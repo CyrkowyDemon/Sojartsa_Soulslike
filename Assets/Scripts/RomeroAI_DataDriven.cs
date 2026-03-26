@@ -66,28 +66,33 @@ public class RomeroAI_DataDriven : EnemyBase
 
     private void CheckForCounterAction(float distance)
     {
+        // 1. Jeśli Romero nie jest w walce lub jest za daleko, ignoruje machanie gracza
+        if (!_isInCombat || distance > strafeDistance * 1.5f) return;
+
         if (_currentState == AIState.Attacking || Time.time < _lastReactionTime + reactionCooldown) return;
 
         if (IsPlayerAttacking())
         {
+            // 2. SPRAWDZAMY KIERUNEK (Dot Product) - czy gracz w ogóle patrzy w stronę tego Romero?
+            Vector3 dirToRomero = (transform.position - _target.position).normalized;
+            float dot = Vector3.Dot(_target.forward, dirToRomero);
+            
+            // Jeśli dot jest mniejszy niż 0.5, to gracz bije kogoś innego (lub patrzy w inną stronę)
+            if (dot < 0.5f) return; 
+
             _lastReactionTime = Time.time;
 
-            // POPRAWKA 1: Niezależne i bezpieczne rzuty na prawdopodobieństwo
             if (distance < 2.5f && Random.value < counterKickChance)
             {
-                // Agresywna kontra
                 ExecuteAttackByTrigger("Attack2", 1.2f);
-                return; // Zakończ, jeśli wykonano kontrę
+                return; 
             }
             
             if (Random.value < dodgeChance)
             {
-                // Defensywny unik
                 _animator.SetTrigger("Dodge");
-                
-                // POPRAWKA 2: Traktujemy unik jak atak, by zablokować inne akcje i nie psuć root motion
                 SetState(AIState.Attacking); 
-                _lastAttackTime = Time.time; // Traktujemy unik jako akcję resetującą timer, by nie atakował od razu po nim
+                _lastAttackTime = Time.time; 
             }
         }
     }

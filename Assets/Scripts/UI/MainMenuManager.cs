@@ -1,11 +1,10 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
-using UnityEngine.EventSystems; // Kluczowe dla obsługi EventSystemu
+using UnityEngine.EventSystems;
 
 public class MainMenuManager : MonoBehaviour
 {
-    // Lista poziomów do wyboru w Inspektorze
     public enum LevelID 
     {
         MainMenu = 0,
@@ -18,43 +17,49 @@ public class MainMenuManager : MonoBehaviour
 
     [Header("Input & Sterowanie")]
     [SerializeField] private InputReader inputReader;
-    [Tooltip("Przycisk zaznaczony na samym starcie (dla pada/klawiatury)")]
     public GameObject firstSelectedButton; 
 
-    [Header("Panele UI (Prefaby/Obiekty)")]
+    [Header("Panele UI")]
     public GameObject mainMenuPanel; 
     public GameObject settingsPanel;
 
     [Header("Nawigacja dla Pada")]
-    [Tooltip("Pierwszy suwak/przycisk w menu ustawień")]
     public GameObject firstSettingsButton; 
-    [Tooltip("Przycisk 'Ustawienia' w głównym menu (do niego wrócimy po zamknięciu)")]
     public GameObject settingsButtonInMenu; 
 
     private void Start()
     {
-        // 1. Włączamy mapę sterowania UI
-        if (inputReader != null) inputReader.EnableUI();
+        // Odkomentuj to, jak naprawisz błędy w InputReaderze:
+        // if (inputReader != null) inputReader.EnableUI();
 
-        // 2. Bezpiecznie zaznaczamy pierwszy przycisk
         SelectButton(firstSelectedButton);
     }
 
-    public void StartGame()
+    // --- KLUCZOWA FUNKCJA DLA PRZYCISKÓW ---
+    // W Inspektorze w Button -> OnClick wybierz: MainMenuManager -> LoadSpecificLevel
+    // I wpisz w okienku numer sceny (np. 1, 2, 3)
+    public void LoadSpecificLevel(int sceneIndex)
     {
-        // Przywracamy sterowanie graczem przed zmianą sceny
-        if (inputReader != null) inputReader.EnableGameplay();
+        if (inputReader != null) 
+        {
+            // Odkomentuj to, jak naprawisz błędy w InputReaderze:
+            // inputReader.EnableGameplay();
+        }
         
         Time.timeScale = 1f; 
-        SceneManager.LoadScene((int)levelToLoad);
+        SceneManager.LoadScene(sceneIndex);
+    }
+
+    // Standardowy start z poziomu wybranego w "levelToLoad" (np. dla przycisku "Graj Dalej")
+    public void StartGame()
+    {
+        LoadSpecificLevel((int)levelToLoad);
     }
 
     public void OpenSettings()
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(true);
-
-        // Przełączamy focus pada na menu ustawień
         SelectButton(firstSettingsButton);
     }
 
@@ -62,8 +67,6 @@ public class MainMenuManager : MonoBehaviour
     {
         if (settingsPanel != null) settingsPanel.SetActive(false);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
-
-        // Wracamy focusem na przycisk, który otworzył ustawienia
         SelectButton(settingsButtonInMenu);
     }
 
@@ -72,8 +75,6 @@ public class MainMenuManager : MonoBehaviour
         Debug.Log("Wychodzę z gry!");
         Application.Quit();
     }
-
-    // --- SYSTEM BEZPIECZNEGO ZAZNACZANIA ---
 
     public void SelectButton(GameObject button)
     {
@@ -85,12 +86,8 @@ public class MainMenuManager : MonoBehaviour
 
     private IEnumerator SelectRoutine(GameObject button)
     {
-        // Wyczyszczenie obecnego zaznaczenia zapobiega błędom "Ghost Highlight"
         EventSystem.current.SetSelectedGameObject(null);
-        
-        // Czekamy jedną klatkę, aż UI przeliczy swoją strukturę po SetActive(true)
         yield return null; 
-        
         EventSystem.current.SetSelectedGameObject(button);
     }
 }

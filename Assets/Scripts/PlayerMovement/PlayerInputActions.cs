@@ -387,6 +387,24 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""TabPrev"",
+                    ""type"": ""Button"",
+                    ""id"": ""8b9c0d1e-2f3a-4b5c-6d7e-8f9a0b1c2d3e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""TabNext"",
+                    ""type"": ""Button"",
+                    ""id"": ""9c0d1e2f-3a4b-5c6d-7e8f-9a0b1c2d3e4f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -554,6 +572,50 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Cancel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";XBOXControlScheme"",
+                    ""action"": ""TabPrev"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8b9c0d1e-2f3a-4b5c-6d7e-8f9a0b1c2d3e"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";PCControlScheme"",
+                    ""action"": ""TabPrev"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9c0d1e2f-3a4b-5c6d-7e8f-9a0b1c2d3e4f"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";XBOXControlScheme"",
+                    ""action"": ""TabNext"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0d1e2f3a-4b5c-6d7e-8f9a-0b1c2d3e4f5a"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";PCControlScheme"",
+                    ""action"": ""TabNext"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -602,6 +664,8 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
         m_UI_Submit = m_UI.FindAction("Submit", throwIfNotFound: true);
         m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
+        m_UI_TabPrev = m_UI.FindAction("TabPrev", throwIfNotFound: true);
+        m_UI_TabNext = m_UI.FindAction("TabNext", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
@@ -848,6 +912,8 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_Navigate;
     private readonly InputAction m_UI_Submit;
     private readonly InputAction m_UI_Cancel;
+    private readonly InputAction m_UI_TabPrev;
+    private readonly InputAction m_UI_TabNext;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -871,6 +937,14 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "UI/Cancel".
         /// </summary>
         public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/TabPrev".
+        /// </summary>
+        public InputAction @TabPrev => m_Wrapper.m_UI_TabPrev;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/TabNext".
+        /// </summary>
+        public InputAction @TabNext => m_Wrapper.m_UI_TabNext;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -906,6 +980,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Cancel.started += instance.OnCancel;
             @Cancel.performed += instance.OnCancel;
             @Cancel.canceled += instance.OnCancel;
+            @TabPrev.started += instance.OnTabPrev;
+            @TabPrev.performed += instance.OnTabPrev;
+            @TabPrev.canceled += instance.OnTabPrev;
+            @TabNext.started += instance.OnTabNext;
+            @TabNext.performed += instance.OnTabNext;
+            @TabNext.canceled += instance.OnTabNext;
         }
 
         /// <summary>
@@ -926,6 +1006,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Cancel.started -= instance.OnCancel;
             @Cancel.performed -= instance.OnCancel;
             @Cancel.canceled -= instance.OnCancel;
+            @TabPrev.started -= instance.OnTabPrev;
+            @TabPrev.performed -= instance.OnTabPrev;
+            @TabPrev.canceled -= instance.OnTabPrev;
+            @TabNext.started -= instance.OnTabNext;
+            @TabNext.performed -= instance.OnTabNext;
+            @TabNext.canceled -= instance.OnTabNext;
         }
 
         /// <summary>
@@ -1070,5 +1156,19 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCancel(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "TabPrev" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTabPrev(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "TabNext" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTabNext(InputAction.CallbackContext context);
     }
 }

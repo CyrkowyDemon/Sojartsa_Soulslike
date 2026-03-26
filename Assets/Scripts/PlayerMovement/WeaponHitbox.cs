@@ -37,6 +37,10 @@ public class WeaponHitbox : MonoBehaviour
 
     public void OpenDamageWindow()
     {
+        // FAIL-SAFE: Jeśli bron (lub jej punkty) ulegla zniszczeniu, ignorujemy próbę ataku.
+        // Zapobiega to błędom MissingReferenceException, gdy np. wróg umiera, ale stara animacja wysle jeszcze event.
+        if (basePoint == null || tipPoint == null) return;
+
         _isAttacking = true;
         _hitObjectsThisSwing.Clear(); // Czyscimy pamiec trafionych obiektow
 

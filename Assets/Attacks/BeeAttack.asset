@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackData
   animationTrigger: Attack
   minDistance: 0
-  maxDistance: 2
+  maxDistance: 3
   weight: 1
-  attackCooldown: 1.5
+  attackCooldown: 0.75
   condition: 0
   isJumpAttack: 0

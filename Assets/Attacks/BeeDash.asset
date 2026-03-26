@@ -15,7 +15,7 @@ MonoBehaviour:
   animationTrigger: Attack2
   minDistance: 3
   maxDistance: 10
-  weight: 1
-  attackCooldown: 2
+  weight: 0.7
+  attackCooldown: 1.5
   condition: 0
   isJumpAttack: 0

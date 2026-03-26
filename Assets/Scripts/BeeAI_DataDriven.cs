@@ -213,6 +213,22 @@ public class BeeAI_DataDriven : EnemyBase
         CloseDamage();
     }
 
+    // Odpalane przez Animation Eventy ustawione w klatkach animacji "Distraction"
+    // Parametr chanceToDash wpisujesz w edytorze Unity jako "Float" od 0.0 do 1.0
+    public void CheckDistractionDash(float chanceToDash)
+    {
+        // Jeśli już wcześniej wylosowała atak podczas tego tańca - ignorujemy resztę prób
+        if (_currentState == BeeState.Attacking) return;
+
+        // Rzut kostką (np. 0.2 to 20% szans)
+        if (Random.value <= chanceToDash)
+        {
+            Debug.Log($"<color=yellow>[BEE] Zmyłka udana! Atakuje z zaskoczenia!</color>");
+            _animator.SetTrigger("Attack2"); // lub inna nazwa pod którą masz kropnięcie w dół
+            _currentState = BeeState.Attacking;
+        }
+    }
+
     public void OpenDamageByID(int id)
     {
         foreach (var hb in _allHitboxes)

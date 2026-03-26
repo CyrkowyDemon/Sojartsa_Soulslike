@@ -21,17 +21,32 @@ public class PauseManager : MonoBehaviour
     public GameObject firstSettingsButton; 
     public GameObject settingsButtonInPause;
 
+    [Header("Kamera - Zabezpieczenie")]
+    [Tooltip("Przeciągnij tu obiekt kamery z komponentem Cinemachine Input Axis Controller")]
+    public CinemachineInputAxisController cameraInputController;
+
     private CinemachineBrain _brain;
     private bool isPaused = false;
+    
+    // Zmienna do ignorowania podwójnych sygnałów z ESC w tej samej klatce
+    private int _lastToggleFrame = -1; 
 
     private void OnEnable()
     {
-        if (inputReader != null) inputReader.MainMenuEvent += TogglePause;
+        if (inputReader != null)
+        {
+            inputReader.MainMenuEvent += TogglePause;
+            inputReader.CancelEvent += HandleCancel;
+        }
     }
 
     private void OnDisable()
     {
-        if (inputReader != null) inputReader.MainMenuEvent -= TogglePause;
+        if (inputReader != null)
+        {
+            inputReader.MainMenuEvent -= TogglePause;
+            inputReader.CancelEvent -= HandleCancel;
+        }
     }
 
     void Start()
@@ -42,6 +57,10 @@ public class PauseManager : MonoBehaviour
 
     public void TogglePause()
     {
+        // Magiczne rozwiązanie problemu z ESC: jeśli w tej samej klatce już to wywołaliśmy, zignoruj!
+        if (Time.frameCount == _lastToggleFrame) return;
+        _lastToggleFrame = Time.frameCount;
+
         isPaused = !isPaused;
         
         if (pauseCanvas != null)
@@ -56,15 +75,16 @@ public class PauseManager : MonoBehaviour
 
         if (isPaused)
         {
-            // FromSoftware style: Time does NOT stop.
             Time.timeScale = 1f; 
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
             
-            inputReader.EnableUI(); 
-            SelectButton(firstSelectedButton);
+            if (inputReader != null) inputReader.SetPauseMenuState(); 
+            
+            // WYŁĄCZAMY KOMPONENT KAMERY
+            if (cameraInputController != null) cameraInputController.enabled = false;
 
-            // FromSoftware style: Camera still tracks in background, we just don't feed it new input.
+            SelectButton(firstSelectedButton);
             if (_brain != null) _brain.enabled = true;
         }
         else
@@ -73,8 +93,11 @@ public class PauseManager : MonoBehaviour
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
             
-            inputReader.EnableGameplay(); 
+            if (inputReader != null) inputReader.UnlockAllInput(); 
             EventSystem.current.SetSelectedGameObject(null);
+
+            // WŁĄCZAMY KAMERĘ Z POWROTEM
+            if (cameraInputController != null) cameraInputController.enabled = true;
 
             if (settingsPanel != null) settingsPanel.SetActive(false);
             if (_brain != null) _brain.enabled = true;
@@ -86,6 +109,7 @@ public class PauseManager : MonoBehaviour
         if (pauseMainPanel != null) pauseMainPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(true);
 
+        if (inputReader != null) inputReader.SetSettingsMenuState();
         SelectButton(firstSettingsButton);
     }
 
@@ -94,28 +118,53 @@ public class PauseManager : MonoBehaviour
         if (settingsPanel != null) settingsPanel.SetActive(false);
         if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
 
+        if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(settingsButtonInPause);
+    }
+
+    private void HandleCancel()
+    {
+        if (!isPaused) return; // Jeśli gra nie jest zapauzowana, ignorujemy przycisk Cancel
+
+        if (settingsPanel != null && settingsPanel.activeSelf)
+        {
+            CloseSettings();
+        }
+        else
+        {
+            TogglePause();
+        }
     }
 
     public void QuitToMainMenu()
     {
         Time.timeScale = 1f; 
+        if (inputReader != null) inputReader.UnlockAllInput(); 
         SceneManager.LoadScene(0); 
     }
 
-    // --- SYSTEM BEZPIECZNEGO ZAZNACZANIA ---
-    public void SelectButton(GameObject button)
-    {
-        if (button != null && gameObject.activeInHierarchy)
-        {
-            StartCoroutine(SelectRoutine(button));
-        }
-    }
+   public void SelectButton(GameObject button)
+{
+    // 1. Sprawdzamy, czy obiekt jest aktywny, żeby nie wywalić błędu
+    if (button == null || !gameObject.activeInHierarchy) return;
 
-    private IEnumerator SelectRoutine(GameObject button)
+    // 2. Odpalamy Coroutine, żeby dać Unity jedną klatkę przerwy
+    StartCoroutine(SelectRoutine(button));
+}
+
+private IEnumerator SelectRoutine(GameObject button)
+{
+    // Czyścimy zaznaczenie całkowicie
+    EventSystem.current.SetSelectedGameObject(null);
+    
+    // Czekamy do końca klatki - to pozwala myszce "odświeżyć" swój stan
+    yield return new WaitForEndOfFrame();
+
+    // Sprawdzamy: jeśli gracz poruszył myszką, EventSystem sam coś "scoveruje". 
+    // Jeśli nic nie jest podświetlone myszką, wtedy ustawiamy focus dla pada.
+    if (EventSystem.current.currentSelectedGameObject == null)
     {
-        EventSystem.current.SetSelectedGameObject(null);
-        yield return null; 
         EventSystem.current.SetSelectedGameObject(button);
     }
+}
 }

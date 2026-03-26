@@ -1,19 +1,29 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; // Wymagane dla TextMeshPro!
 
 public class SettingsUI : MonoBehaviour
 {
-    [Header("UI Elementy")]
+    [Header("UI Elementy - Suwaki")]
     [SerializeField] private Slider mouseSlider;
     [SerializeField] private Slider gamepadSlider;
+    [SerializeField] private Slider vibrationSlider;
+
+    [Header("UI Elementy - Przyciski (Sekiro Style)")]
+    [SerializeField] private Button invertXButton;
+    [SerializeField] private TextMeshProUGUI invertXText; // Tekst na przycisku
+    [SerializeField] private Button invertYButton;
+    [SerializeField] private TextMeshProUGUI invertYText; // Tekst na przycisku
+
+    private bool _currentInvertX;
+    private bool _currentInvertY;
 
     private bool _isUpdating = false;
     private bool _isInitialized = false;
 
     private void Start()
     {
-        // WYMUSZAMY twarde załadowanie rzetelnych wartości z dysku (PlayerPrefs) przy każdym uruchomieniu sceny,
-        // żeby pominąć 100% potencjalnych błędów pamięci/Singleto'ów
+        // WYMUSZAMY twarde załadowanie rzetelnych wartości z dysku
         if (SettingsManager.Instance != null)
         {
             SettingsManager.Instance.LoadSettings();
@@ -25,24 +35,21 @@ public class SettingsUI : MonoBehaviour
 
     private void OnEnable()
     {
-        UpdateSliders();
+        if (_isInitialized) UpdateSliders();
     }
 
     public void UpdateSliders()
     {
         if (SettingsManager.Instance == null) return;
 
-        _isUpdating = true; // BLOKADA: Blokujemy wywoływanie eventów przy aktualizacji
+        _isUpdating = true; // BLOKADA eventów
 
+        // --- Aktualizacja Suwaków ---
         if (mouseSlider != null)
         {
             mouseSlider.minValue = 0.1f;
             mouseSlider.maxValue = 10f;
             mouseSlider.value = SettingsManager.Instance.mouseSensitivity;
-        }
-        else
-        {
-            Debug.LogError("[UI] BRAK mouseSlider w Inspektorze!");
         }
 
         if (gamepadSlider != null)
@@ -51,36 +58,79 @@ public class SettingsUI : MonoBehaviour
             gamepadSlider.maxValue = 10f;
             gamepadSlider.value = SettingsManager.Instance.gamepadSensitivity;
         }
-        else
+
+        if (vibrationSlider != null)
         {
-            Debug.LogError("[UI] BRAK gamepadSlider w Inspektorze!");
+            vibrationSlider.minValue = 0f;
+            vibrationSlider.maxValue = 1f;
+            vibrationSlider.value = SettingsManager.Instance.vibrationLevel;
         }
-            
-        // DIAGNOSTYKA
-        Debug.Log($"[UI] Wymuszono synchronizację suwaków. Odczyt z bazy to Mysz: {SettingsManager.Instance.mouseSensitivity}, Pad: {SettingsManager.Instance.gamepadSensitivity}");
+
+        // --- Aktualizacja Przycisków (Sekiro Style) ---
+        _currentInvertX = SettingsManager.Instance.invertX;
+        _currentInvertY = SettingsManager.Instance.invertY;
+        UpdateInvertButtonVisuals(); // Funkcja zmieniająca napis na przycisku
             
         _isUpdating = false; // ODBLOKOWANIE
     }
 
-    // Funkcja podpięta pod suwak myszki (OnValueChanged)
-    public void OnMouseSensitivityChanged(float newValue)
+    // Funkcja odświeżająca same teksty
+    private void UpdateInvertButtonVisuals()
     {
-        if (!_isInitialized || _isUpdating) return; // Chronimy przed eventami ze startu silnika Unity!
-
-        if (SettingsManager.Instance != null)
-        {
-            SettingsManager.Instance.SaveSettings(newValue, SettingsManager.Instance.gamepadSensitivity);
-        }
+        if (invertXText != null) 
+            invertXText.text = _currentInvertX ? "Inverted" : "Normal";
+            
+        if (invertYText != null) 
+            invertYText.text = _currentInvertY ? "Inverted" : "Normal";
     }
 
-    // Funkcja podpięta pod suwak pada (OnValueChanged)
+    // --- EVENTY DLA SUWAKÓW ---
+    public void OnMouseSensitivityChanged(float newValue)
+    {
+        if (!_isInitialized || _isUpdating) return;
+        SaveAll();
+    }
+
     public void OnGamepadSensitivityChanged(float newValue)
     {
-        if (!_isInitialized || _isUpdating) return; // Chronimy przed eventami ze startu silnika Unity!
+        if (!_isInitialized || _isUpdating) return;
+        SaveAll();
+    }
 
+    public void OnVibrationChanged(float newValue)
+    {
+        if (!_isInitialized || _isUpdating) return;
+        SaveAll();
+    }
+
+    // --- EVENTY DLA PRZYCISKÓW (Zamiast Toggle) ---
+    public void ToggleInvertX()
+    {
+        if (!_isInitialized || _isUpdating) return;
+        _currentInvertX = !_currentInvertX; // Odwracamy (jak było false, to teraz true)
+        UpdateInvertButtonVisuals(); // Od razu zmieniamy napis
+        SaveAll(); // Zapisujemy
+    }
+
+    public void ToggleInvertY()
+    {
+        if (!_isInitialized || _isUpdating) return;
+        _currentInvertY = !_currentInvertY;
+        UpdateInvertButtonVisuals();
+        SaveAll();
+    }
+
+    private void SaveAll()
+    {
         if (SettingsManager.Instance != null)
         {
-            SettingsManager.Instance.SaveSettings(SettingsManager.Instance.mouseSensitivity, newValue);
+            SettingsManager.Instance.SaveSettings(
+                mouseSlider ? mouseSlider.value : SettingsManager.Instance.mouseSensitivity,
+                gamepadSlider ? gamepadSlider.value : SettingsManager.Instance.gamepadSensitivity,
+                _currentInvertX,
+                _currentInvertY,
+                vibrationSlider ? vibrationSlider.value : SettingsManager.Instance.vibrationLevel
+            );
         }
     }
 }

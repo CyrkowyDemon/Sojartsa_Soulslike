@@ -33,6 +33,16 @@ public class CinemachineInputScaler : MonoBehaviour
                     ? SettingsManager.Instance.mouseSensitivity 
                     : SettingsManager.Instance.gamepadSensitivity;
 
+                // 4. Obsługa inwersji osi
+                float invX = SettingsManager.Instance.invertX ? -1f : 1f;
+                float invY = SettingsManager.Instance.invertY ? -1f : 1f;
+
+                // Sprawdzamy czy to oś X czy Y (AxisDescriptor hints pomagają)
+                if (hint == IInputAxisOwner.AxisDescriptor.Hints.X)
+                    return value * sensitivity * invX;
+                if (hint == IInputAxisOwner.AxisDescriptor.Hints.Y)
+                    return value * sensitivity * invY;
+
                 return value * sensitivity;
             }
 
