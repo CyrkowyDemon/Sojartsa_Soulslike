@@ -20307,6 +20307,19 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 908139642}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!134 &911287219
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &917854026
 GameObject:
   m_ObjectHideFlags: 0
@@ -24999,11 +25012,6 @@ Transform:
   - {fileID: 1261314384}
   m_Father: {fileID: 1048522332}
   m_LocalEulerAnglesHint: {x: 0, y: -280.66, z: 0}
---- !u!4 &1094964464 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7852581637183653690, guid: dd2d736257f231849afea0b18794ae81, type: 3}
-  m_PrefabInstance: {fileID: 604869978}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1096943053
 GameObject:
   m_ObjectHideFlags: 0
@@ -34256,6 +34264,11 @@ Camera:
   m_CorrespondingSourceObject: {fileID: 4593879738978816412, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
   m_PrefabInstance: {fileID: 2136085253}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &1473162924 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1354792040131233736, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
+  m_PrefabInstance: {fileID: 2136085253}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1476199090
 GameObject:
   m_ObjectHideFlags: 0
@@ -42756,6 +42769,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 868896655553415376, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 911287219}
     - target: {fileID: 3050678519809632928, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
       propertyPath: m_LocalPosition.x
       value: -11.07963
@@ -42807,7 +42824,7 @@ PrefabInstance:
     - target: {fileID: 5053467104511725765, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
       propertyPath: cameraTransform
       value: 
-      objectReference: {fileID: 1094964464}
+      objectReference: {fileID: 1473162924}
     - target: {fileID: 5525456951265030748, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
       propertyPath: hud
       value: 
@@ -42816,10 +42833,6 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 1473162920}
-    - target: {fileID: 5590081092486308190, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
-      propertyPath: m_UIInputModule
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 7794612364660720935, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
       propertyPath: m_Name
       value: Player

@@ -10,22 +10,43 @@ using UnityEngine.InputSystem;
 public class CinemachineInputScaler : MonoBehaviour
 {
     [SerializeField] private InputReader inputReader;
+    [SerializeField] private TargetHandler targetHandler; // NOWE: Referencja do skryptu namierzania
     private CinemachineInputAxisController _axisController;
 
-    private void Start()
+    private void Awake()
     {
         _axisController = GetComponent<CinemachineInputAxisController>();
+        
+        // --- NOWOŚĆ: Automatyczne szukanie TargetHandlera ---
+        if (targetHandler == null)
+        {
+            targetHandler = FindFirstObjectByType<TargetHandler>();
+        }
+
+        // --- NOWOŚĆ: Wymuszenie, żeby kamera zawsze za nami latała (Zero teleportacji!) ---
+        if (TryGetComponent<CinemachineCamera>(out var cam))
+        {
+            cam.StandbyUpdate = CinemachineCamera.StandbyUpdateMode.Always;
+            Debug.Log($"<color=green>[CAMERA] Wymuszono 'Standby Update' na Always dla {gameObject.name}!</color>");
+        }
+
         if (_axisController == null) return;
 
         // Poprawna sygnatura dla tej wersji Cinemachine 3.0
         _axisController.ReadControlValueOverride = (InputAction action, IInputAxisOwner.AxisDescriptor.Hints hint, Object context, CinemachineInputAxisController.Reader.ControlValueReader defaultReader) => 
         {
-            // 1. Odczytujemy surową wartość używając domyślnego readera (żeby uniknąć nieskończonej pętli przekazujemy null jako ostatni parametr)
+            // 1. Odczytujemy surową wartość
             float value = defaultReader(action, hint, context, null);
             
             // 2. Sprawdzamy czy to oś Look (Nazwa akcji zawiera "Look")
             if (action != null && action.name.Contains("Look"))
             {
+                // --- NOWOŚĆ: Jeśli masz namierzony cel, nie obracaj kamery swobodnej! ---
+                if (targetHandler != null && targetHandler.IsLockedOn)
+                {
+                    return 0f; // Ignoruj ruch myszki/gałki dla obrotu kamery
+                }
+
                 if (SettingsManager.Instance == null || inputReader == null) return value;
 
                 // 3. Pobieramy czułość dla aktywnego urządzenia

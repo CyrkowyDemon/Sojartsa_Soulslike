@@ -27,6 +27,12 @@ public class TargetHandler : MonoBehaviour
     private void Awake()
     {
         _mainCamera = Camera.main;
+
+        // --- POPRAWKA: Kamera LockOn musi zawsze kogoś "pilnować", żeby nie było przeskoku ---
+        if (lockOnCamera != null)
+        {
+            lockOnCamera.LookAt = transform; // Na starcie patrz na gracza
+        }
     }
 
 private void OnEnable()
@@ -214,7 +220,8 @@ private void OnEnable()
         if (lockOnCamera != null)
         {
             lockOnCamera.Priority = 0;
-            lockOnCamera.LookAt = null; 
+            // --- POPRAWKA: Nie ustawiamy null! Kamera wraca do patrzenia na gracza ---
+            lockOnCamera.LookAt = transform; 
         }
     }
 

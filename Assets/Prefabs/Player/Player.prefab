@@ -537,6 +537,8 @@ MonoBehaviour:
     m_Bits: 64
   damageAmount: 30
   swordTrail: {fileID: 2276837235969367711}
+  hitVFXPrefab: {fileID: 7610795319446460829, guid: feb862579ce897d40baeea21d517635d, type: 3}
+  hitLightPrefab: {fileID: 6037506901154312284, guid: 1dfcfc159d6a15c47885f3102e1bc46c, type: 3}
   hitStopDuration: 0.07
   hitStopOnPlayerHit: 0.11
 --- !u!114 &2008507649159441915

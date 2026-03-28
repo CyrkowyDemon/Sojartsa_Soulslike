@@ -16,6 +16,8 @@ public class WeaponHitbox : MonoBehaviour
 
     [Header("VFX")]
     [SerializeField] private TrailRenderer swordTrail;
+    [SerializeField] private GameObject hitVFXPrefab; // NOWE: Prefab efektu trafienia (np. Impact Flash / Krew)
+    [SerializeField] private GameObject hitLightPrefab; // NOWE: Prefab światła trafienia (Hit Light - FromSoftware style)
 
     [Header("Hit Stop")]
     [SerializeField] private float hitStopDuration = 0.04f; // Szybsze, bardziej "ostre"
@@ -135,6 +137,47 @@ public class WeaponHitbox : MonoBehaviour
                     {
                         playerHP.TakeDamage(damageAmount, isKnockbackAttack);
                         hitPlayer = true;
+                    }
+
+                    // --- NOWE: Spawnowanie VFX w punkcie trafienia ---
+                    if (hitVFXPrefab != null)
+                    {
+                        // FIX: Jeśli Unity zwraca punkt (0,0,0) (częste przy CapsuleCast), używamy środka ostrza
+                        Vector3 vfxPos = hit.point;
+                        Vector3 vfxNormal = hit.normal;
+
+                        if (vfxPos == Vector3.zero)
+                        {
+                            vfxPos = Vector3.Lerp(currentBase, currentTip, 0.5f);
+                            vfxNormal = Vector3.up; // Fallback na górę
+                        }
+
+                        // Debug: Fioletowa linia w oknie Scene pokaże nam dokładnie punkt trafienia
+                        Debug.DrawRay(vfxPos, vfxNormal * 1.0f, Color.magenta, 2.0f);
+
+                        // Tworzymy efekt w punkcie styku, obrócony w stronę normalnej powierzchni (odbicie)
+                        GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.LookRotation(vfxNormal));
+                        
+                        // Zabezpieczenie: Jeśli "Play on Awake" jest wyłączone, zmuszamy cząsteczki do startu
+                        ParticleSystem ps = vfx.GetComponent<ParticleSystem>();
+                        if (ps != null) ps.Play();
+
+                        Destroy(vfx, 2f); // Automatyczne sprzątanie po 2 sekundach
+                    }
+                    else
+                    {
+                        // Ostrzeżenie, jeśli zapomniałeś przypisać prefab w inspektorze
+                        Debug.LogWarning($"<color=yellow>[HIT-VFX] Mordo, zapomniałeś przypisać 'hitVFXPrefab' w inspektorze na {gameObject.name}!</color>");
+                    }
+
+                    // --- NOWE: Spawnowanie "Hit Light" (FromSoftware style) ---
+                    if (hitLightPrefab != null)
+                    {
+                        Vector3 lightPos = hit.point;
+                        if (lightPos == Vector3.zero) lightPos = Vector3.Lerp(currentBase, currentTip, 0.5f);
+
+                        // Spawny punktowe światło dokładnie w miejscu trafienia
+                        Instantiate(hitLightPrefab, lightPos, Quaternion.identity);
                     }
                 }
                 else

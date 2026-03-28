@@ -17,10 +17,22 @@ public class PlayerMovement : MonoBehaviour
     private float _verticalVelocity;
     private bool _isGrounded;
 
-    private void Start()
+    private void Awake()
     {
+        // --- POPRAWKA: Automatyczne szukanie Głównej Kamery ---
+        if (cameraTransform == null && Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+            Debug.Log("<color=cyan>[MOVEMENT] Automatycznie przypisano Main Camera jako źródło kierunku ruchu!</color>");
+        }
+
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    private void Start()
+    {
+        // Start zostawiamy pusty lub usuwamy, jeśli nie ma innej logiki
     }
 
     public Vector2 MoveInput => _moveInput;
