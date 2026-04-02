@@ -6,16 +6,21 @@ using System.Collections.Generic;
 
 public class KeybindManager : MonoBehaviour
 {
-    // Ta klasa (struktura) tworzy ładne okienko dla każdego przycisku w Inspektorze
+    [Header("Referencje - Zabezpieczenie Zmiany w Locie")]
+    [Tooltip("Przeciągnij tutaj plik InputReader z The Player, żeby od razu ogarnął zmianę klawisza!")]
+    public InputReader inputReader;
+
     [System.Serializable]
     public class KeybindSlot
     {
-        public string slotName; // Np. "Atak" (tylko dla Ciebie, żebyś wiedział co to)
+        public string slotName; 
         public InputActionReference actionToRebind;
         public Button buttonToClick;
         public TMP_Text buttonText;
-        public int bindingIndex = 0; // 0 dla klawiatury, 1 dla pada (zazwyczaj)
+        public int bindingIndex = 0; 
         public bool excludeMouse = true;
+        [Tooltip("Zaznacz to, jeśli ten slot przypisuje KLAWISZ NA PADZIE!")]
+        public bool isGamepadSlot = false; 
     }
 
     [Header("Lista wszystkich klawiszy")]
@@ -23,72 +28,150 @@ public class KeybindManager : MonoBehaviour
 
     private InputActionRebindingExtensions.RebindingOperation _rebindingOperation;
 
+    private void OnEnable()
+    {
+        if (keybinds.Count > 0 && keybinds[0].buttonToClick != null)
+        {
+            StartCoroutine(FocusFirstSlotRoutine());
+        }
+    }
+
+    private System.Collections.IEnumerator FocusFirstSlotRoutine()
+    {
+        yield return new WaitForEndOfFrame();
+        if (UnityEngine.EventSystems.EventSystem.current != null && keybinds[0].buttonToClick.gameObject.activeInHierarchy)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(keybinds[0].buttonToClick.gameObject);
+        }
+    }
+
+    private System.Collections.IEnumerator ReselectButtonRoutine(GameObject go)
+    {
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            yield return new WaitForEndOfFrame();
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(go);
+        }
+    }
+
+    // [NAPRAWIONE] Bierzemy "żywą" akcję w 100% niezawodnie po GUID (ID), a nie po ścieżkach ze stringami!
+    private InputAction GetLiveAction(KeybindSlot slot)
+    {
+        if (inputReader != null && inputReader.Controls != null && slot.actionToRebind != null)
+        {
+            // Szukamy po unikalnym ID. To nigdy nie zawodzi (nie straszne mu spacje czy zmiany nazw)
+            var liveAction = inputReader.Controls.asset.FindAction(slot.actionToRebind.action.id.ToString());
+
+            if (liveAction != null) return liveAction;
+
+            Debug.LogError($"[KeybindManager] TOTALNY BŁĄD! Nie znaleziono żywej akcji dla '{slot.slotName}'. " +
+                           $"Sprawdź, czy InputReader załadował Controls!");
+        }
+        
+        // Zwracanie fallbacku to to, co psuło Ci grę (modyfikowało twardy asset w projekcie)
+        // Zostawiamy jako ostateczną ostateczność, żeby gra nie wywaliła NullReference, ale nie powinno to już nigdy wystąpić.
+        return slot.actionToRebind?.action;
+    }
+
     private void Start()
     {
-        // Na start gry, menedżer sam podpina wszystkie przyciski i odświeża napisy
+        if (inputReader != null && inputReader.Controls == null)
+        {
+            inputReader.LoadRebinds();
+        }
+
         foreach (var slot in keybinds)
         {
             UpdateBindingText(slot);
-            
-            // Magia: automatycznie podpinamy kliknięcie przycisku pod funkcję zmiany klawisza!
             slot.buttonToClick.onClick.AddListener(() => StartRebinding(slot));
         }
     }
 
+    private void OnDestroy()
+    {
+        _rebindingOperation?.Dispose();
+    }
+
     public void StartRebinding(KeybindSlot slot)
     {
-        // Jeśli już coś bindujemy, ignoruj
         if (_rebindingOperation != null) return;
 
-        // Wyłączamy akcję i zmieniamy tekst
-        slot.actionToRebind.action.Disable();
+        var liveAction = GetLiveAction(slot);
+
+        if (slot.bindingIndex < 0 || slot.bindingIndex >= liveAction.bindings.Count)
+        {
+            Debug.LogError($"[KeybindManager] Błędny bindingIndex ({slot.bindingIndex}) dla slotu '{slot.slotName}'!");
+            return;
+        }
+
+        // [NAPRAWIONE] Wyłączamy CAŁĄ MAPĘ AKCJI, a nie pojedynczą akcję.
+        // Wyłączanie pojedynczej akcji (liveAction.Disable()) robiło desync w Unity.
+        liveAction.actionMap?.Disable();
+        
         slot.buttonText.text = "Wciśnij klawisz...";
         slot.buttonToClick.interactable = false;
 
-        var rebind = slot.actionToRebind.action.PerformInteractiveRebinding(slot.bindingIndex);
-        if (slot.excludeMouse) rebind.WithControlsExcluding("Mouse");
+        var rebind = liveAction.PerformInteractiveRebinding(slot.bindingIndex);
+
+        if (slot.isGamepadSlot)
+        {
+            rebind.WithControlsExcluding("<Keyboard>")
+                  .WithControlsExcluding("<Mouse>");
+        }
+        else
+        {
+            rebind.WithControlsExcluding("<Gamepad>");
+            if (slot.excludeMouse) rebind.WithControlsExcluding("<Mouse>");
+            rebind.WithCancelingThrough("<Keyboard>/escape");
+        }
 
         _rebindingOperation = rebind
             .OnMatchWaitForAnother(0.1f)
-            .OnComplete(operation => RebindComplete(slot))
-            .OnCancel(operation => RebindComplete(slot))
+            .OnComplete(operation => RebindComplete(slot, liveAction))
+            .OnCancel(operation => RebindComplete(slot, liveAction))
             .Start();
     }
 
-    private void RebindComplete(KeybindSlot slot)
+    private void RebindComplete(KeybindSlot slot, InputAction liveAction)
     {
         _rebindingOperation.Dispose();
         _rebindingOperation = null;
 
-        slot.actionToRebind.action.Enable();
+        // [NAPRAWIONE] Włączamy całą mapę z powrotem.
+        liveAction.actionMap?.Enable();
+        
         slot.buttonToClick.interactable = true;
         
         UpdateBindingText(slot);
+        StartCoroutine(ReselectButtonRoutine(slot.buttonToClick.gameObject));
 
-        // Zapisujemy nowe ustawienia do pamięci gry
-        string rebindsData = slot.actionToRebind.action.actionMap.asset.SaveBindingOverridesAsJson();
-        PlayerPrefs.SetString("rebinds", rebindsData);
-        PlayerPrefs.Save();
+        if (inputReader != null)
+        {
+            inputReader.SaveRebinds();
+        }
     }
 
     private void UpdateBindingText(KeybindSlot slot)
     {
         if (slot.actionToRebind != null && slot.buttonText != null)
         {
-            slot.buttonText.text = slot.actionToRebind.action.GetBindingDisplayString(slot.bindingIndex);
+            var liveAction = GetLiveAction(slot);
+            slot.buttonText.text = liveAction.GetBindingDisplayString(slot.bindingIndex);
         }
     }
 
-    // BONUS: Funkcja do resetowania wszystkich klawiszy (możesz ją podpiąć pod osobny przycisk)
     public void ResetAllBindings()
     {
-        foreach (var slot in keybinds)
+        if (inputReader != null && inputReader.Controls != null)
         {
-            slot.actionToRebind.action.RemoveAllBindingOverrides();
-            UpdateBindingText(slot);
+            inputReader.Controls.asset.RemoveAllBindingOverrides();
+            inputReader.SaveRebinds();
+            
+            foreach (var slot in keybinds)
+            {
+                UpdateBindingText(slot);
+            }
         }
-        
-        PlayerPrefs.DeleteKey("rebinds");
-        PlayerPrefs.Save();
     }
 }

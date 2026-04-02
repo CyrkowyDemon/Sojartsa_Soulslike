@@ -14,6 +14,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public event Action TabPrevEvent;
     public event Action TabNextEvent;
     public event Action<Vector2> SwitchTargetEvent;
+    public event Action InteractEvent;
 
     public enum InputDeviceType { Mouse, Gamepad }
     public InputDeviceType LastUsedDevice { get; private set; } = InputDeviceType.Mouse;
@@ -21,11 +22,18 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public Vector2 MovementValue { get; private set; }
     public Vector2 LookValue { get; private set; }
     
-    // --- NOWE: BLOKADY INPUTU DLA MENU ---
     public bool IsMovementLocked = false;
     public bool IsCameraLocked = false;
 
     private PlayerInputActions _controls;
+    public PlayerInputActions Controls 
+    { 
+        get 
+        {
+            if (_controls == null) LoadRebinds();
+            return _controls;
+        }
+    }
     private float _lastSwitchTime;
     [SerializeField] private float switchCooldown = 0.3f; 
     
@@ -37,30 +45,54 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
         _lastSwitchTime = -100f; 
         
         RefreshSettings();
-        
-        if (_controls == null)
-        {
-            _controls = new PlayerInputActions();
-            _controls.Player.SetCallbacks(this);
-            _controls.UI.SetCallbacks(this);
-        }
 
         if (SettingsManager.Instance != null)
         {
+            // Zabezpieczenie przed podwójną subskrypcją w ScriptableObject
+            SettingsManager.Instance.OnSettingsUpdated -= RefreshSettings; 
             SettingsManager.Instance.OnSettingsUpdated += RefreshSettings;
         }
         
-        // Zawsze na start włączamy obie mapy
-        _controls.Player.Enable();
-        _controls.UI.Enable();
-        UnlockAllInput(); // Upewniamy się, że po starcie nic nie jest zablokowane
+        UnlockAllInput();
 
-        // Wczytywanie zapisanych klawiszy z PlayerPrefs
+        // LoadRebinds teraz zajmuje się WSZYSTKIM: tworzeniem instancji, wczytywaniem i włączaniem
+        LoadRebinds();
+    }
+
+    public void LoadRebinds()
+    {
+        // 1. TWARDY RESET: Zamiast bawić się w Disable/Enable, całkowicie zabijamy stary system
+        if (_controls != null)
+        {
+            _controls.Disable();
+            _controls.Dispose(); // Czyścimy śmieci z pamięci RAM (zapobiega memory leakom!)
+        }
+
+        // 2. Tworzymy całkowicie ŚWIEŻĄ instancję z domyślnymi klawiszami
+        _controls = new PlayerInputActions();
+        _controls.Player.SetCallbacks(this);
+        _controls.UI.SetCallbacks(this);
+
+        // 3. Wczytujemy zapisane klawisze z PlayerPrefs
         string rebinds = PlayerPrefs.GetString("rebinds", string.Empty);
         if (!string.IsNullOrEmpty(rebinds))
         {
+            // Nakładamy JSON-a na zupełnie nowy, czysty obiekt. Unity nie ma prawa tego zignorować.
             _controls.asset.LoadBindingOverridesFromJson(rebinds);
         }
+
+        // 4. Odpalamy zaktualizowany system
+        _controls.Player.Enable();
+        _controls.UI.Enable();
+    }
+
+    public void SaveRebinds()
+    {
+        if (_controls == null) return;
+        
+        string rebindsData = _controls.asset.SaveBindingOverridesAsJson();
+        PlayerPrefs.SetString("rebinds", rebindsData);
+        PlayerPrefs.Save();
     }
 
     private void OnDisable()
@@ -70,10 +102,12 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
             SettingsManager.Instance.OnSettingsUpdated -= RefreshSettings;
         }
 
+        // Sprzątanie pamięci przy wyłączaniu gry
         if (_controls != null)
         {
-            _controls.Player.Disable();
-            _controls.UI.Disable();
+            _controls.Disable();
+            _controls.Dispose();
+            _controls = null;
         }
     }
 
@@ -81,19 +115,16 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     
     public void OnMove(InputAction.CallbackContext context)
     {
-        // BRAMKA: Jeśli zablokowane (Settings Menu), ustawiamy ruch na 0,0
         if (IsMovementLocked)
         {
             MovementValue = Vector2.zero;
             return;
         }
-        
         MovementValue = context.ReadValue<Vector2>();
     }
 
     public void OnLook(InputAction.CallbackContext context) 
     { 
-        // BRAMKA: Jeśli zablokowane (Pause lub Settings), ustawiamy kamerę na 0,0
         if (IsCameraLocked)
         {
             LookValue = Vector2.zero;
@@ -104,12 +135,11 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
         bool isMouse = (context.control.device is Mouse);
         LastUsedDevice = isMouse ? InputDeviceType.Mouse : InputDeviceType.Gamepad;
 
-        float currentSensitivity = isMouse ? mouseSensitivity : gamepadSensitivity;
-        LookValue = rawValue * currentSensitivity;
+        LookValue = rawValue;
 
-        if (Mathf.Abs(LookValue.x) < 0.4f) return;
+        if (Mathf.Abs(rawValue.x) < 0.4f) return;
 
-        bool isHorizontal = Mathf.Abs(LookValue.x) > Mathf.Abs(LookValue.y);
+        bool isHorizontal = Mathf.Abs(rawValue.x) > Mathf.Abs(rawValue.y);
         float timeSinceLastSwitch = Time.time - _lastSwitchTime;
         bool cooldownPassed = timeSinceLastSwitch > switchCooldown;
 
@@ -117,14 +147,13 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
         {
             if (cooldownPassed)
             {
-                Vector2 cleanDirection = new Vector2(Mathf.Sign(LookValue.x), 0);
+                Vector2 cleanDirection = new Vector2(Mathf.Sign(rawValue.x), 0);
                 SwitchTargetEvent?.Invoke(cleanDirection); 
                 _lastSwitchTime = Time.time;          
             }
         }
     }
 
-    // Dodajemy małe zabezpieczenie (bramkę) do ataku i uniku, żeby gracz nie atakował klikając w UI
     public void OnAttack(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) AttackEvent?.Invoke(); }
     public void OnHeavyAttack(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) HeavyAttackEvent?.Invoke(); }
     public void OnDodge(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) DodgeEvent?.Invoke(); }
@@ -137,6 +166,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public void OnCancel(InputAction.CallbackContext context) { if (context.performed) CancelEvent?.Invoke(); }
     public void OnTabPrev(InputAction.CallbackContext context) { if (context.performed) TabPrevEvent?.Invoke(); }
     public void OnTabNext(InputAction.CallbackContext context) { if (context.performed) TabNextEvent?.Invoke(); }
+    public void OnInteraction(InputAction.CallbackContext context) { if (context.performed) InteractEvent?.Invoke(); }
     public void OnNewaction(InputAction.CallbackContext context) { }
 
     public void RefreshSettings()
@@ -148,18 +178,16 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
         }
     }
 
-    // --- NOWE FUNKCJE DO KONTROLI STANU ---
-    
     public void SetPauseMenuState()
     {
         IsCameraLocked = true;
-        IsMovementLocked = false; // Gracz może chodzić w pauzie
+        IsMovementLocked = true;
     }
 
     public void SetSettingsMenuState()
     {
         IsCameraLocked = true;
-        IsMovementLocked = true; // W opcjach nic nie robimy
+        IsMovementLocked = true;
     }
 
     public void UnlockAllInput()

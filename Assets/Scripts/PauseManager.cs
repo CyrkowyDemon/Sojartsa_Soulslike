@@ -18,6 +18,7 @@ public class PauseManager : MonoBehaviour
     [Header("Panele")]
     public GameObject pauseMainPanel; 
     public GameObject settingsPanel;
+    public GameObject keybindsPanel; // NOWE: PauseManager musi wiedziec o tym panelu!
     public GameObject firstSettingsButton; 
     public GameObject settingsButtonInPause;
 
@@ -99,7 +100,9 @@ public class PauseManager : MonoBehaviour
             // WŁĄCZAMY KAMERĘ Z POWROTEM
             if (cameraInputController != null) cameraInputController.enabled = true;
 
+            // Zamykamy WSZYSTKIE panele przy wyjsciu z pauzy
             if (settingsPanel != null) settingsPanel.SetActive(false);
+            if (keybindsPanel != null) keybindsPanel.SetActive(false); // NOWE
             if (_brain != null) _brain.enabled = true;
         }
     }
@@ -124,7 +127,17 @@ public class PauseManager : MonoBehaviour
 
     private void HandleCancel()
     {
-        if (!isPaused) return; // Jeśli gra nie jest zapauzowana, ignorujemy przycisk Cancel
+        if (!isPaused) return;
+
+        // Hierarchia Cancel: Keybinds -> Settings -> Pauza
+        if (keybindsPanel != null && keybindsPanel.activeSelf)
+        {
+            // Zamykamy keybindy, wracamy do ustawień
+            keybindsPanel.SetActive(false);
+            if (settingsPanel != null) settingsPanel.SetActive(true);
+            SelectButton(firstSettingsButton);
+            return;
+        }
 
         if (settingsPanel != null && settingsPanel.activeSelf)
         {

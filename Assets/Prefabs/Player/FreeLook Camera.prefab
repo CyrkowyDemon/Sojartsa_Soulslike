@@ -32,13 +32,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1638936502597639161}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14485031, y: -3.2022773e-23, z: 1.15548874e-23, w: 0.9894536}
+  m_LocalRotation: {x: 0.14484839, y: 0, z: 0, w: 0.9894539}
   m_LocalPosition: {x: 0, y: 2.7074318, z: -4.1928053}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 16.657, y: 0, z: 0}
 --- !u!114 &985066504443442587
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ MonoBehaviour:
   TargetOffset: {x: 0, y: 0, z: 0}
   TrackerSettings:
     BindingMode: 4
-    PositionDamping: {x: 1, y: 1, z: 1}
+    PositionDamping: {x: 0.5, y: 0.5, z: 0.5}
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
@@ -108,7 +108,7 @@ MonoBehaviour:
       Radius: 0.3
       Height: 3
     Center:
-      Radius: 2.5
+      Radius: 3
       Height: 1
     Bottom:
       Radius: 1
@@ -319,3 +319,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CinemachineInputScaler
   inputReader: {fileID: 11400000, guid: d2bbf070f71655f45a2573b1e8f8c21c, type: 2}
+  targetHandler: {fileID: 0}

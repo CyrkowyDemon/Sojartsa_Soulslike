@@ -175,6 +175,13 @@ private void OnEnable()
         if (_currentTarget == null || !IsTargetAliveAndValid())
         {
             ClearTarget();
+
+            // --- AUTO-LOCK: Jeśli opcja włączona, szukamy kolejnego wroga ---
+            bool autoLock = SettingsManager.Instance != null && SettingsManager.Instance.autoLock;
+            if (autoLock)
+            {
+                FindAndSetBestTarget();
+            }
             return; 
         }
 
@@ -190,8 +197,10 @@ private void OnEnable()
     {
         if (!_currentTarget.gameObject.activeInHierarchy) return false;
 
-        // Opcjonalnie: Możesz tu dodać Raycast sprawdzający, czy gracz wciąż WIDZI cel. 
-        // W Soulsach cel znika za ścianą na np. 2 sekundy i lock się zrywa. Na razie zostawmy bazę.
+        // --- NOWE: Sprawdzamy czy wróg nie jest martwy (np. leży jako zwłoki przed Destroy) ---
+        EnemyHealth hp = _currentTarget.GetComponentInParent<EnemyHealth>();
+        if (hp != null && hp.IsDead) return false;
+
         return true;
     }
 
