@@ -7,6 +7,7 @@ public class PlayerHealth : MonoBehaviour
     private int currentHealth;
     private Animator _animator;
     private bool _isDead = false;
+    public bool IsDead => _isDead;
 
     private bool _isInvincible = false; // I-Frames
 

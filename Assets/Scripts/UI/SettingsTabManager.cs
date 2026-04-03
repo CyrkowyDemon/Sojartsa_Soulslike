@@ -3,19 +3,29 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem; // Dodaliśmy to!
+using UnityEngine.InputSystem; 
+
+// Dodajemy małą "paczkę" danych, żeby każda zakładka miała SWOJE WŁASNE grafiki
+[System.Serializable]
+public class TabConfig
+{
+    public Image tabImage;        // Komponent Image danej zakładki
+    public Sprite activeSprite;   // Obrazek, gdy świeci (jest wybrana/najechana)
+    public Sprite inactiveSprite; // Obrazek, gdy jest zgaszona
+}
 
 public class SettingsTabManager : MonoBehaviour
 {
     [Header("Input")]
     [SerializeField] private InputReader inputReader;
 
-    [Header("Structure (Panele z Canvas Group)")]
+    [Header("Structure (Panele)")]
     [SerializeField] private List<CanvasGroup> categoryPanels; 
     [SerializeField] private TextMeshProUGUI categoryTitleText;
     
-    [Header("Górne Przyciski Zakładek")]
-    [SerializeField] private List<CanvasGroup> topTabButtons; 
+    [Header("Wygląd zakładek (Górne przyciski)")]
+    // Zamiast zwykłej listy obrazków, mamy listę naszych konfiguracji (TabConfig)
+    public List<TabConfig> tabs; 
 
     [Header("Names")]
     [SerializeField] private List<string> categoryNames = new List<string> { "GAME", "INPUT", "GRAPHICS", "SOUND", "KEYS" };
@@ -53,16 +63,25 @@ public class SettingsTabManager : MonoBehaviour
         UpdateTabs();
     }
 
+    // Kursor myszki WCHODZI na zakładkę - od razu ją wybieramy (świeci się!)
+    public void OnTabEnter(int newIndex)
+    {
+        if (_index != newIndex)
+        {
+            _index = newIndex;
+            UpdateTabs();
+        }
+    }
+
     private void UpdateTabs()
     {
-        // Sprawdzamy, czy lewy przycisk myszy jest wciśnięty (Nowy Input System)
         bool isMouseActive = false;
         if (Mouse.current != null)
         {
             isMouseActive = Mouse.current.leftButton.isPressed;
         }
 
-        // 1. PANELE
+        // 1. PANELE 
         for (int i = 0; i < categoryPanels.Count; i++)
         {
             if (categoryPanels[i] == null) continue;
@@ -72,22 +91,22 @@ public class SettingsTabManager : MonoBehaviour
             categoryPanels[i].interactable = isActive;
             categoryPanels[i].blocksRaycasts = isActive;
 
-            // Focusujemy tylko, gdy NIE trzymamy myszki (czyli nawigujemy padem/klawiaturą)
             if (isActive && !isMouseActive) 
             {
                 FocusFirst(categoryPanels[i].gameObject);
             }
         }
 
-        // 2. PRZYCISKI GÓRNE
-        if (topTabButtons != null)
+        // 2. PRZYCISKI GÓRNE (Każdy ma swoje unikalne grafiki)
+        if (tabs != null)
         {
-            for (int i = 0; i < topTabButtons.Count; i++)
+            for (int i = 0; i < tabs.Count; i++)
             {
-                if (topTabButtons[i] == null) continue;
-                topTabButtons[i].alpha = (i == _index) ? 1f : 0.4f;
-                topTabButtons[i].interactable = true;
-                topTabButtons[i].blocksRaycasts = true;
+                if (tabs[i].tabImage == null) continue;
+                
+                // Jeśli i == _index, to znaczy, że to ta zakładka jest włączona.
+                // Dajemy jej aktywny sprite. Reszta dostaje nieaktywny.
+                tabs[i].tabImage.sprite = (i == _index) ? tabs[i].activeSprite : tabs[i].inactiveSprite;
             }
         }
 

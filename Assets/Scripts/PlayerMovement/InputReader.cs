@@ -106,7 +106,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
         if (_controls != null)
         {
             _controls.Disable();
-            _controls.Dispose();
+            // _controls.Dispose(); // Wywalamy to, bo w Edytorze Unity gryzie się z systemem Destroy
             _controls = null;
         }
     }
