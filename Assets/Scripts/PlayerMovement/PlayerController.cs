@@ -15,6 +15,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float gravity = -30f;
 
     [Header("IK Settings")]
+    [SerializeField] private bool useFootIK = true; // PRZEŁĄCZNIK W INSPEKTORZE
     [SerializeField] private RigBuilder rigBuilder;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private float footOffset = 0.08f;
@@ -36,13 +37,11 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 _moveInput;
     private float _verticalVelocity;
     private bool _isGrounded;
-    private Vector3 _initialHipsLocalPos;
     private float _currentPelvisOffset;
 
     private void Awake()
     {
         if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
-        if (hipsBone != null) _initialHipsLocalPos = hipsBone.localPosition;
     }
 
     private void Start()
@@ -67,6 +66,10 @@ public class PlayerMovement : MonoBehaviour
         }
 
         ApplyGravity();
+    }
+
+    private void LateUpdate()
+    {
         HandleFootIK();
     }
 
@@ -76,24 +79,34 @@ public class PlayerMovement : MonoBehaviour
         var rig = rigBuilder.layers[0].rig;
 
         float speed = _moveInput.magnitude;
-        float targetWeight = (speed > 0.1f) ? 0f : 1f;
+        
+        // Obliczamy wagę: musi być włączone w inspektorze I postać musi stać (speed < 0.1)
+        float targetWeight = (useFootIK && speed <= 0.1f) ? 1f : 0f;
         rig.weight = Mathf.Lerp(rig.weight, targetWeight, 5f * Time.deltaTime);
 
-        if (rig.weight <= 0.01f) return;
+        // Jeśli IK jest wyłączone (waga bliska 0), płynnie resetujemy offset bioder i kończymy
+        if (rig.weight <= 0.01f) 
+        {
+            _currentPelvisOffset = Mathf.Lerp(_currentPelvisOffset, 0f, pelvisSpeed * Time.deltaTime);
+            if (hipsBone != null && Mathf.Abs(_currentPelvisOffset) > 0.001f)
+            {
+                hipsBone.position += Vector3.up * _currentPelvisOffset;
+            }
+            return;
+        }
 
+        // --- Logika IK gdy waga > 0 ---
         float leftGroundHeight = SampleGroundHeight(leftFootBone);
         float rightGroundHeight = SampleGroundHeight(rightFootBone);
 
-        // POPRAWKA BŁĘDU MATEMATYCZNEGO: 
-        // Bierzemy najniższy poziom ziemi względem gracza. Jeśli jest w dole (-0.3), biodra schodzą o -0.3.
         float lowestGround = Mathf.Min(leftGroundHeight, rightGroundHeight);
-        float targetPelvisOffset = Mathf.Clamp(lowestGround, -0.8f, 0.4f);
+        float targetPelvisOffset = Mathf.Clamp(lowestGround, -0.8f, 0f);
 
         _currentPelvisOffset = Mathf.Lerp(_currentPelvisOffset, targetPelvisOffset, pelvisSpeed * Time.deltaTime);
 
         if (hipsBone != null)
         {
-            hipsBone.localPosition = _initialHipsLocalPos + Vector3.up * _currentPelvisOffset;
+            hipsBone.position += Vector3.up * _currentPelvisOffset;
         }
 
         ProcessFoot(leftFootBone, leftFootIKTarget, leftKneeHint);
@@ -103,12 +116,14 @@ public class PlayerMovement : MonoBehaviour
     private float SampleGroundHeight(Transform footBone)
     {
         if (footBone == null) return 0f;
-        float lateralOffset = (footBone == leftFootBone) ? -0.18f : 0.18f;
-        Vector3 origin = transform.TransformPoint(new Vector3(lateralOffset, 1.0f, 0f));
         
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 2.0f, groundLayer))
+        // Zmieniamy punkt startowy na pozycję kości + lekki margines w górę
+        Vector3 origin = footBone.position + Vector3.up * 0.5f;
+        
+        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1.5f, groundLayer))
         {
-            return hit.point.y - transform.position.y;
+            // Zwracamy różnicę między ziemią a pozycją stopy
+            return hit.point.y - footBone.position.y;
         }
         return 0f;
     }
@@ -119,10 +134,9 @@ public class PlayerMovement : MonoBehaviour
 
         target.rotation = transform.rotation * Quaternion.Euler(footTargetRotationOffset);
 
-        float lateralOffset = (footBone == leftFootBone) ? -0.18f : 0.18f;
-        Vector3 origin = transform.TransformPoint(new Vector3(lateralOffset, 1.0f, 0f)); 
+        Vector3 origin = footBone.position + Vector3.up * 0.5f;
         
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 2.0f, groundLayer))
+        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1.5f, groundLayer))
         {
             Vector3 targetPos = hit.point + Vector3.up * footOffset;
             target.position = Vector3.Lerp(target.position, targetPos, footIKLerpSpeed * Time.deltaTime);
@@ -156,11 +170,9 @@ public class PlayerMovement : MonoBehaviour
         controller.Move(delta);
     }
 
-    // --- SYSTEM WIZUALIZACJI DEBUGOWANIA ---
     private void OnDrawGizmos()
     {
         if (!Application.isPlaying) return;
-
         Gizmos.color = Color.yellow;
         DrawFootGizmo(leftFootBone);
         Gizmos.color = Color.cyan;
@@ -170,18 +182,11 @@ public class PlayerMovement : MonoBehaviour
     private void DrawFootGizmo(Transform footBone)
     {
         if (footBone == null) return;
-        float lateralOffset = (footBone == leftFootBone) ? -0.18f : 0.18f;
-        Vector3 origin = transform.TransformPoint(new Vector3(lateralOffset, 1.0f, 0f));
-        
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 2.0f, groundLayer))
+        Vector3 origin = footBone.position + Vector3.up * 0.5f;
+        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1.5f, groundLayer))
         {
-            Gizmos.DrawLine(origin, hit.point); // Linia do ziemi
-            Gizmos.DrawSphere(hit.point, 0.05f); // Kropka w miejscu uderzenia w ziemię
-        }
-        else
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(origin, origin + Vector3.down * 2.0f); // Czerwona linia, jeśli laser nic nie trafia
+            Gizmos.DrawLine(origin, hit.point);
+            Gizmos.DrawSphere(hit.point, 0.05f);
         }
     }
 }
