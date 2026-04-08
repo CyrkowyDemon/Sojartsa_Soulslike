@@ -5,19 +5,24 @@ public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 100;
     private int currentHealth;
-    private Animator _animator;
+    [SerializeField] private Animator animator;
     private bool _isDead = false;
     public bool IsDead => _isDead;
 
-    private bool _isInvincible = false; // I-Frames
+    [SerializeField] private bool _isInvincible = false; // I-Frames z dasha
 
     [Header("UI")]
     [SerializeField] private PlayerHUD hud;
 
+    void Awake()
+    {
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        Debug.Log($"<color=green>[HEALTH] Skrypt PlayerHealth zainicjalizowany na {gameObject.name}. HP: {currentHealth}/{maxHealth}</color>");
+    }
+
     void Start()
     {
         currentHealth = maxHealth;
-        _animator = GetComponent<Animator>();
         if (hud != null) hud.UpdateHP(currentHealth, maxHealth);
     }
 
@@ -53,6 +58,7 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHealth <= 0)
         {
+            Debug.Log($"<color=red>[HEALTH] KRYTYCZNE: Gracz otrzymuje śmiertelne obrażenia! Aktualne HP: {currentHealth}</color>");
             Die();
         }
         else
@@ -60,16 +66,16 @@ public class PlayerHealth : MonoBehaviour
             // Zamykamy miecz, jeśli oberwaliśmy w trakcie wymachu!
             SendMessage("CloseDamage", SendMessageOptions.DontRequireReceiver);
             
-            if (_animator != null) 
+            if (animator != null) 
             {
                 if (isKnockback) 
                 {
-                    _animator.SetTrigger("Knockback");
+                    animator.SetTrigger("Knockback");
                     Debug.Log("<color=red>[HEALTH] Otrzymano cios z odrzutem!</color>");
                 }
                 else 
                 {
-                    _animator.SetTrigger("HitReaction");
+                    animator.SetTrigger("HitReaction");
                 }
             }
         }
@@ -80,10 +86,12 @@ public class PlayerHealth : MonoBehaviour
         if (_isDead) return;
         _isDead = true;
         
+        Debug.Log($"<color=red>[HEALTH] ZGON! Wywołano Die(). Scena: {SceneManager.GetActiveScene().name}</color>");
+        
         // Zamykamy miecz przy zgonie
         SendMessage("CloseDamage", SendMessageOptions.DontRequireReceiver);
         
-        if (_animator != null) _animator.SetTrigger("Die");
+        if (animator != null) animator.SetTrigger("Die");
         Invoke("RestartScene", 3f);
     }
     
@@ -92,4 +100,22 @@ public class PlayerHealth : MonoBehaviour
     // === ANIMATION EVENTS: Dodaj na animacji dashu! ===
     public void EnableIFrames() { _isInvincible = true; }
     public void DisableIFrames() { _isInvincible = false; }
+
+    /// <summary>
+    /// Ożywia gracza i odnawia mu zdrowie (Używane przy teleportacji)
+    /// </summary>
+    public void Revive(int healthPercent = 100)
+    {
+        _isDead = false;
+        currentHealth = Mathf.CeilToInt(maxHealth * (healthPercent / 100f));
+        
+        if (animator != null) 
+        {
+            animator.SetTrigger("Recover"); 
+            animator.ResetTrigger("Die");
+        }
+
+        if (hud != null) hud.UpdateHP(currentHealth, maxHealth);
+        Debug.Log("<color=green>[HEALTH] Gracz został ożywiony i zrefreshowany!</color>");
+    }
 }

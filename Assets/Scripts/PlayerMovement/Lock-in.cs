@@ -60,6 +60,8 @@ private void OnEnable()
 
     private void FindAndSetBestTarget()
     {
+        if (_mainCamera == null) _mainCamera = Camera.main; // AUTO-REFRESH KAMERY PO WARPIE
+
         // Używamy NonAlloc dla maksymalnej wydajności
         int count = Physics.OverlapSphereNonAlloc(transform.position, lockOnRange, _colliders, enemyLayer);
         
@@ -107,6 +109,7 @@ private void OnEnable()
     public void SwitchTarget(Vector2 inputDirection)
     {
         if (!IsLockedOn || inputDirection.sqrMagnitude < 0.1f) return;
+        if (_mainCamera == null) _mainCamera = Camera.main; // AUTO-REFRESH KAMERY PO WARPIE
 
         int count = Physics.OverlapSphereNonAlloc(transform.position, lockOnRange, _colliders, enemyLayer);
         Transform bestTarget = null;
