@@ -22766,6 +22766,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 954254371}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &957719099 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4987840456314616052, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
+  m_PrefabInstance: {fileID: 2136085253}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &959033299
 GameObject:
   m_ObjectHideFlags: 0
@@ -35934,6 +35939,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1354792040131233736, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
   m_PrefabInstance: {fileID: 2136085253}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1473162925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957719099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a6610d2e704f1648819acc8d7460285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioEventEmitter
+  CollisionTag: 
+  EventReference:
+    Guid:
+      Data1: -963625136
+      Data2: 1085232764
+      Data3: 1940464310
+      Data4: 1161400770
+    Path: event:/foot
+  Event: 
+  EventPlayTrigger: 1
+  EventStopTrigger: 0
+  AllowFadeout: 1
+  TriggerOnce: 0
+  Preload: 0
+  NonRigidbodyVelocity: 0
+  Params: []
+  OverrideAttenuation: 0
+  OverrideMinDistance: 1
+  OverrideMaxDistance: 20
 --- !u!1 &1476199090
 GameObject:
   m_ObjectHideFlags: 0
@@ -53745,10 +53781,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Main Camera
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 361785661145692043, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4987840456314616052, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1473162925}
   m_SourcePrefab: {fileID: 100100000, guid: 70ec7eb6df073c04583814db5993f5b7, type: 3}
 --- !u!1 &2142542625
 GameObject:
