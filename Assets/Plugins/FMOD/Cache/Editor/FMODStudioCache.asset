@@ -69,7 +69,7 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639114429764971830
+  lastModified: 639114143272847883
   FileSizes:
   - Name: Desktop
     Value: 1078
@@ -142,7 +142,7 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639114429764971830
+  lastModified: 639114143272831491
   FileSizes:
   - Name: Desktop
     Value: 2619424
@@ -203,7 +203,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: -8055644028912070556}
   cacheVersion: 131859
-  cacheTime: 639114429764971830
+  cacheTime: 639114143272847883
   SerializableEventsDict:
   - key: event:/Tavern
     index: 0
