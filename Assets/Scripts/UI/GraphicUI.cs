@@ -11,6 +11,9 @@ public class GraphicUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI resolutionText;
     [SerializeField] private TextMeshProUGUI bloodText;
 
+    [Header("Okno Rozdzielczości")]
+    [SerializeField] private ResolutionWindow resolutionWindow;
+
     private int _currentQuality;
     private int _currentScreenMode;
     private int _currentResIndex;
@@ -84,12 +87,16 @@ public class GraphicUI : MonoBehaviour
         SaveAndApply();
     }
 
-    public void CycleResolution(int direction) // direction: 1 dla następnej, -1 dla poprzedniej
+    /// <summary>
+    /// Wywoływane przez przycisk Rozdzielczości w UI.
+    /// Otwiera okno wyboru zamiast przełączać strzałkami.
+    /// </summary>
+    public void OpenResolutionWindow()
     {
-        _currentResIndex += direction;
-        if (_currentResIndex >= _resolutions.Length) _currentResIndex = 0;
-        if (_currentResIndex < 0) _currentResIndex = _resolutions.Length - 1;
-        SaveAndApply();
+        if (resolutionWindow != null)
+            resolutionWindow.Open();
+        else
+            Debug.LogWarning("[GraphicUI] Brak referencji do ResolutionWindow!");
     }
 
     public void ToggleBlood()

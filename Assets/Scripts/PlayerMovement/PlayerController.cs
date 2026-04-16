@@ -139,6 +139,23 @@ public class PlayerMovement : MonoBehaviour
         if (rigBuilder == null || rigBuilder.layers.Count == 0 || !useFootIK) return;
         var rig = rigBuilder.layers[0].rig;
 
+        // === FROMSOFTWARE FIX: W powietrzu IK jest wyłączony ===
+        if (!_isGrounded)
+        {
+            rig.weight = Mathf.Lerp(rig.weight, 0f, footWeightSpeed * Time.deltaTime);
+            _currentPelvisOffset = Mathf.Lerp(_currentPelvisOffset, 0f, pelvisSpeed * Time.deltaTime);
+            if (animator != null)
+            {
+                Vector3 localPos = animator.transform.localPosition;
+                localPos.y = _originalAnimatorY + _currentPelvisOffset;
+                animator.transform.localPosition = localPos;
+            }
+            _leftFootWeight = 0f;
+            _rightFootWeight = 0f;
+            return;
+        }
+        // ======================================================
+
         // Wartości absolutne World Y + wektory kąta nachylenia (Normal)
         Vector3 leftNormal, rightNormal;
         float leftGroundWorldY = SampleGroundHeight(leftFootBone, out leftNormal);

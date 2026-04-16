@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 public class ChestController : MonoBehaviour, IInteractable
 {
@@ -15,6 +16,12 @@ public class ChestController : MonoBehaviour, IInteractable
     [Header("Skrzynia: Punkt Interakcji (Styl FromSoft)")]
     [Tooltip("Miejsce, gdzie gracz ma ustać, żeby animacja wyglądała idealnie.")]
     public Transform interactionPoint;
+
+    [Header("Nagrody (Scriptable Objects)")]
+    [SerializeField] private ChestLootData lootData;
+    private int _openCount = 0;
+    // Pamiętamy indeksy wydanych nagród, żeby nie dawać dusz przy każdym otwarciu tej samej skrzyni
+    private List<int> _claimedEntryIndices = new List<int>();
 
     [Header("Wydarzenia (Loot, Dźwięk, VFX)")]
     public UnityEvent OnChestOpened;
@@ -56,6 +63,34 @@ public class ChestController : MonoBehaviour, IInteractable
     {
         isAnimating = true; // Rozpoczynamy pracę
         isOpen = true;
+        _openCount++; // To nasze n-te otwarcie
+
+        // 1. Logika Nagród (Loot)
+        if (lootData != null && CurrencyManager.Instance != null)
+        {
+            for (int i = 0; i < lootData.entries.Count; i++)
+            {
+                var entry = lootData.entries[i];
+                
+                // Czy to otwarcie pasuje do wymagań?
+                if (entry.requiredOpenCount == _openCount)
+                {
+                    // Czy nagroda była już odebrana? (ważne dla giveOnlyOnce)
+                    if (entry.giveOnlyOnce && _claimedEntryIndices.Contains(i))
+                    {
+                        continue;
+                    }
+
+                    // Wypłać duszę!
+                    CurrencyManager.Instance.AddCurrency(entry.soulsAmount);
+                    
+                    if (entry.giveOnlyOnce)
+                    {
+                        _claimedEntryIndices.Add(i);
+                    }
+                }
+            }
+        }
         
         // 1. Odpalamy animację w Unity Animatorze (o ile ma on przypisany Controller!)
         if (animator != null && animator.runtimeAnimatorController != null)
@@ -64,7 +99,7 @@ public class ChestController : MonoBehaviour, IInteractable
         }
 
         // 2. Wywołujemy zdarzenia (np. wylosowanie itemu, dźwięk otwierania)
-        Debug.Log("[ChestController] Skrzynia otwarta! Wywołuję UnityEvents.");
+        Debug.Log($"[ChestController] Skrzynia otwarta! Otwarcie nr: {_openCount}.");
         OnChestOpened?.Invoke();
 
         // 3. Po czasie animacji ściągamy blokadę

@@ -27,11 +27,29 @@ public class MainMenuManager : MonoBehaviour
     public GameObject firstSettingsButton; 
     public GameObject settingsButtonInMenu; 
 
+    private void OnEnable()
+    {
+        if (inputReader != null)
+            inputReader.CancelEvent += HandleCancel;
+    }
+
+    private void OnDisable()
+    {
+        if (inputReader != null)
+            inputReader.CancelEvent -= HandleCancel;
+    }
+
+    private void HandleCancel()
+    {
+        // ESC w Settings → wróć do Main Menu
+        if (settingsPanel != null && settingsPanel.activeSelf)
+        {
+            CloseSettings();
+        }
+    }
+
     private void Start()
     {
-        // Odkomentuj to, jak naprawisz błędy w InputReaderze:
-        // if (inputReader != null) inputReader.EnableUI();
-
         SelectButton(firstSelectedButton);
     }
 

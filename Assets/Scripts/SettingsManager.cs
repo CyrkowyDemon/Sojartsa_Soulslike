@@ -52,6 +52,14 @@ public class SettingsManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // === FROMSOFTWARE STANDARD: Blokada 60 FPS ===
+        // VSync musi być wyłączony, żeby targetFrameRate był jedynym szefem!
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+        Debug.Log($"<color=lime>[FPS] Blokada aktywna! Target: {Application.targetFrameRate} FPS | vSync: {QualitySettings.vSyncCount}</color>");
+        // ==============================================
+
         LoadSettings();
     }
 
@@ -121,6 +129,10 @@ public class SettingsManager : MonoBehaviour
 
     public void ApplyGraphics()
     {
+        // Upewniamy się, że blokada FPS nie zostanie przypadkowo wyłączona przez Unity
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
         QualitySettings.SetQualityLevel(qualityIndex);
 
         FullScreenMode mode = FullScreenMode.ExclusiveFullScreen;
@@ -133,6 +145,7 @@ public class SettingsManager : MonoBehaviour
             // Zabezpieczenie przed wyjściem poza zakres, jeśli monitor się zmienił
             int index = Mathf.Clamp(resolutionIndex, 0, resolutions.Length - 1);
             Resolution res = resolutions[index];
+            // Zawsze wybieramy najwyższe możliwe odświeżanie dla tej rozdzielczości
             Screen.SetResolution(res.width, res.height, mode);
         }
     }
