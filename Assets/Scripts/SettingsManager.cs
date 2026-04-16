@@ -6,7 +6,7 @@ public class SettingsManager : MonoBehaviour
     public static SettingsManager Instance { get; private set; }
 
     [Header("Sterowanie")]
-    [Range(0.1f, 10f)] public float mouseSensitivity = 1.0f;
+    [Range(1f, 5f)] public float mouseSensitivity = 1.0f;
     [Range(0.1f, 10f)] public float gamepadSensitivity = 3.0f;
     public bool invertX = false;
     public bool invertY = false;

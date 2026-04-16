@@ -59,6 +59,10 @@ public class PlayerMovement : MonoBehaviour
     private bool _hasLeftParam;
     private bool _hasRightParam;
 
+    // Indeks warstwy Actions w Animatorze (Base=0, UpperBody=1, Actions=2)
+    // Musi zgadzać się z PlayerCombat.cs!
+    private const int ACTIONS_LAYER = 2;
+
     private void Awake()
     {
         if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
@@ -155,6 +159,26 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         // ======================================================
+
+        // === FROMSOFTWARE FIX: Podczas ataku/uniku IK jest wygaszany ===
+        // Gdy cokolwiek gra na warstwie Actions (atak, heavy, dodge),
+        // animacja jest ręczna i IK by ją psuło – odpuszczamy wagę.
+        bool isActionsPlaying = !animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).IsName("Nothing");
+        if (isActionsPlaying)
+        {
+            rig.weight = Mathf.Lerp(rig.weight, 0f, footWeightSpeed * Time.deltaTime);
+            _currentPelvisOffset = Mathf.Lerp(_currentPelvisOffset, 0f, pelvisSpeed * Time.deltaTime);
+            if (animator != null)
+            {
+                Vector3 localPos = animator.transform.localPosition;
+                localPos.y = _originalAnimatorY + _currentPelvisOffset;
+                animator.transform.localPosition = localPos;
+            }
+            _leftFootWeight = 0f;
+            _rightFootWeight = 0f;
+            return;
+        }
+        // ===================================================================
 
         // Wartości absolutne World Y + wektory kąta nachylenia (Normal)
         Vector3 leftNormal, rightNormal;
