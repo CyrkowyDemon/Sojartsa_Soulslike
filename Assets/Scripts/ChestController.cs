@@ -4,129 +4,69 @@ using System.Collections.Generic;
 
 public class ChestController : MonoBehaviour, IInteractable
 {
-    [Header("Skrzynia: Stan i Animacja")]
-    [SerializeField] private Animator animator;
+    [Header("Skrzynia: Stan")]
     [SerializeField] private bool isOpen = false;
-    [SerializeField] private string openAnimationParam = "IsOpen";
-
     [SerializeField] private bool canBeClosed = true;
-    [SerializeField] private float animationDuration = 1.5f; // Tyle trwa Twoja animacja
-    private bool isAnimating = false;
 
-    [Header("Skrzynia: Punkt Interakcji (Styl FromSoft)")]
-    [Tooltip("Miejsce, gdzie gracz ma ustać, żeby animacja wyglądała idealnie.")]
+    [Header("Skrzynia: Konfiguracja")]
     public Transform interactionPoint;
-
-    [Header("Nagrody (Scriptable Objects)")]
     [SerializeField] private ChestLootData lootData;
-    private int _openCount = 0;
-    // Pamiętamy indeksy wydanych nagród, żeby nie dawać dusz przy każdym otwarciu tej samej skrzyni
-    private List<int> _claimedEntryIndices = new List<int>();
 
-    [Header("Wydarzenia (Loot, Dźwięk, VFX)")]
+    [Header("Wydarzenia")]
     public UnityEvent OnChestOpened;
     public UnityEvent OnChestClosed;
 
-    // --- Implementacja IInteractable ---
+    private HashSet<int> _claimedLootIndices = new HashSet<int>();
+    private bool _isAnimating = false;
+    private int _openCount = 0;
 
     public void Interact(Transform interactor)
     {
-        if (isAnimating) return; // BLOKADA: Nie spamuj "E"!
+        if (_isAnimating || (!canBeClosed && isOpen)) return;
 
-        if (!isOpen)
-        {
-            OpenChest();
-        }
-        else if (canBeClosed)
-        {
-            CloseChest();
-        }
+        if (!isOpen) OpenChest();
+        else CloseChest();
     }
 
-    public string GetInteractText()
-    {
-        if (isAnimating) return ""; // Podczas animacji nie ma tekstu
-        if (!isOpen) return "Otwórz skrzynię";
-        return canBeClosed ? "Zamknij skrzynię" : "";
-    }
-
-    public bool CanInteract()
-    {
-        if (isAnimating) return false; // Nie pozwól na interakcję w trakcie pracy
-        if (!isOpen) return true;
-        return canBeClosed;
-    }
-
-    // --- Logika Skrzyni ---
+    public string GetInteractText() => _isAnimating ? "" : (!isOpen ? "Otwórz skrzynię" : (canBeClosed ? "Zamknij skrzynię" : ""));
+    public bool CanInteract() => !_isAnimating && (!isOpen || canBeClosed);
 
     private void OpenChest()
     {
-        isAnimating = true; // Rozpoczynamy pracę
         isOpen = true;
-        _openCount++; // To nasze n-te otwarcie
+        _openCount++;
+        _isAnimating = true;
 
-        // 1. Logika Nagród (Loot)
-        if (lootData != null && CurrencyManager.Instance != null)
-        {
-            for (int i = 0; i < lootData.entries.Count; i++)
-            {
-                var entry = lootData.entries[i];
-                
-                // Czy to otwarcie pasuje do wymagań?
-                if (entry.requiredOpenCount == _openCount)
-                {
-                    // Czy nagroda była już odebrana? (ważne dla giveOnlyOnce)
-                    if (entry.giveOnlyOnce && _claimedEntryIndices.Contains(i))
-                    {
-                        continue;
-                    }
-
-                    // Wypłać duszę!
-                    CurrencyManager.Instance.AddCurrency(entry.soulsAmount);
-                    
-                    if (entry.giveOnlyOnce)
-                    {
-                        _claimedEntryIndices.Add(i);
-                    }
-                }
-            }
-        }
-        
-        // 1. Odpalamy animację w Unity Animatorze (o ile ma on przypisany Controller!)
-        if (animator != null && animator.runtimeAnimatorController != null)
-        {
-            animator.SetBool(openAnimationParam, true);
-        }
-
-        // 2. Wywołujemy zdarzenia (np. wylosowanie itemu, dźwięk otwierania)
-        Debug.Log($"[ChestController] Skrzynia otwarta! Otwarcie nr: {_openCount}.");
-        OnChestOpened?.Invoke();
-
-        // 3. Po czasie animacji ściągamy blokadę
-        Invoke(nameof(ResetAnimationFlag), animationDuration);
+        ProcessLoot();
+        OnChestOpened?.Invoke(); // Krzyczy: "Zostałam otwarta!"
     }
 
     private void CloseChest()
     {
-        isAnimating = true; // Rozpoczynamy pracę
         isOpen = false;
+        _isAnimating = true;
 
-        // 1. Odpalamy animację zamykania
-        if (animator != null && animator.runtimeAnimatorController != null)
-        {
-            animator.SetBool(openAnimationParam, false);
-        }
-
-        // 2. Wywołujemy zdarzenia (np. dźwięk zatrzaśnięcia)
-        Debug.Log("[ChestController] Skrzynia zamknięta!");
-        OnChestClosed?.Invoke();
-
-        // 3. Po czasie animacji ściągamy blokadę
-        Invoke(nameof(ResetAnimationFlag), animationDuration);
+        OnChestClosed?.Invoke(); // Krzyczy: "Zostałam zamknięta!"
     }
 
-    private void ResetAnimationFlag()
+    private void ProcessLoot()
     {
-        isAnimating = false; // System znowu gotowy
+        if (lootData == null || CurrencyManager.Instance == null) return;
+
+        for (int i = 0; i < lootData.entries.Count; i++)
+        {
+            var entry = lootData.entries[i];
+            if (entry.requiredOpenCount == _openCount)
+            {
+                if (entry.giveOnlyOnce && !_claimedLootIndices.Add(i)) continue;
+                CurrencyManager.Instance.AddCurrency(entry.soulsAmount);
+            }
+        }
+    }
+
+    // TĘ FUNKCJĘ MUSISZ WYWOŁAĆ Z KLATKI ANIMACJI W UNITY
+    public void UnlockInteraction()
+    {
+        _isAnimating = false;
     }
 }

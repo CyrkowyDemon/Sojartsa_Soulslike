@@ -154,6 +154,9 @@
 		<property name="length">
 			<value>0.55225000000000002</value>
 		</property>
+		<property name="pitch">
+			<value>-0.200000003</value>
+		</property>
 		<relationship name="modulators">
 			<destination>{648097b0-57a2-4790-b138-2dcd9b66b065}</destination>
 			<destination>{495fb372-8bf1-49bd-8440-db1151d44e96}</destination>
@@ -187,6 +190,9 @@
 	<object class="MultiSound" id="{84d01524-b9ef-446a-a028-a1dacd45d071}">
 		<property name="length">
 			<value>0.44839583333333333</value>
+		</property>
+		<property name="pitch">
+			<value>-0.200000003</value>
 		</property>
 		<relationship name="modulators">
 			<destination>{e7a303e6-265e-4059-b47b-3c9403d4f5eb}</destination>

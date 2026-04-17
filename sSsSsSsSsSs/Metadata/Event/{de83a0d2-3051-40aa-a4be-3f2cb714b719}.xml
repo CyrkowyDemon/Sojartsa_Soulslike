@@ -110,6 +110,7 @@
 		<property name="length">
 			<value>1.3756041666666667</value>
 		</property>
+		<property name="name" />
 		<relationship name="triggerConditions">
 			<destination>{e5044f28-e770-467f-acfe-341918cba25d}</destination>
 		</relationship>
@@ -132,9 +133,6 @@
 		</relationship>
 	</object>
 	<object class="SingleSound" id="{6312077d-a4fe-47c7-8458-686bcc216ba4}">
-		<property name="start">
-			<value>0.93000000000000005</value>
-		</property>
 		<property name="length">
 			<value>0.44527083333333334</value>
 		</property>
