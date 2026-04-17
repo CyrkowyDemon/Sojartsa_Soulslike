@@ -190,6 +190,12 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
         IsMovementLocked = true;
     }
 
+    public void SetDialogueState()
+    {
+        IsCameraLocked = true;
+        IsMovementLocked = true;
+    }
+
     public void UnlockAllInput()
     {
         IsCameraLocked = false;

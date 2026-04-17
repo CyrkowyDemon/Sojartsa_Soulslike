@@ -16,6 +16,7 @@ public class TargetHandler : MonoBehaviour
     private Transform _currentTarget;
     private Transform _lockOnPoint; 
     private bool _isLockedOnInternal = false;
+    private bool _isForced = false; // NOWE: Blokuje celownik, żebyś nie odwrócił wzroku od Meliny!
 
     // Optymalizacja: Pamięć zarezerwowana z góry, brak alokacji śmieci (GC) przy skanowaniu
     private readonly Collider[] _colliders = new Collider[32]; 
@@ -49,6 +50,8 @@ private void OnEnable()
     }
     private void ToggleLockOn()
     {
+        if (_isForced) return; // Jeśli gra nas zmusza do patrzenia (np. rozmawiamy), gracz nie może tego wyłączyć w locie!
+
         if (IsLockedOn)
         {
             ClearTarget(); 
@@ -89,11 +92,12 @@ private void OnEnable()
             {
                 // Liczymy odległość wroga od idealnego ŚRODKA EKRANU (0.5, 0.5)
                 Vector2 screenCenter = new Vector2(0.5f, 0.5f);
-                float distanceFromCenter = Vector2.Distance(screenCenter, new Vector2(viewportPos.x, viewportPos.y));
+                Vector2 enemyScreenPos = new Vector2(viewportPos.x, viewportPos.y);
+                float sqrDistanceFromCenter = (screenCenter - enemyScreenPos).sqrMagnitude;
 
-                if (distanceFromCenter < closestToCenter)
+                if (sqrDistanceFromCenter < closestToCenter)
                 {
-                    closestToCenter = distanceFromCenter;
+                    closestToCenter = sqrDistanceFromCenter;
                     bestTarget = enemy;
                 }
             }
@@ -133,11 +137,13 @@ private void OnEnable()
             if (lookingRight == isToTheRight) 
             {
                 // Obliczamy odległość NA EKRANIE od obecnego celu
-                float distance = Vector2.Distance(new Vector2(viewportPos.x, viewportPos.y), new Vector2(currentViewportPos.x, currentViewportPos.y));
+                Vector2 enemyPos2D = new Vector2(viewportPos.x, viewportPos.y);
+                Vector2 currentPos2D = new Vector2(currentViewportPos.x, currentViewportPos.y);
+                float sqrDistance = (enemyPos2D - currentPos2D).sqrMagnitude;
                 
-                if (distance < closestDistance)
+                if (sqrDistance < closestDistance)
                 {
-                    closestDistance = distance;
+                    closestDistance = sqrDistance;
                     bestTarget = enemy;
                 }
             }
@@ -188,11 +194,36 @@ private void OnEnable()
             return; 
         }
 
-        // Zrywamy lock-on, jeśli cel ucieknie za daleko
-        if (Vector3.Distance(transform.position, _currentTarget.position) > lockOnRange)
+        // Zrywamy lock-on, jeśli cel ucieknie za daleko. Ale NIE przy dialogu (gdy to scenka wymusza)!
+        if (!_isForced && (transform.position - _currentTarget.position).sqrMagnitude > lockOnRange * lockOnRange)
         {
             ClearTarget();
         }
+    }
+
+    // Specjalna publiczna metoda odpalamna przez NPC!
+    public void ForceLockOn(Transform forcedTargetPoint)
+    {
+        if (_isLockedOnInternal) ClearTarget(); 
+        
+        _isForced = true;
+        _currentTarget = forcedTargetPoint.root; // Domyślamy się że bazą jest parent. Czysto poglądowe obejście dla błędów
+        _lockOnPoint = forcedTargetPoint;
+        _isLockedOnInternal = true;
+
+        if (lockOnCamera != null && targetGroup != null)
+        {
+            targetGroup.AddMember(_lockOnPoint, 1f, 1.5f);
+            lockOnCamera.LookAt = targetGroup.transform; 
+            lockOnCamera.Priority = 20; 
+        }
+    }
+
+    // NPC puszcza kontrolę po końcu gadania
+    public void ClearForcedLockOn()
+    {
+        _isForced = false;
+        ClearTarget();
     }
 
     // Pomocnicza metoda sprawdzająca, czy cel nie schował się na stałe za ścianą

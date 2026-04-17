@@ -15,6 +15,12 @@ public class PlayerCombat : MonoBehaviour
 
     private bool _attackBuffered = false;
     private float _bufferTimer = 0f;
+    private int _nothingStateHash;
+
+    private void Start()
+    {
+        _nothingStateHash = Animator.StringToHash("Nothing");
+    }
 
     private void OnEnable() 
     { 
@@ -42,7 +48,7 @@ public class PlayerCombat : MonoBehaviour
     private void HandleAttackInput()
     {
         // Sprawdzamy warstwę ACTIONS (2), bo tam siedzą ataki!
-        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).IsName("Nothing");
+        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
         bool canAttack = animator.GetBool("CanCancel") || isIdle;
 
         if (canAttack)
@@ -58,7 +64,7 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleHeavyAttackInput()
     {
-        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).IsName("Nothing");
+        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
         bool canAttack = animator.GetBool("CanCancel") || isIdle;
 
         if (canAttack)
@@ -93,7 +99,7 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleDodgeInput()
     {
-        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).IsName("Nothing");
+        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
         bool canDodge = animator.GetBool("CanCancel") || isIdle;
 
         if (canDodge)

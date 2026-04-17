@@ -32,6 +32,9 @@ public class WeaponHitbox : MonoBehaviour
     // Lista pamietajaca obiekty juz trafione W TYM JEDNYM uderzeniu
     private HashSet<GameObject> _hitObjectsThisSwing = new HashSet<GameObject>();
 
+    // OPTYMALIZACJA: Przechowujemy hity w cache'u (0 GC w klatce)
+    private RaycastHit[] _hitCache = new RaycastHit[20];
+
     private void Awake()
     {
         if (swordTrail != null) swordTrail.emitting = false; // Na starcie wylaczamy slad!
@@ -98,11 +101,13 @@ public class WeaponHitbox : MonoBehaviour
             return;
         }
 
-        RaycastHit[] hits = Physics.CapsuleCastAll(
+        // OPTYMALIZACJA: CapsuleCastNonAlloc
+        int hitCount = Physics.CapsuleCastNonAlloc(
             _previousBasePosition, 
             _previousTipPosition, 
             weaponThickness, 
             movementDirection.normalized, 
+            _hitCache,
             movementDistance, 
             enemyLayer);
 
@@ -110,8 +115,9 @@ public class WeaponHitbox : MonoBehaviour
         bool hitEnemy = false;
         bool hitPlayer = false;
 
-        foreach (RaycastHit hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            RaycastHit hit = _hitCache[i];
             Collider hitCollider = hit.collider;
             
             EnemyHealth enemyHP = hitCollider.GetComponentInParent<EnemyHealth>();
@@ -155,14 +161,15 @@ public class WeaponHitbox : MonoBehaviour
                         // Debug: Fioletowa linia w oknie Scene pokaże nam dokładnie punkt trafienia
                         Debug.DrawRay(vfxPos, vfxNormal * 1.0f, Color.magenta, 2.0f);
 
-                        // Tworzymy efekt w punkcie styku, obrócony w stronę normalnej powierzchni (odbicie)
-                        GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.LookRotation(vfxNormal));
+                        // Tworzymy efekt w punkcie styku (Styl FromSoftware - pooling!)
+                        // GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.LookRotation(vfxNormal));
+                        GameObject vfx = SimplePool.Spawn(hitVFXPrefab, vfxPos, Quaternion.LookRotation(vfxNormal));
                         
                         // Zabezpieczenie: Jeśli "Play on Awake" jest wyłączone, zmuszamy cząsteczki do startu
                         ParticleSystem ps = vfx.GetComponent<ParticleSystem>();
                         if (ps != null) ps.Play();
 
-                        Destroy(vfx, 2f); // Automatyczne sprzątanie po 2 sekundach
+                        // Destroy(vfx, 2f); // Zastępujemy poolingiem (do zrobienia w samym skrypcie VFX)
                     }
                     else
                     {
@@ -176,8 +183,9 @@ public class WeaponHitbox : MonoBehaviour
                         Vector3 lightPos = hit.point;
                         if (lightPos == Vector3.zero) lightPos = Vector3.Lerp(currentBase, currentTip, 0.5f);
 
-                        // Spawny punktowe światło dokładnie w miejscu trafienia
-                        Instantiate(hitLightPrefab, lightPos, Quaternion.identity);
+                        // Spawny punktowe światło dokładnie w miejscu trafienia (Pooling!)
+                        // Instantiate(hitLightPrefab, lightPos, Quaternion.identity);
+                        SimplePool.Spawn(hitLightPrefab, lightPos, Quaternion.identity);
                     }
                 }
                 else

@@ -33,6 +33,9 @@ public class DogAI : EnemyBase
     private float _minStrafeEndTime = 0f;
     private bool _canRotate = true;
 
+    // --- OPTYMALIZACJA (Cache list, by nie śmiecić w pamięci) ---
+    private List<EnemyAttackData> _validAttacksCache = new List<EnemyAttackData>();
+
     protected override void Start()
     {
         base.Start();
@@ -51,33 +54,33 @@ public class DogAI : EnemyBase
 
     protected override void UpdateBehavior()
     {
-        float distance = Vector3.Distance(_target.position, transform.position);
-        float distanceFromSpawn = Vector3.Distance(_spawnPosition, transform.position);
+        float sqrDistance = (_target.position - transform.position).sqrMagnitude;
+        float sqrDistanceFromSpawn = (_spawnPosition - transform.position).sqrMagnitude;
 
-        DecideNextState(distance, distanceFromSpawn);
+        DecideNextState(sqrDistance, sqrDistanceFromSpawn);
         UpdateStateActions();
 
         if (_agent.isOnNavMesh) _agent.nextPosition = transform.position;
     }
 
-    private void DecideNextState(float distance, float distanceFromSpawn)
+    private void DecideNextState(float sqrDistance, float sqrDistanceFromSpawn)
     {
         if (_currentState == AIState.Attacking) return;
         
         // --- Powrót ---
         if (_currentState == AIState.Returning)
         {
-            if (distanceFromSpawn < 1.5f) { _isInCombat = false; SetState(AIState.Idle); }
+            if (sqrDistanceFromSpawn < 1.5f * 1.5f) { _isInCombat = false; SetState(AIState.Idle); }
             return;
         }
 
         // --- Wejście w tryb walki ---
         if (!_isInCombat)
         {
-            if (CanSeePlayer(distance)) _isInCombat = true; 
+            if (CanSeePlayer(sqrDistance)) _isInCombat = true; 
             else { SetState(AIState.Idle); return; }
         }
-        else if (distanceFromSpawn > maxChaseDistance || distance > maxChaseDistance)
+        else if (sqrDistanceFromSpawn > maxChaseDistance * maxChaseDistance || sqrDistance > maxChaseDistance * maxChaseDistance)
         {
             _isInCombat = false;
             SetState(AIState.Returning);
@@ -90,52 +93,47 @@ public class DogAI : EnemyBase
         // --- COOLDOWN ---
         if (Time.time < _lastAttackTime + _currentAttackCooldown)
         {
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
             return;
         }
 
         // --- NOWY SYSTEM: WYBÓR ATAKU Z LISTY ---
-        EnemyAttackData selectedAttack = PickValidAttack(distance);
-
-        if (selectedAttack != null)
-        {
-            ExecuteAttack(selectedAttack);
-        }
+        EnemyAttackData selectedAttack = PickValidAttack(sqrDistance);
+        if (selectedAttack != null) ExecuteAttack(selectedAttack);
         else
         {
-            // Brak pasujących ataków w tym dystansie? To chociaż krąż lub podbiegnij
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
         }
     }
 
-    private EnemyAttackData PickValidAttack(float distance)
+    private EnemyAttackData PickValidAttack(float sqrDistance)
     {
-        List<EnemyAttackData> validAttacks = new List<EnemyAttackData>();
+        _validAttacksCache.Clear(); // Czyścimy zamiast tworzyć nową (0 alokacji!)
         float totalWeight = 0f;
 
         foreach (var attack in availableAttacks)
         {
-            if (distance >= attack.minDistance && distance <= attack.maxDistance)
+            if (sqrDistance >= attack.minDistance * attack.minDistance && sqrDistance <= attack.maxDistance * attack.maxDistance)
             {
-                validAttacks.Add(attack);
+                _validAttacksCache.Add(attack);
                 totalWeight += attack.weight;
             }
         }
 
-        if (validAttacks.Count == 0) return null;
+        if (_validAttacksCache.Count == 0) return null;
 
         float randomRoll = Random.Range(0f, totalWeight);
         float currentWeightSum = 0f;
 
-        foreach (var attack in validAttacks)
+        foreach (var attack in _validAttacksCache)
         {
             currentWeightSum += attack.weight;
             if (randomRoll <= currentWeightSum) return attack;
         }
 
-        return validAttacks[0];
+        return _validAttacksCache[0];
     }
 
     private void ExecuteAttack(EnemyAttackData data)
@@ -207,7 +205,7 @@ public class DogAI : EnemyBase
         float targetSideways = _strafeDir; 
         float targetForward = _strafeForwardBias; 
 
-        if (Vector3.Distance(transform.position, _target.position) < 2.5f) targetForward = -0.5f; 
+        if ((_target.position - transform.position).sqrMagnitude < 2.5f * 2.5f) targetForward = -0.5f; 
 
         float currentSideways = _animator.GetFloat("SidewaysSpeed");
         float currentForward = _animator.GetFloat("ForwardSpeed");

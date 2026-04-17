@@ -51,33 +51,33 @@ public class EnemyAI_DataDriven : EnemyBase
 
     protected override void UpdateBehavior()
     {
-        float distance = Vector3.Distance(_target.position, transform.position);
-        float distanceFromSpawn = Vector3.Distance(_spawnPosition, transform.position);
+        float sqrDistance = (_target.position - transform.position).sqrMagnitude;
+        float sqrDistanceFromSpawn = (_spawnPosition - transform.position).sqrMagnitude;
 
-        DecideNextState(distance, distanceFromSpawn);
+        DecideNextState(sqrDistance, sqrDistanceFromSpawn);
         UpdateStateActions();
 
         if (_agent.isOnNavMesh) _agent.nextPosition = transform.position;
     }
 
-    private void DecideNextState(float distance, float distanceFromSpawn)
+    private void DecideNextState(float sqrDistance, float sqrDistanceFromSpawn)
     {
         if (_currentState == AIState.Attacking) return;
         
         // --- Powrót ---
         if (_currentState == AIState.Returning)
         {
-            if (distanceFromSpawn < 1.5f) { _isInCombat = false; SetState(AIState.Idle); }
+            if (sqrDistanceFromSpawn < 1.5f * 1.5f) { _isInCombat = false; SetState(AIState.Idle); }
             return;
         }
 
         // --- Wejście w tryb walki ---
         if (!_isInCombat)
         {
-            if (CanSeePlayer(distance)) _isInCombat = true; 
+            if (CanSeePlayer(sqrDistance)) _isInCombat = true; 
             else { SetState(AIState.Idle); return; }
         }
-        else if (distanceFromSpawn > maxChaseDistance || distance > maxChaseDistance)
+        else if (sqrDistanceFromSpawn > maxChaseDistance * maxChaseDistance || sqrDistance > maxChaseDistance * maxChaseDistance)
         {
             _isInCombat = false;
             SetState(AIState.Returning);
@@ -90,13 +90,14 @@ public class EnemyAI_DataDriven : EnemyBase
         // --- COOLDOWN ---
         if (Time.time < _lastAttackTime + _currentAttackCooldown)
         {
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
             return;
         }
 
         // --- NOWY SYSTEM: WYBÓR ATAKU Z LISTY ---
-        EnemyAttackData selectedAttack = PickValidAttack(distance);
+        float distanceForAttack = Mathf.Sqrt(sqrDistance);
+        EnemyAttackData selectedAttack = PickValidAttack(distanceForAttack);
 
         if (selectedAttack != null)
         {
@@ -105,7 +106,7 @@ public class EnemyAI_DataDriven : EnemyBase
         else
         {
             // Brak pasujących ataków w tym dystansie? To chociaż krąż lub podbiegnij
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
         }
     }
@@ -207,7 +208,7 @@ public class EnemyAI_DataDriven : EnemyBase
         float targetSideways = _strafeDir; 
         float targetForward = _strafeForwardBias; 
 
-        if (Vector3.Distance(transform.position, _target.position) < 2.5f) targetForward = -0.5f; 
+        if ((_target.position - transform.position).sqrMagnitude < 2.5f * 2.5f) targetForward = -0.5f; 
 
         float currentSideways = _animator.GetFloat("SidewaysSpeed");
         float currentForward = _animator.GetFloat("ForwardSpeed");

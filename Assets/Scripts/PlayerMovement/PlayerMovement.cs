@@ -4,6 +4,7 @@ using UnityEngine.Animations.Rigging;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private InputReader inputReader;
+    public InputReader InputReader => inputReader;
     [SerializeField] private CharacterController controller;
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private Animator animator;
@@ -58,6 +59,20 @@ public class PlayerMovement : MonoBehaviour
     private int _rightWeightHash;
     private bool _hasLeftParam;
     private bool _hasRightParam;
+    
+    // Cache Hashy dla wydajności
+    private int _idleStateHash;
+    private int _idleTagHash;
+    private int _nothingStateHash;
+
+    public bool isMovementLocked = false; // NOWE: Lock postaci podczas dialogu!
+
+    // Cache dla Gizmosów (zamiast alokowania setek razy na sekundę)
+    private float _cachedLeftGroundY;
+    private float _cachedRightGroundY;
+    
+    // Zoptymalizowana tablica dla Raycastów (0 alokacji GC)
+    private RaycastHit[] _raycastHitsAlloc = new RaycastHit[10];
 
     // Indeks warstwy Actions w Animatorze (Base=0, UpperBody=1, Actions=2)
     // Musi zgadzać się z PlayerCombat.cs!
@@ -84,6 +99,11 @@ public class PlayerMovement : MonoBehaviour
                 if (param.name == leftFootWeightParam) _hasLeftParam = true;
                 if (param.name == rightFootWeightParam) _hasRightParam = true;
             }
+
+            // Cache hashy stanów
+            _idleStateHash = Animator.StringToHash("Idle");
+            _idleTagHash = Animator.StringToHash("Idle");
+            _nothingStateHash = Animator.StringToHash("Nothing");
         }
     }
 
@@ -91,10 +111,23 @@ public class PlayerMovement : MonoBehaviour
     {
         if (playerHealth != null && playerHealth.IsDead) return;
 
+        // Jeśli gra zablokowała nam ruch (np. NPC wciągnął nas w dialog)
+        if (isMovementLocked)
+        {
+            _moveInput = Vector2.zero;
+            animator.SetFloat("ForwardSpeed", 0f, dampingTime, Time.deltaTime);
+            animator.SetFloat("SidewaysSpeed", 0f, dampingTime, Time.deltaTime);
+            ApplyGravity();
+            return;
+        }
+
         _moveInput = inputReader.MovementValue;
         _isGrounded = controller.isGrounded;
 
-        bool canRotate = animator.GetBool("CanRotate") || animator.GetCurrentAnimatorStateInfo(0).IsTag("Idle") || animator.GetCurrentAnimatorStateInfo(0).IsName("Idle");
+        // OPTYMALIZACJA: Pobieramy stan raz
+        AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
+        bool canRotate = animator.GetBool("CanRotate") || baseState.shortNameHash == _idleStateHash || baseState.tagHash == _idleTagHash;
+        
         bool lockedOn = targetHandler != null && targetHandler.IsLockedOn;
 
         // == PRZYWRÓCONE: Informujemy Animatora czy mamy Lock-ona ==
@@ -163,7 +196,8 @@ public class PlayerMovement : MonoBehaviour
         // === FROMSOFTWARE FIX: Podczas ataku/uniku IK jest wygaszany ===
         // Gdy cokolwiek gra na warstwie Actions (atak, heavy, dodge),
         // animacja jest ręczna i IK by ją psuło – odpuszczamy wagę.
-        bool isActionsPlaying = !animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).IsName("Nothing");
+        AnimatorStateInfo actionState = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER);
+        bool isActionsPlaying = actionState.shortNameHash != _nothingStateHash || animator.IsInTransition(ACTIONS_LAYER);
         if (isActionsPlaying)
         {
             rig.weight = Mathf.Lerp(rig.weight, 0f, footWeightSpeed * Time.deltaTime);
@@ -184,6 +218,10 @@ public class PlayerMovement : MonoBehaviour
         Vector3 leftNormal, rightNormal;
         float leftGroundWorldY = SampleGroundHeight(leftFootBone, out leftNormal);
         float rightGroundWorldY = SampleGroundHeight(rightFootBone, out rightNormal);
+        
+        // Zapisujemy do cache'a, żeby OnDrawGizmos nie musiało tego liczyć od nowa
+        _cachedLeftGroundY = leftGroundWorldY;
+        _cachedRightGroundY = rightGroundWorldY;
 
         // --- DYNAMIKA WAG (AUTO-WEIGHTING) ---
         // Liczymy różnice wysokości kości kostki (ankle) względem podłoża
@@ -250,13 +288,15 @@ public class PlayerMovement : MonoBehaviour
         Vector3 origin = new Vector3(footBone.position.x, controller.bounds.min.y + 0.8f, footBone.position.z);
         
         // Zwiększamy dystans laseru, żeby zawsze złapał przepaście i nie wpadał w błędny cykl
-        RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 2.5f, groundLayer);
+        // OPTYMALIZACJA: RaycastNonAlloc nie generuje garbage collections
+        int hitCount = Physics.RaycastNonAlloc(origin, Vector3.down, _raycastHitsAlloc, 2.5f, groundLayer);
         
         float highestGround = -Mathf.Infinity;
         bool hitAnything = false;
 
-        foreach (var hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            var hit = _raycastHitsAlloc[i];
             if (hit.transform.root == transform.root) continue;
 
             if (hit.point.y > highestGround)
@@ -318,13 +358,9 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!showDebugGizmos || !Application.isPlaying || leftFootBone == null) return;
 
-        // Ponownie zbieramy dane do rysowania (tylko w Edytorze)
-        Vector3 lNorm, rNorm;
-        float lGround = SampleGroundHeight(leftFootBone, out lNorm);
-        float rGround = SampleGroundHeight(rightFootBone, out rNorm);
-
-        DrawDebugMarker(leftFootBone, lGround, _leftFootWeight);
-        DrawDebugMarker(rightFootBone, rGround, _rightFootWeight);
+        // Używamy zbuforowanych wartości z LateUpdate ZAMIAST robić podwójnych strzałów Raycast
+        DrawDebugMarker(leftFootBone, _cachedLeftGroundY, _leftFootWeight);
+        DrawDebugMarker(rightFootBone, _cachedRightGroundY, _rightFootWeight);
     }
 
     private void DrawDebugMarker(Transform foot, float groundY, float weight)

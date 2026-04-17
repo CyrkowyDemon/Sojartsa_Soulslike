@@ -9,9 +9,14 @@ public abstract class EnemyBase : MonoBehaviour
     [SerializeField] protected float fieldOfViewAngle = 120f;
     [SerializeField] protected LayerMask obstacleMask;
 
+    [SerializeField] protected float lookInterval = 0.2f; // Co ile sekund sprawdzać wzrok
+    
     protected Transform _target;
     protected EnemyHealth _health;
     protected bool _isInCombat = false;
+    
+    private float _lookTimer;
+    private bool _cachedCanSeePlayer;
 
     protected virtual void Start()
     {
@@ -38,9 +43,23 @@ public abstract class EnemyBase : MonoBehaviour
     protected abstract void UpdateBehavior();
 
     // Gotowy system wzroku, który każde dziecko dostaje za darmo
-    protected bool CanSeePlayer(float distance)
+    // Gotowy system wzroku, który każde dziecko dostaje za darmo
+    // Optymalizacja: Używamy sqrDistance, by nie liczyć pierwiastka w Update
+    protected bool CanSeePlayer(float sqrDistance)
     {
-        if (distance > lookRange) return false;
+        // Jeśli jesteśmy już w walce, wzrok nas nie interesuje
+        if (_isInCombat) return true;
+
+        // Ticking: Sprawdzamy Linecast tylko co lookInterval sekund
+        if (Time.time < _lookTimer) return _cachedCanSeePlayer;
+        
+        _lookTimer = Time.time + lookInterval;
+
+        if (sqrDistance > lookRange * lookRange) 
+        {
+            _cachedCanSeePlayer = false;
+            return false;
+        }
 
         Vector3 directionToPlayer = (_target.position - transform.position).normalized;
         float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
@@ -52,9 +71,12 @@ public abstract class EnemyBase : MonoBehaviour
 
             if (!Physics.Linecast(rayStart, rayEnd, obstacleMask))
             {
+                _cachedCanSeePlayer = true;
                 return true; 
             }
         }
+        
+        _cachedCanSeePlayer = false;
         return false;
     }
 

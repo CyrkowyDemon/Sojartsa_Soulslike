@@ -5,15 +5,6 @@ using TMPro;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem; 
 
-// Dodajemy małą "paczkę" danych, żeby każda zakładka miała SWOJE WŁASNE grafiki
-[System.Serializable]
-public class TabConfig
-{
-    public Image tabImage;        // Komponent Image danej zakładki
-    public Sprite activeSprite;   // Obrazek, gdy świeci (jest wybrana/najechana)
-    public Sprite inactiveSprite; // Obrazek, gdy jest zgaszona
-}
-
 public class SettingsTabManager : MonoBehaviour
 {
     [Header("Input")]
@@ -120,4 +111,13 @@ public class SettingsTabManager : MonoBehaviour
         Selectable first = panel.GetComponentInChildren<Selectable>();
         if (first != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
     }
+}
+
+// Dodajemy małą "paczkę" danych, żeby każda zakładka miała SWOJE WŁASNE grafiki
+[System.Serializable]
+public class TabConfig
+{
+    public Image tabImage;        // Komponent Image danej zakładki
+    public Sprite activeSprite;   // Obrazek, gdy świeci (jest wybrana/najechana)
+    public Sprite inactiveSprite; // Obrazek, gdy jest zgaszona
 }

@@ -13,6 +13,7 @@ public class PlayerInteractor : MonoBehaviour
     [Range(0, 1)]
     [SerializeField] private float facingThreshold = 0.5f;
 
+    private readonly Collider[] _overlapResults = new Collider[10];
     private IInteractable currentInteractable;
 
     private void OnEnable()
@@ -38,29 +39,31 @@ public class PlayerInteractor : MonoBehaviour
 
     private void FindClosestInteractable()
     {
-        // 1. Zbieramy wszystkie collidery w zasięgu (Zamiast Raycastu, używamy Overlapa - to milsze dla gracza)
-        Collider[] colliders = Physics.OverlapSphere(transform.position, detectionRadius, interactableLayer);
+        // 1. Zbieramy collidery (NonAlloc - brak śmieci w pamięci!)
+        int count = Physics.OverlapSphereNonAlloc(transform.position, detectionRadius, _overlapResults, interactableLayer);
         
         IInteractable closest = null;
-        float minDistance = float.MaxValue;
+        float minSqrDistance = float.MaxValue;
 
-        foreach (var col in colliders)
+        for (int i = 0; i < count; i++)
         {
+            Collider col = _overlapResults[i];
+            
             // 2. Czy obiekt ma nasz interfejs?
             IInteractable interactable = col.GetComponentInParent<IInteractable>();
             if (interactable == null || !interactable.CanInteract()) continue;
 
             // 3. Sprawdźmy, czy patrzymy w jego stronę (Souls Style!)
-            Vector3 directionToObj = (col.transform.position - transform.position).normalized;
-            float dot = Vector3.Dot(transform.forward, directionToObj);
-
+            Vector3 toObj = col.transform.position - transform.position;
+            float sqrDist = toObj.sqrMagnitude;
+            
+            float dot = Vector3.Dot(transform.forward, toObj.normalized);
             if (dot < facingThreshold) continue;
 
-            // 4. Wybieramy najbliższy, jeśli jest ich kilka
-            float dist = Vector3.Distance(transform.position, col.transform.position);
-            if (dist < minDistance)
+            // 4. Wybieramy najbliższy
+            if (sqrDist < minSqrDistance)
             {
-                minDistance = dist;
+                minSqrDistance = sqrDist;
                 closest = interactable;
             }
         }
@@ -70,6 +73,13 @@ public class PlayerInteractor : MonoBehaviour
 
     private void HandleInteraction()
     {
+        // PRO FIX: Jeśli trwa dialog, zlewamy system patrzenia na NPC i od razu skipujemy!
+        if (DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy)
+        {
+            DialogueManager.Instance.DisplayNextNode();
+            return;
+        }
+
         // Kliknąłeś E! Jeśli coś mamy pod nosem, to gadamy z tym.
         if (currentInteractable != null)
         {

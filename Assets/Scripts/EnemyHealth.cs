@@ -26,6 +26,7 @@ public class EnemyHealth : MonoBehaviour
     [Header("Odniesienia")]
     private Animator _animator;
     private NavMeshAgent _agent;
+    private int _attackTagHash;
 
     public bool IsBroken => _isBroken;
     public bool IsDead => _isDead;
@@ -35,6 +36,7 @@ public class EnemyHealth : MonoBehaviour
         currentHealth = maxHealth;
         _animator = GetComponent<Animator>();
         _agent = GetComponent<NavMeshAgent>();
+        _attackTagHash = Animator.StringToHash("Attack");
     }
 
     void Update()
@@ -115,8 +117,8 @@ public class EnemyHealth : MonoBehaviour
 
         AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
         
-        // Jeśli wróg JEST w trakcie ataku (zakładam, że ma tag "Attack" w Animatorze)
-        if (stateInfo.IsTag("Attack"))
+        // Jeśli wróg JEST w trakcie ataku - Hyper Armor (nie przerywamy mu)
+        if (stateInfo.tagHash == _attackTagHash)
         {
             return;
         }

@@ -54,10 +54,10 @@ public class BeeAI : EnemyBase
     // ========================
     protected override void UpdateBehavior()
     {
-        float distance = Vector3.Distance(_target.position, transform.position);
-        float distanceFromSpawn = Vector3.Distance(_spawnPosition, transform.position);
+        float sqrDistance = (_target.position - transform.position).sqrMagnitude;
+        float sqrDistanceFromSpawn = (_spawnPosition - transform.position).sqrMagnitude;
 
-        DecideNextState(distance, distanceFromSpawn);
+        DecideNextState(sqrDistance, sqrDistanceFromSpawn);
         ExecuteState();
 
         if (_agent.isOnNavMesh) _agent.nextPosition = transform.position;
@@ -66,14 +66,14 @@ public class BeeAI : EnemyBase
     // ========================
     // MÓZG PSZCZOŁY
     // ========================
-    private void DecideNextState(float distance, float distanceFromSpawn)
+    private void DecideNextState(float sqrDistance, float sqrDistanceFromSpawn)
     {
         if (_currentState == BeeState.Attacking) return;
 
         // Powrót do gniazda
         if (_currentState == BeeState.Returning)
         {
-            if (distanceFromSpawn < 2f)
+            if (sqrDistanceFromSpawn < 2f * 2f)
             {
                 _isInCombat = false;
                 SetState(BeeState.Idle);
@@ -84,21 +84,21 @@ public class BeeAI : EnemyBase
         // Wejście w walkę
         if (!_isInCombat)
         {
-            if (CanSeePlayer(distance)) _isInCombat = true;
+            if (CanSeePlayer(sqrDistance)) _isInCombat = true;
             else
             {
                 SetState(BeeState.Idle);
                 return;
             }
         }
-        else if (distanceFromSpawn > maxChaseDistance || distance > maxChaseDistance)
+        else if (sqrDistanceFromSpawn > maxChaseDistance * maxChaseDistance || sqrDistance > maxChaseDistance * maxChaseDistance)
         {
             _isInCombat = false;
             SetState(BeeState.Returning);
             return;
         }
 
-        // Blokada orbitowania (minimum X sekund krążenia)
+        // Blokada orbitowania
         if (_currentState == BeeState.Orbiting && Time.time < _minOrbitEndTime)
         {
             return;
@@ -107,15 +107,15 @@ public class BeeAI : EnemyBase
         // Cooldown po ataku
         if (Time.time < _lastAttackTime + attackCooldownDuration)
         {
-            if (distance <= orbitDistance * 1.5f) SetState(BeeState.Orbiting);
+            if (sqrDistance <= (orbitDistance * 1.5f) * (orbitDistance * 1.5f)) SetState(BeeState.Orbiting);
             else SetState(BeeState.Chasing);
             return;
         }
 
         // --- DECYZJA ATAKU ---
-        float dashRange = 7f;
+        float sqrDashRange = 7f * 7f;
 
-        if (distance <= attackRange)
+        if (sqrDistance <= attackRange * attackRange)
         {
             float roll = Random.value;
             if (roll < 0.7f)
@@ -127,7 +127,7 @@ public class BeeAI : EnemyBase
                 SetState(BeeState.Orbiting);  // 30% odlot i krążenie
             }
         }
-        else if (distance <= dashRange)
+        else if (sqrDistance <= sqrDashRange)
         {
             float roll = Random.value;
             if (roll < 0.35f)
@@ -205,10 +205,10 @@ public class BeeAI : EnemyBase
         float targetForward = 0f;
 
         // Jeśli za blisko gracza - odlot do tyłu
-        float distToPlayer = Vector3.Distance(transform.position, _target.position);
-        if (distToPlayer < attackRange) targetForward = -0.5f;
+        float sqrDistToPlayer = (_target.position - transform.position).sqrMagnitude;
+        if (sqrDistToPlayer < attackRange * attackRange) targetForward = -0.5f;
         // Jeśli za daleko - lekko podleć
-        else if (distToPlayer > orbitDistance) targetForward = 0.5f;
+        else if (sqrDistToPlayer > orbitDistance * orbitDistance) targetForward = 0.5f;
 
         float currentSideways = _animator.GetFloat("SidewaysSpeed");
         float currentForward = _animator.GetFloat("ForwardSpeed");
@@ -238,9 +238,9 @@ public class BeeAI : EnemyBase
         if (_agent.isOnNavMesh) _agent.isStopped = true;
         SnapToTarget();
 
-        float dist = Vector3.Distance(_target.position, transform.position);
+        float sqrDist = (_target.position - transform.position).sqrMagnitude;
 
-        if (dist > attackRange)
+        if (sqrDist > attackRange * attackRange)
         {
             _animator.SetTrigger("Attack2"); // Dash-atak z dystansu
         }

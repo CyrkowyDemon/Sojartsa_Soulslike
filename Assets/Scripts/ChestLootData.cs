@@ -2,6 +2,12 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 
+[CreateAssetMenu(fileName = "NewChestLoot", menuName = "Combat/Chest Loot Data")]
+public class ChestLootData : ScriptableObject
+{
+    public List<LootEntry> entries = new List<LootEntry>();
+}
+
 [Serializable]
 public struct LootEntry
 {
@@ -13,10 +19,4 @@ public struct LootEntry
     
     [Tooltip("Jeśli zaznaczone, nagroda wpadnie tylko raz, nawet jak gracz zamknie i otworzy skrzynię ponownie.")]
     public bool giveOnlyOnce;
-}
-
-[CreateAssetMenu(fileName = "NewChestLoot", menuName = "Combat/Chest Loot Data")]
-public class ChestLootData : ScriptableObject
-{
-    public List<LootEntry> entries = new List<LootEntry>();
 }

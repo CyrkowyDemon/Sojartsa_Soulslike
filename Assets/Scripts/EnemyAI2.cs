@@ -33,6 +33,12 @@ public class EnemyAI2 : EnemyBase
     private float _strafeForwardBias = 0f;
     private float _minStrafeEndTime = 0f;
     private bool _canRotate = true; // Blokada rotacji podczas ciosu (FromSoft-style commitment)
+    
+    private int _attackTagHash;
+    private int _heavyAttackTagHash;
+
+    // --- OPTYMALIZACJA (Fizyka i Pamięć) ---
+    private Collider[] _aoeOverlapCache = new Collider[10]; // Cache dla ataku AoE
 
     protected override void Start()
     {
@@ -47,28 +53,34 @@ public class EnemyAI2 : EnemyBase
         _agent.updatePosition = false;
         _agent.updateRotation = false;
         _strafeDir = Random.value > 0.5f ? 1 : -1;
+
+        _attackTagHash = Animator.StringToHash("Attack");
+        _heavyAttackTagHash = Animator.StringToHash("HeavyAttack");
     }
 
     // To zastępuje nam standardowe Update()
     protected override void UpdateBehavior()
     {
-        float distance = Vector3.Distance(_target.position, transform.position);
-        float distanceFromSpawn = Vector3.Distance(_spawnPosition, transform.position);
+        Vector3 toTarget = _target.position - transform.position;
+        float sqrDistance = toTarget.sqrMagnitude;
 
-        DecideNextState(distance, distanceFromSpawn);
+        Vector3 toSpawn = _spawnPosition - transform.position;
+        float sqrDistanceFromSpawn = toSpawn.sqrMagnitude;
+
+        DecideNextState(sqrDistance, sqrDistanceFromSpawn);
         UpdateStateActions();
 
         if (_agent.isOnNavMesh) _agent.nextPosition = transform.position;
     }
 
-    private void DecideNextState(float distance, float distanceFromSpawn)
+    private void DecideNextState(float sqrDistance, float sqrDistanceFromSpawn)
     {
         if (_currentState == AIState.Attacking) return;
         
         // --- Powrót na miejsce ---
         if (_currentState == AIState.Returning)
         {
-            if (distanceFromSpawn < 1.5f)
+            if (sqrDistanceFromSpawn < 1.5f * 1.5f) // 1.5m -> squared
             {
                 _isInCombat = false;
                 SetState(AIState.Idle);
@@ -79,40 +91,37 @@ public class EnemyAI2 : EnemyBase
         // --- Wejście w tryb walki ---
         if (!_isInCombat)
         {
-            if (CanSeePlayer(distance)) _isInCombat = true; 
+            if (CanSeePlayer(sqrDistance)) _isInCombat = true; 
             else
             {
                 SetState(AIState.Idle);
                 return;
             }
         }
-        else if (distanceFromSpawn > maxChaseDistance || distance > maxChaseDistance)
+        else if (sqrDistanceFromSpawn > maxChaseDistance * maxChaseDistance || sqrDistance > maxChaseDistance * maxChaseDistance)
         {
             _isInCombat = false;
             SetState(AIState.Returning);
             return;
         }
 
-        // --- BLOKADA STRAFINGU: Wróg MUSI pokrążyć minimum X sekund! ---
+        // --- BLOKADA STRAFINGU ---
         if (_currentState == AIState.Strafing && Time.time < _minStrafeEndTime)
         {
-            return; // Siedź i krąż, nie myśl o ataku!
+            return;
         }
 
-        // --- COOLDOWN: Jeszcze odpoczywa po ostatnim ataku ---
+        // --- COOLDOWN ---
         if (Time.time < _lastAttackTime + attackCooldownDuration)
         {
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
             return;
         }
 
-        // --- JEDNORAZOWA DECYZJA (nie co klatkę!) ---
-        // Jeśli wróg właśnie skończył krążyć i cooldown minął,
-        // podejmuje JEDNĄ decyzję, a nie rzuca kostką 60 razy na sekundę.
-        float jumpAttackRange = 7f; 
+        float sqrJumpAttackRange = 7f * 7f; 
 
-        if (distance <= attackRange)
+        if (sqrDistance <= attackRange * attackRange)
         {
             float diceRoll = Random.value;
 
@@ -133,7 +142,7 @@ public class EnemyAI2 : EnemyBase
                 SetState(AIState.Strafing);
             }
         }
-        else if (distance > attackRange && distance <= jumpAttackRange)
+        else if (sqrDistance > attackRange * attackRange && sqrDistance <= sqrJumpAttackRange)
         {
             if (Random.value < 0.4f) 
             {
@@ -215,7 +224,7 @@ public class EnemyAI2 : EnemyBase
         float targetSideways = _strafeDir; 
         float targetForward = _strafeForwardBias; 
 
-        if (Vector3.Distance(transform.position, _target.position) < attackRange) targetForward = -0.5f; 
+        if ((_target.position - transform.position).sqrMagnitude < attackRange * attackRange) targetForward = -0.5f; 
 
         float currentSideways = _animator.GetFloat("SidewaysSpeed");
         float currentForward = _animator.GetFloat("ForwardSpeed");
@@ -231,11 +240,11 @@ private void StartAttackSequence()
     if (_agent.isOnNavMesh) _agent.isStopped = true;
     SnapToTarget();
 
-    float dist = Vector3.Distance(_target.position, transform.position);
+    float sqrDist = (_target.position - transform.position).sqrMagnitude;
     
     // Tu już nie decydujemy czy chce atakować, bo o tym zdecydował nowy mózg wyżej.
     // Skoro wywołał tę funkcję i dystans jest duży - to na pewno ma być Jump Attack.
-    if (dist > 3f) 
+    if (sqrDist > 3f * 3f) 
     {
         _animator.SetTrigger("Attack2"); // Skok
     }
@@ -300,8 +309,9 @@ private void StartAttackSequence()
     private bool IsPlayerAttacking()
     {
         if (_playerAnimator == null) return false;
-        AnimatorStateInfo state = _playerAnimator.GetCurrentAnimatorStateInfo(0);
-        return state.IsTag("Attack") || state.IsTag("HeavyAttack");
+        // Sprawdzamy warstwę 2 (Actions), bo tam są ataki gracza!
+        AnimatorStateInfo state = _playerAnimator.GetCurrentAnimatorStateInfo(2);
+        return state.tagHash == _attackTagHash || state.tagHash == _heavyAttackTagHash;
     }
 
 public void ResetAttack() 
@@ -336,10 +346,18 @@ public void ResetAttack()
 
     public void ExecuteAoEAttack()
     {
-        if (aoeEffectPrefab != null) Instantiate(aoeEffectPrefab, transform.position, Quaternion.identity);
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, aoeRadius);
-        foreach (Collider hit in hitColliders)
+        if (aoeEffectPrefab != null) 
         {
+            // Instantiate(aoeEffectPrefab, transform.position, Quaternion.identity);
+            SimplePool.Spawn(aoeEffectPrefab, transform.position, Quaternion.identity); // POOLING!
+        }
+
+        // OPTYMALIZACJA: NonAlloc nie tworzy nowej tablicy co klatkę
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, aoeRadius, _aoeOverlapCache);
+        
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hit = _aoeOverlapCache[i];
             if (hit.CompareTag("Player"))
             {
                 PlayerHealth pHealth = hit.GetComponent<PlayerHealth>();

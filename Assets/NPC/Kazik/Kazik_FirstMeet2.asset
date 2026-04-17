@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86ea0ba8ee4d6b94a8bf9db4bc3d4806, type: 3}
+  m_Name: Kazik_FirstMeet2
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueConversation
+  locksPlayer: 1
+  requiredFlags: []
+  excludeFlags: []
+  nodes:
+  - text: "Doprawdy? Rozumiem.. Nie bede ci\u0119 zatrzymywa\u0142..  "
+    voiceover: {fileID: 0}
+    useManualTime: 1
+    manualWaitTime: 3
+  - text: "chyba \u017Ce masz przy sobie troch\u0119 grosza haha...  "
+    voiceover: {fileID: 0}
+    useManualTime: 1
+    manualWaitTime: 3
+  - text: "wtedy moge zaszczyci\u0107 ci\u0119 moimi towarami. "
+    voiceover: {fileID: 0}
+    useManualTime: 1
+    manualWaitTime: 3
+  choices: []
+  nextConversation: {fileID: 0}
+  flagsToSetOnEnd:
+  - {fileID: 11400000, guid: bc67ef2a22f5706469e2e1cd7180683d, type: 2}

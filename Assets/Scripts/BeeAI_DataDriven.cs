@@ -32,6 +32,9 @@ public class BeeAI_DataDriven : EnemyBase
     private int _orbitDir = 1;
     private float _nextOrbitChangeTime = 0f;
 
+    // --- OPTYMALIZACJA (Cache list, by nie śmiecić w pamięci) ---
+    private List<EnemyAttackData> _validAttacksCache = new List<EnemyAttackData>();
+
     protected override void Start()
     {
         base.Start();
@@ -48,31 +51,31 @@ public class BeeAI_DataDriven : EnemyBase
 
     protected override void UpdateBehavior()
     {
-        float distance = Vector3.Distance(_target.position, transform.position);
-        float distanceFromSpawn = Vector3.Distance(_spawnPosition, transform.position);
+        float sqrDistance = (_target.position - transform.position).sqrMagnitude;
+        float sqrDistanceFromSpawn = (_spawnPosition - transform.position).sqrMagnitude;
 
-        DecideNextState(distance, distanceFromSpawn);
+        DecideNextState(sqrDistance, sqrDistanceFromSpawn);
         ExecuteState();
 
         if (_agent.isOnNavMesh) _agent.nextPosition = transform.position;
     }
 
-    private void DecideNextState(float distance, float distanceFromSpawn)
+    private void DecideNextState(float sqrDistance, float sqrDistanceFromSpawn)
     {
         if (_currentState == BeeState.Attacking) return;
 
         if (_currentState == BeeState.Returning)
         {
-            if (distanceFromSpawn < 2f) { _isInCombat = false; SetState(BeeState.Idle); }
+            if (sqrDistanceFromSpawn < 2f * 2f) { _isInCombat = false; SetState(BeeState.Idle); }
             return;
         }
 
         if (!_isInCombat)
         {
-            if (CanSeePlayer(distance)) _isInCombat = true;
+            if (CanSeePlayer(sqrDistance)) _isInCombat = true;
             else { SetState(BeeState.Idle); return; }
         }
-        else if (distanceFromSpawn > maxChaseDistance || distance > maxChaseDistance)
+        else if (sqrDistanceFromSpawn > maxChaseDistance * maxChaseDistance || sqrDistance > maxChaseDistance * maxChaseDistance)
         {
             _isInCombat = false;
             SetState(BeeState.Returning);
@@ -83,13 +86,13 @@ public class BeeAI_DataDriven : EnemyBase
 
         if (Time.time < _lastAttackTime + _currentAttackCooldown)
         {
-            if (distance <= orbitDistance * 1.5f) SetState(BeeState.Orbiting);
+            if (sqrDistance <= (orbitDistance * 1.5f) * (orbitDistance * 1.5f)) SetState(BeeState.Orbiting);
             else SetState(BeeState.Chasing);
             return;
         }
 
         // --- WYBÓR ATAKU ---
-        EnemyAttackData selectedAttack = PickValidAttack(distance);
+        EnemyAttackData selectedAttack = PickValidAttack(sqrDistance);
 
         if (selectedAttack != null)
         {
@@ -97,35 +100,35 @@ public class BeeAI_DataDriven : EnemyBase
         }
         else
         {
-            if (distance <= orbitDistance * 1.5f) SetState(BeeState.Orbiting);
+            if (sqrDistance <= (orbitDistance * 1.5f) * (orbitDistance * 1.5f)) SetState(BeeState.Orbiting);
             else SetState(BeeState.Chasing);
         }
     }
 
-    private EnemyAttackData PickValidAttack(float distance)
+    private EnemyAttackData PickValidAttack(float sqrDistance)
     {
-        List<EnemyAttackData> validAttacks = new List<EnemyAttackData>();
+        _validAttacksCache.Clear(); // Czyścimy zamiast tworzyć nową (0 alokacji!)
         float totalWeight = 0f;
 
         foreach (var attack in availableAttacks)
         {
-            if (distance >= attack.minDistance && distance <= attack.maxDistance)
+            if (sqrDistance >= attack.minDistance * attack.minDistance && sqrDistance <= attack.maxDistance * attack.maxDistance)
             {
-                validAttacks.Add(attack);
+                _validAttacksCache.Add(attack);
                 totalWeight += attack.weight;
             }
         }
 
-        if (validAttacks.Count == 0) return null;
+        if (_validAttacksCache.Count == 0) return null;
 
         float randomRoll = Random.Range(0f, totalWeight);
         float currentWeightSum = 0f;
-        foreach (var attack in validAttacks)
+        foreach (var attack in _validAttacksCache)
         {
             currentWeightSum += attack.weight;
             if (randomRoll <= currentWeightSum) return attack;
         }
-        return validAttacks[0];
+        return _validAttacksCache[0];
     }
 
     private void ExecuteAttack(EnemyAttackData data)
@@ -187,9 +190,9 @@ public class BeeAI_DataDriven : EnemyBase
         float targetSideways = _orbitDir;
         float targetForward = 0f;
 
-        float distToPlayer = Vector3.Distance(transform.position, _target.position);
-        if (distToPlayer < 2f) targetForward = -0.5f;
-        else if (distToPlayer > orbitDistance) targetForward = 0.5f;
+        float sqrDistToPlayer = (transform.position - _target.position).sqrMagnitude;
+        if (sqrDistToPlayer < 2f * 2f) targetForward = -0.5f;
+        else if (sqrDistToPlayer > orbitDistance * orbitDistance) targetForward = 0.5f;
 
         _animator.SetFloat("SidewaysSpeed", Mathf.Lerp(_animator.GetFloat("SidewaysSpeed"), targetSideways, Time.deltaTime * 5f));
         _animator.SetFloat("ForwardSpeed", Mathf.Lerp(_animator.GetFloat("ForwardSpeed"), targetForward, Time.deltaTime * 5f));

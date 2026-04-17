@@ -35,6 +35,9 @@ public class RomeroAI_DataDriven : EnemyBase
     private float _nextStrafeChangeTime = 0f;
     private float _minStrafeEndTime = 0f;
     private bool _canRotate = true;
+    
+    private int _attackTagHash;
+    private int _heavyAttackTagHash;
 
     protected override void Start()
     {
@@ -49,16 +52,20 @@ public class RomeroAI_DataDriven : EnemyBase
         _agent.updatePosition = false;
         _agent.updateRotation = false;
         _strafeDir = Random.value > 0.5f ? 1 : -1;
+
+        _attackTagHash = Animator.StringToHash("Attack");
+        _heavyAttackTagHash = Animator.StringToHash("HeavyAttack");
     }
 
     protected override void UpdateBehavior()
     {
-        float distance = Vector3.Distance(_target.position, transform.position);
-        float distanceFromSpawn = Vector3.Distance(_spawnPosition, transform.position);
+        float sqrDistance = (_target.position - transform.position).sqrMagnitude;
+        float sqrDistanceFromSpawn = (_spawnPosition - transform.position).sqrMagnitude;
 
+        float distance = Mathf.Sqrt(sqrDistance); // Wymagane dla CheckForCounterAction i wzroku
         CheckForCounterAction(distance);
 
-        DecideNextState(distance, distanceFromSpawn);
+        DecideNextState(sqrDistance, sqrDistanceFromSpawn);
         UpdateStateActions();
 
         if (_agent.isOnNavMesh) _agent.nextPosition = transform.position;
@@ -97,22 +104,22 @@ public class RomeroAI_DataDriven : EnemyBase
         }
     }
 
-    private void DecideNextState(float distance, float distanceFromSpawn)
+    private void DecideNextState(float sqrDistance, float sqrDistanceFromSpawn)
     {
         if (_currentState == AIState.Attacking) return;
         
         if (_currentState == AIState.Returning)
         {
-            if (distanceFromSpawn < 1.5f) { _isInCombat = false; SetState(AIState.Idle); }
+            if (sqrDistanceFromSpawn < 1.5f * 1.5f) { _isInCombat = false; SetState(AIState.Idle); }
             return;
         }
 
         if (!_isInCombat)
         {
-            if (CanSeePlayer(distance)) _isInCombat = true; 
+            if (CanSeePlayer(sqrDistance)) _isInCombat = true; 
             else { SetState(AIState.Idle); return; }
         }
-        else if (distanceFromSpawn > maxChaseDistance || distance > maxChaseDistance)
+        else if (sqrDistanceFromSpawn > maxChaseDistance * maxChaseDistance || sqrDistance > maxChaseDistance * maxChaseDistance)
         {
             _isInCombat = false;
             SetState(AIState.Returning);
@@ -123,27 +130,28 @@ public class RomeroAI_DataDriven : EnemyBase
 
         if (Time.time < _lastAttackTime + _currentAttackCooldown)
         {
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
             return;
         }
 
-        EnemyAttackData selectedAttack = PickValidAttack(distance);
+        EnemyAttackData selectedAttack = PickValidAttack(sqrDistance);
         if (selectedAttack != null) ExecuteAttack(selectedAttack);
         else
         {
-            if (distance <= strafeDistance) SetState(AIState.Strafing);
+            if (sqrDistance <= strafeDistance * strafeDistance) SetState(AIState.Strafing);
             else SetState(AIState.Chasing);
         }
     }
 
-    private EnemyAttackData PickValidAttack(float distance)
+    private EnemyAttackData PickValidAttack(float sqrDistance)
     {
         List<EnemyAttackData> validAttacks = new List<EnemyAttackData>();
         float totalWeight = 0f;
         foreach (var attack in availableAttacks)
         {
-            if (distance >= attack.minDistance && distance <= attack.maxDistance)
+            // Optymalizacja: Porównujemy kwadraty dystansów
+            if (sqrDistance >= attack.minDistance * attack.minDistance && sqrDistance <= attack.maxDistance * attack.maxDistance)
             {
                 validAttacks.Add(attack);
                 totalWeight += attack.weight;
@@ -216,7 +224,7 @@ public class RomeroAI_DataDriven : EnemyBase
 
         float targetSideways = _strafeDir;
         float targetForward = 0f;
-        if (Vector3.Distance(transform.position, _target.position) < 2.5f) targetForward = -0.5f;
+        if ((_target.position - transform.position).sqrMagnitude < 2.5f * 2.5f) targetForward = -0.5f;
 
         _animator.SetFloat("SidewaysSpeed", Mathf.Lerp(_animator.GetFloat("SidewaysSpeed"), targetSideways, Time.deltaTime * 5f));
         _animator.SetFloat("ForwardSpeed", Mathf.Lerp(_animator.GetFloat("ForwardSpeed"), targetForward, Time.deltaTime * 5f));
@@ -270,8 +278,8 @@ public class RomeroAI_DataDriven : EnemyBase
         AnimatorStateInfo currentState = _playerAnimator.GetCurrentAnimatorStateInfo(2);
         AnimatorStateInfo nextState = _playerAnimator.GetNextAnimatorStateInfo(2); // POPRAWKA 3: Przewidywanie ataku w fazie przejścia (transition)
         
-        bool isAttacking = currentState.IsTag("Attack") || currentState.IsTag("HeavyAttack") || 
-                           nextState.IsTag("Attack") || nextState.IsTag("HeavyAttack");
+        bool isAttacking = currentState.tagHash == _attackTagHash || currentState.tagHash == _heavyAttackTagHash || 
+                           nextState.tagHash == _attackTagHash || nextState.tagHash == _heavyAttackTagHash;
         
         if (isAttacking) Debug.Log("<color=yellow>[ROMERO] Widzę Twój atak! Reaguję!</color>");
 

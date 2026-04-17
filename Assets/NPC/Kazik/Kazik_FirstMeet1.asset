@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86ea0ba8ee4d6b94a8bf9db4bc3d4806, type: 3}
+  m_Name: Kazik_FirstMeet1
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueConversation
+  locksPlayer: 1
+  requiredFlags: []
+  excludeFlags: []
+  nodes:
+  - text: "Oh... Witaj podr\xF3\u017Cniku, co za ciekawy str\xF3j? czy\u017Cby\u015B
+      by\u0142 \u0142owc\u0105 nagr\xF3d?"
+    voiceover: {fileID: 0}
+    useManualTime: 1
+    manualWaitTime: 4
+  choices:
+  - choiceText: Ta....
+    nextConversation: {fileID: 11400000, guid: e0e0d3f1c736e004e80cc3030965e070, type: 2}
+  - choiceText: "Nie, jestem Hus.. wykonuje tylko przys\u0142uge dla tutejszego so\u0142tysa
+      i wybieram si\u0119 na po\u0142udnie"
+    nextConversation: {fileID: 11400000, guid: e0e0d3f1c736e004e80cc3030965e070, type: 2}
+  nextConversation: {fileID: 0}
+  flagsToSetOnEnd: []

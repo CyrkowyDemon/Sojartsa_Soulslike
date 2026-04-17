@@ -13,19 +13,56 @@ public class PlayerFootsteps : MonoBehaviour
     [SerializeField] private float rayDistance = 1.5f;
     [SerializeField] private LayerMask floorLayer;
     [SerializeField] private float movementThreshold = 0.1f;
-
+    
+    private string[] _cachedTerrainLayerNames;
     private Animator animator;
 
     void Start()
     {
         animator = GetComponent<Animator>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
+
+        // OPTYMALIZACJA: Cache'ujemy nazwy tekstur na starcie, żeby nie robić tego co krok
+        CacheTerrainLayers();
+    }
+
+    private void CacheTerrainLayers()
+    {
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain != null && terrain.terrainData != null)
+        {
+            var layers = terrain.terrainData.terrainLayers;
+            _cachedTerrainLayerNames = new string[layers.Length];
+            for (int i = 0; i < layers.Length; i++)
+            {
+                _cachedTerrainLayerNames[i] = layers[i].name.ToLower();
+            }
+            Debug.Log($"[Footsteps] Zcache'owano {layers.Length} warstw terenu.");
+        }
     }
 
     public void PlayFootstep()
     {
         float currentSpeed = (animator != null) ? animator.velocity.magnitude : 0f;
         if (currentSpeed < movementThreshold) return;
+
+        // --- FROMSOFTWARE FIX: Blokada w powietrzu i w trakcie walki/uników ---
+        CharacterController controller = GetComponentInParent<CharacterController>();
+        if (controller != null && !controller.isGrounded) return; // Zabezpieczenie przed chodzeniem w powietrzu
+
+        if (animator != null && animator.layerCount > 2)
+        {
+            // Sprawdzamy warstwę ACTIONS (indeks 2) - tak samo jak w PlayerMovement i PlayerCombat
+            AnimatorStateInfo actionState = animator.GetCurrentAnimatorStateInfo(2);
+            int nothingHash = Animator.StringToHash("Nothing");
+            
+            // Jeśli gramy animację na warstwie ataku/uniku lub jesteśmy w przejściu
+            if (actionState.shortNameHash != nothingHash || animator.IsInTransition(2))
+            {
+                return; // Gracz atakuje albo robi unik, wycisz kroki!
+            }
+        }
+        // ----------------------------------------------------------------------
 
         string materialLabel = DetermineMaterial();
 
@@ -62,14 +99,18 @@ public class PlayerFootsteps : MonoBehaviour
 
     private string GetTerrainTexture(TerrainData terrainData, Vector3 worldPos, Vector3 terrainPos)
     {
+        if (_cachedTerrainLayerNames == null || _cachedTerrainLayerNames.Length == 0) return defaultLayer;
+
         int mapX = Mathf.RoundToInt(((worldPos.x - terrainPos.x) / terrainData.size.x) * (terrainData.alphamapWidth - 1));
         int mapZ = Mathf.RoundToInt(((worldPos.z - terrainPos.z) / terrainData.size.z) * (terrainData.alphamapHeight - 1));
 
+        // TO JEST CIĘŻKIE API, ale pobieramy tylko 1x1 piksel
         float[,,] splatmapData = terrainData.GetAlphamaps(mapX, mapZ, 1, 1);
+        
         float maxWeight = 0f;
         int textureIndex = 0;
 
-        for (int i = 0; i < terrainData.terrainLayers.Length; i++)
+        for (int i = 0; i < _cachedTerrainLayerNames.Length; i++)
         {
             if (splatmapData[0, 0, i] > maxWeight)
             {
@@ -77,6 +118,8 @@ public class PlayerFootsteps : MonoBehaviour
                 textureIndex = i;
             }
         }
-        return terrainData.terrainLayers[textureIndex].name.ToLower();
+        
+        // ZWRACAMY ZCACHE'OWANY STRING (brak nowych alokacji pamięci!)
+        return _cachedTerrainLayerNames[textureIndex];
     }
 }
