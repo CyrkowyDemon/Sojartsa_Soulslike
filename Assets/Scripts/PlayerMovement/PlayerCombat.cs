@@ -9,13 +9,20 @@ public class PlayerCombat : MonoBehaviour
     [Header("Nowy System Miecza")]
     [SerializeField] private WeaponHitbox weaponHitbox;
     [SerializeField] private float bufferWindow = 0.5f;
+    [SerializeField] private float dodgeDelay = 0.5f; // NOWOŚĆ: Czas na obrót przed unikiem
 
     // Indeks warstwy "Actions" w Animatorze (Base=0, UpperBody=1, Actions=2)
     private const int ACTIONS_LAYER = 2;
 
+    public bool IsDamageWindowOpen { get; private set; } 
+    public bool IsDodgingAnim { get; private set; } 
+    public bool IsRotationLocked { get; private set; } // NOWOŚĆ: Twarda blokada obrotu (od uderzenia do cancela)
+
     private bool _attackBuffered = false;
     private float _bufferTimer = 0f;
     private int _nothingStateHash;
+
+    private Coroutine _dodgeCoroutine; // NOWOŚĆ: Referencja do asynchronicznego uniku
 
     private void Start()
     {
@@ -104,40 +111,54 @@ public class PlayerCombat : MonoBehaviour
 
         if (canDodge)
         {
+            // Natychmiast zabezpieczamy flagi, by gracz nie wcisnął spamu guzików w trakcie opóźnienia!
+            animator.SetBool("CanCancel", false); 
             _attackBuffered = false;
             _bufferTimer = 0;
 
-            Vector2 dodgeDir = inputReader.MovementValue;
-
-            bool lockedOn = targetHandler != null && targetHandler.IsLockedOn;
-
-            if (!lockedOn)
-            {
-                if (dodgeDir.sqrMagnitude > 0.01f)
-                    dodgeDir = new Vector2(0f, 1f);  // Do przodu
-                else
-                    dodgeDir = new Vector2(0f, -1f); // Do tylu
-            }
-            else
-            {
-                if (dodgeDir == Vector2.zero) dodgeDir = new Vector2(0f, -1f);
-            }
-
-            animator.SetFloat("DodgeX", dodgeDir.x);
-            animator.SetFloat("DodgeY", dodgeDir.y);
-
-            // Zamykamy hitbox miecza, jeśli cancelujemy atak unikiem
-            if(weaponHitbox != null) weaponHitbox.CloseDamageWindow();
-
-            animator.SetBool("CanCancel", false);
-
-            // Czyścimy zaległe triggery
-            animator.ResetTrigger("Attack");
-            animator.ResetTrigger("HeavyAttack");
-            animator.ResetTrigger("Dodge");
-
-            animator.SetTrigger("Dodge");
+            if (_dodgeCoroutine != null) StopCoroutine(_dodgeCoroutine);
+            
+            // ODŁAPUJEMY UNIK Z DELAYEM (używamy zmiennej dodgeDelay z Inspektora)
+            _dodgeCoroutine = StartCoroutine(ExecuteDodgeWithDelay(dodgeDelay));
         }
+    }
+
+    private System.Collections.IEnumerator ExecuteDodgeWithDelay(float delay)
+    {
+        // 1. Oczekiwanie mgnienia oka - czas dla gracza na dogięcie analoga/klawiszy pod napięciem
+        yield return new WaitForSeconds(delay);
+
+        // 2. Pobieramy wektor dopiero "Z PRZYSZŁOŚCI", czyli te 0.15s później!
+        Vector2 dodgeDir = inputReader.MovementValue;
+
+        bool lockedOn = targetHandler != null && targetHandler.IsLockedOn;
+
+        if (!lockedOn)
+        {
+            if (dodgeDir.sqrMagnitude > 0.01f)
+                dodgeDir = new Vector2(0f, 1f);  // Do przodu
+            else
+                dodgeDir = new Vector2(0f, -1f); // Do tylu
+        }
+        else
+        {
+            if (dodgeDir == Vector2.zero) dodgeDir = new Vector2(0f, -1f);
+        }
+
+        animator.SetFloat("DodgeX", dodgeDir.x);
+        animator.SetFloat("DodgeY", dodgeDir.y);
+
+        // Zamykamy hitbox miecza awaryjnie w razie czego
+        if(weaponHitbox != null) weaponHitbox.CloseDamageWindow();
+        IsDamageWindowOpen = false;
+        IsDodgingAnim = true; // --- ZACZYNAMY FIZYCZNY UNIK, BLOKUJEMY ROTACJĘ ---
+
+        // Czyścimy zaległe triggery przed włożeniem nowego
+        animator.ResetTrigger("Attack");
+        animator.ResetTrigger("HeavyAttack");
+        animator.ResetTrigger("Dodge");
+
+        animator.SetTrigger("Dodge");
     }
 
     // --- NOWE ANIMATION EVENTS ---
@@ -147,29 +168,31 @@ public class PlayerCombat : MonoBehaviour
     public void OpenDamage()
     {
         if (weaponHitbox != null) weaponHitbox.OpenDamageWindow();
+        IsDamageWindowOpen = true; 
+        IsRotationLocked = true; // --- BLOKADA START ---
     }
 
-    // Kiedy wymach się kończy i miecz leci w dół / przed powrotem
-    // Dodaj to w połowie / na końcu animacji uderzenia
     public void CloseDamage()
     {
         if (weaponHitbox != null) weaponHitbox.CloseDamageWindow();
+        IsDamageWindowOpen = false;
+        // UWAGA: Nie wyłączamy IsRotationLocked tutaj (zgodnie z prośbą Reżysera!)
     }
 
-
-    // Wywoływane przez Animation Event w fazie recovery (~75-80% animacji)
     public void EnableCancel()
     {
         animator.SetBool("CanCancel", true);
+        IsRotationLocked = false; // --- BLOKADA KONIEC (nareszcie wolny!) ---
 
-        // Jeśli gracz kliknął w czasie ataku (bufor), odpala zapamiętany atak
         if (_attackBuffered) ExecuteAttack();
     }
 
-    // Wywoływana przez Animation Event na końcu animacji (reset do czystego stanu)
     public void ResetCombatFlags()
     {
         _attackBuffered = false;
+        IsDamageWindowOpen = false; 
+        IsDodgingAnim = false; 
+        IsRotationLocked = false; // Awaryjne puszczenie na wszelki wypadek
         animator.ResetTrigger("Attack");
         animator.ResetTrigger("HeavyAttack");
         animator.ResetTrigger("Dodge");

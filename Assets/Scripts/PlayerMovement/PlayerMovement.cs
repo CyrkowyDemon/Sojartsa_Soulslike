@@ -11,6 +11,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private TargetHandler targetHandler;
 
+    private PlayerCombat _playerCombat;
+
     [Header("Settings")]
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private float dampingTime = 0.1f;
@@ -85,6 +87,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start()
     {
+        _playerCombat = GetComponent<PlayerCombat>();
         if (rigBuilder != null) rigBuilder.Build();
         if (animator != null) 
         {
@@ -124,29 +127,52 @@ public class PlayerMovement : MonoBehaviour
         _moveInput = inputReader.MovementValue;
         _isGrounded = controller.isGrounded;
 
-        // OPTYMALIZACJA: Pobieramy stan raz
+        // --- SYSTEM ROTACJI (REŻYSERSKA PRECYZJA) ---
         AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
-        bool canRotate = animator.GetBool("CanRotate") || baseState.shortNameHash == _idleStateHash || baseState.tagHash == _idleTagHash;
+        AnimatorStateInfo actionState = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER);
+        bool isActionPlaying = actionState.shortNameHash != _nothingStateHash || animator.IsInTransition(ACTIONS_LAYER);
+        
+        bool canRotate = true; 
+        float currentRotationSpeed = rotationSpeed;
+
+        if (_playerCombat != null)
+        {
+            // TWARDA BLOKADA (Dodge lub Aktywny Hitbox/Recovery do momentu Cancel)
+            if (_playerCombat.IsDodgingAnim || _playerCombat.IsRotationLocked)
+            {
+                canRotate = false;
+                
+                // === FAILSAFE (SAMOLECZENIE) ===
+                // Jeśli jakimś cudem flaga została (np. brak eventu), a my już biegamy lub stoimy w Idle - ODBLOKUJ.
+                if (!isActionPlaying && (baseState.shortNameHash == _idleStateHash || baseState.tagHash == _idleTagHash))
+                {
+                    canRotate = true;
+                    _playerCombat.ResetCombatFlags(); // Czyścimy syf w skrypcie Combat
+                }
+            }
+            // FAZA WIND-UP (ZAMACH)
+            else if (isActionPlaying)
+            {
+                canRotate = true;
+                currentRotationSpeed = rotationSpeed * 0.30f;
+            }
+        }
         
         bool lockedOn = targetHandler != null && targetHandler.IsLockedOn;
-
-        // == PRZYWRÓCONE: Informujemy Animatora czy mamy Lock-ona ==
         animator.SetFloat("LockedIn", lockedOn ? 1f : 0f, dampingTime, Time.deltaTime);
 
         if (lockedOn)
         {
             if (canRotate && targetHandler.CurrentTarget != null)
             {
-                // == PRZYWRÓCONE: Zawsze patrzymy na przeciwnika ==
                 Vector3 dir = targetHandler.CurrentTarget.position - transform.position;
                 dir.y = 0;
                 if (dir.sqrMagnitude > 0.1f)
                 {
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), rotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), currentRotationSpeed * Time.deltaTime);
                 }
             }
-
-            // == PRZYWRÓCONE: Przesyłamy X i Y do Animatora (strafowanie) ==
+            
             animator.SetFloat("ForwardSpeed", _moveInput.y, dampingTime, Time.deltaTime);
             animator.SetFloat("SidewaysSpeed", _moveInput.x, dampingTime, Time.deltaTime);
         }
@@ -159,7 +185,7 @@ public class PlayerMovement : MonoBehaviour
             if (canRotate && speed > 0.01f)
             {
                 Vector3 moveDir = CalculateMovement();
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), rotationSpeed * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), currentRotationSpeed * Time.deltaTime);
             }
         }
 

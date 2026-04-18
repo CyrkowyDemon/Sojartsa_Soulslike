@@ -284,14 +284,17 @@ public class DialogueManager : MonoBehaviour
         _isShowingChoices = true;
         Debug.Log($"[Dialogue] ShowChoices: {_currentConversation.choices.Count} opcji.");
 
-        // Czyścimy stare przyciski
+        // Czyścimy stare przyciski, ale celujemy tylko w guziki (żeby nie skasować Ci przypadkiem na amen tła/obrazków, które siedzą w tym samym panelu!)
         foreach (Transform child in choiceParent)
         {
-            Destroy(child.gameObject);
+            if (child.GetComponent<DialogueChoiceButton>() != null)
+            {
+                Destroy(child.gameObject);
+            }
         }
 
-        // Ukrywamy główny tekst rozmowy na czas podejmowania wyborów
-        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        // PRO FIX: Zostawiamy panel w spokoju (tło i portret), a jedynie czyścimy stary tekst!
+        if (dialogueText != null) dialogueText.text = "";
 
         choicePanel.SetActive(true);
 
@@ -323,10 +326,21 @@ public class DialogueManager : MonoBehaviour
         
         foreach (Transform child in choiceParent)
         {
-            Destroy(child.gameObject);
+            if (child.GetComponent<DialogueChoiceButton>() != null)
+            {
+                Destroy(child.gameObject);
+            }
         }
         
-        // Odpalamy rozmowę, którą wskazuje wybrany przycisk
-        StartConversation(nextConv, _currentNPC);
+        // Jeśli nowa rozmowa jest pusta, całkowicie ubijamy dialog, bo gracz dał popalić.
+        if (nextConv == null)
+        {
+            EndConversation();
+        }
+        else
+        {
+            // W przeciwnym razie ładnie kontynuujemy.
+            StartConversation(nextConv, _currentNPC);
+        }
     }
 }
