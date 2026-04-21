@@ -23,7 +23,7 @@ public class SimplePool : MonoBehaviour
         if (_pools[prefab].Count > 0)
         {
             instance = _pools[prefab].Dequeue();
-            if (instance == null) // Na wypadek, gdyby obiekt został zniszczony w scenie
+            if (instance == null)
             {
                 instance = GameObject.Instantiate(prefab);
             }
@@ -40,10 +40,43 @@ public class SimplePool : MonoBehaviour
         return instance;
     }
 
-    public static void Despawn(GameObject instance, GameObject prefab)
+    /// <summary>
+    /// Automatycznie chowa obiekt do puli po upływie czasu.
+    /// </summary>
+    public static void Despawn(GameObject instance, GameObject prefab, float delay = 0f)
     {
         if (instance == null || prefab == null) return;
 
+        // Jeśli opóźnienie > 0, odpalamy Coroutine na instancji poola
+        if (delay > 0)
+        {
+            // Szukamy instancji poola na scenie, żeby móc odpalić Coroutine
+            SimplePool pool = FindFirstObjectByType<SimplePool>();
+            if (pool != null)
+            {
+                pool.StartCoroutine(pool.DespawnCoroutine(instance, prefab, delay));
+            }
+            else
+            {
+                // Fallback na wypadek braku skryptu SimplePool na scenie (choć powinien być)
+                instance.SetActive(false);
+            }
+        }
+        else
+        {
+            DoDespawn(instance, prefab);
+        }
+    }
+
+    private System.Collections.IEnumerator DespawnCoroutine(GameObject instance, GameObject prefab, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        DoDespawn(instance, prefab);
+    }
+
+    private static void DoDespawn(GameObject instance, GameObject prefab)
+    {
+        if (instance == null) return;
         instance.SetActive(false);
         
         if (!_pools.ContainsKey(prefab))
@@ -51,6 +84,10 @@ public class SimplePool : MonoBehaviour
             _pools[prefab] = new Queue<GameObject>();
         }
 
-        _pools[prefab].Enqueue(instance);
+        if (!_pools[prefab].Contains(instance))
+        {
+            _pools[prefab].Enqueue(instance);
+        }
     }
 }
+

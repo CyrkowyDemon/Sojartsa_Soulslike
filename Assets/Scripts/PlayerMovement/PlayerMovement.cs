@@ -10,13 +10,18 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private TargetHandler targetHandler;
+    [SerializeField] private PlayerLookController lookController; // Skrypt Look-At na graczu
 
     private PlayerCombat _playerCombat;
 
     [Header("Settings")]
-    [SerializeField] private float rotationSpeed = 10f;
+    [SerializeField] private float rotationSpeed = 3f;      // Wolna bazowa rotacja ciała (głowa ją wyprzedza)
+    [SerializeField] private float snapRotationMultiplier = 4f; // x razy szybciej podczas SNAP
     [SerializeField] private float dampingTime = 0.1f;
     [SerializeField] private float gravity = -30f;
+    [Tooltip("Kąt (stopnie) od którego ciało zaczyna się obracać do celu. Poniżej tego progu robi to sam PlayerLookController (głowa/tułów).")]
+    [SerializeField] private float bodyRotationAngle = 70f;
+
 
     [Header("IK Settings")]
     [SerializeField] private bool useFootIK = true; 
@@ -52,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 _moveInput;
     private float _verticalVelocity;
     private bool _isGrounded;
+    private Quaternion _targetRotation; // NOWE: Przechowywanie celu rotacji dla Root Motion
+    private bool _shouldManualRotate;   // NOWE: Czy skrypt ma przejąć kontrolę nad rotacją?
     private float _currentPelvisOffset;
     private float _originalAnimatorY;
     private float _leftFootWeight;
@@ -169,12 +176,24 @@ public class PlayerMovement : MonoBehaviour
                 dir.y = 0;
                 if (dir.sqrMagnitude > 0.1f)
                 {
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), currentRotationSpeed * Time.deltaTime);
+                    bool isMoving = _moveInput.magnitude > 0.05f;
+                    bool snappingFlag = lookController != null && (lookController.IsSnapping || lookController.CheckSnapThreshold());
+
+                    // --- SYSTEM ROTACJI (NOWA LOGIKA) ---
+                    _shouldManualRotate = snappingFlag || (canRotate && isMoving);
+                    if (_shouldManualRotate)
+                    {
+                        _targetRotation = Quaternion.LookRotation(dir);
+                        
+                        // Logika pomocnicza dla Update (żeby np. kamera widziała że się obracamy)
+                        if (snappingFlag && !isMoving) 
+                            Debug.Log("<color=orange>[SNAP] Przygotowuję obrót w miejscu...</color>");
+                    }
                 }
             }
-            
-            animator.SetFloat("ForwardSpeed", _moveInput.y, dampingTime, Time.deltaTime);
-            animator.SetFloat("SidewaysSpeed", _moveInput.x, dampingTime, Time.deltaTime);
+
+            animator.SetFloat("ForwardSpeed",   _moveInput.y, dampingTime, Time.deltaTime);
+            animator.SetFloat("SidewaysSpeed",  _moveInput.x, dampingTime, Time.deltaTime);
         }
         else
         {
@@ -441,7 +460,27 @@ public class PlayerMovement : MonoBehaviour
         
         controller.Move(movement);
 
-        // Dodajemy rotacje z animacji do kapsuly gracza
-        transform.rotation *= deltaRot;
+        // Jeśli skrypt (Snap/Strafe) chce rotacji, to my tu rządzimy, a nie Idle!
+        if (_shouldManualRotate)
+        {
+            // Sprawdzamy czy to SNAP czy zwykły ruch (dla prędkości)
+            bool isSnapping = lookController != null && (lookController.IsSnapping || lookController.CheckSnapThreshold());
+            
+            if (isSnapping)
+            {
+                float snapSpeed = rotationSpeed * snapRotationMultiplier * 60f;
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, _targetRotation, snapSpeed * Time.deltaTime);
+            }
+            else
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, rotationSpeed * Time.deltaTime);
+            }
+        }
+        else
+        {
+            transform.rotation *= deltaRot;
+        }
+        
+        _shouldManualRotate = false; // Reset na koniec klatki 
     }
 }

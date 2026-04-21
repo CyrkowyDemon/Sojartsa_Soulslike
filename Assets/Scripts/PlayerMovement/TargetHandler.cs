@@ -50,14 +50,16 @@ private void OnEnable()
     }
     private void ToggleLockOn()
     {
-        if (_isForced) return; // Jeśli gra nas zmusza do patrzenia (np. rozmawiamy), gracz nie może tego wyłączyć w locie!
+        if (_isForced) return; 
 
         if (IsLockedOn)
         {
+            Debug.Log("<color=yellow>[TARGET] Ręczne wyłączenie lock-on przez gracza.</color>");
             ClearTarget(); 
             return;
         }
 
+        Debug.Log("<color=cyan>[TARGET] Próba znalezienia celu...</color>");
         FindAndSetBestTarget();
     }
 
@@ -181,22 +183,38 @@ private void OnEnable()
     {
         if (!_isLockedOnInternal) return;
 
-        if (_currentTarget == null || !IsTargetAliveAndValid())
+        if (_currentTarget == null)
         {
+            Debug.Log("<color=red>[TARGET] Cel stał się NULL!</color>");
             ClearTarget();
-
-            // --- AUTO-LOCK: Jeśli opcja włączona, szukamy kolejnego wroga ---
-            bool autoLock = SettingsManager.Instance != null && SettingsManager.Instance.autoLock;
-            if (autoLock)
-            {
-                FindAndSetBestTarget();
-            }
-            return; 
+            return;
         }
 
-        // Zrywamy lock-on, jeśli cel ucieknie za daleko. Ale NIE przy dialogu (gdy to scenka wymusza)!
-        if (!_isForced && (transform.position - _currentTarget.position).sqrMagnitude > lockOnRange * lockOnRange)
+        if (!IsTargetAliveAndValid())
         {
+            Debug.Log($"<color=red>[TARGET] Cel '{_currentTarget.name}' już nie jest prawidłowy (martwy lub nieaktywny).</color>");
+            
+            bool wasLocked = _isLockedOnInternal;
+            ClearTarget();
+
+            // --- AUTO-LOCK: Jeśli opcja włączona i kogoś ubiliśmy, szukamy następnego ---
+            if (wasLocked)
+            {
+                bool autoLock = SettingsManager.Instance != null && SettingsManager.Instance.autoLock;
+                if (autoLock)
+                {
+                    Debug.Log("<color=cyan>[TARGET] Auto-lock: szukam kolejnego celu...</color>");
+                    FindAndSetBestTarget();
+                }
+            }
+            return;
+        }
+
+        // --- Histereza Dystansu (styl Soulsowy) ---
+        float breakRange = lockOnRange * 1.2f; 
+        if (!_isForced && (transform.position - _currentTarget.position).sqrMagnitude > breakRange * breakRange)
+        {
+            Debug.Log($"<color=red>[TARGET] Cel uciekł za daleko! Odległość: {Vector3.Distance(transform.position, _currentTarget.position):F1} / Limit: {breakRange:F1}</color>");
             ClearTarget();
         }
     }

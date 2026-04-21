@@ -162,14 +162,14 @@ public class WeaponHitbox : MonoBehaviour
                         Debug.DrawRay(vfxPos, vfxNormal * 1.0f, Color.magenta, 2.0f);
 
                         // Tworzymy efekt w punkcie styku (Styl FromSoftware - pooling!)
-                        // GameObject vfx = Instantiate(hitVFXPrefab, vfxPos, Quaternion.LookRotation(vfxNormal));
                         GameObject vfx = SimplePool.Spawn(hitVFXPrefab, vfxPos, Quaternion.LookRotation(vfxNormal));
                         
                         // Zabezpieczenie: Jeśli "Play on Awake" jest wyłączone, zmuszamy cząsteczki do startu
                         ParticleSystem ps = vfx.GetComponent<ParticleSystem>();
                         if (ps != null) ps.Play();
 
-                        // Destroy(vfx, 2f); // Zastępujemy poolingiem (do zrobienia w samym skrypcie VFX)
+                        // NOWE: Automatycznie zwracamy do puli po 2 sekundach
+                        SimplePool.Despawn(vfx, hitVFXPrefab, 2.0f);
                     }
                     else
                     {
@@ -184,9 +184,12 @@ public class WeaponHitbox : MonoBehaviour
                         if (lightPos == Vector3.zero) lightPos = Vector3.Lerp(currentBase, currentTip, 0.5f);
 
                         // Spawny punktowe światło dokładnie w miejscu trafienia (Pooling!)
-                        // Instantiate(hitLightPrefab, lightPos, Quaternion.identity);
-                        SimplePool.Spawn(hitLightPrefab, lightPos, Quaternion.identity);
+                        GameObject lightObj = SimplePool.Spawn(hitLightPrefab, lightPos, Quaternion.identity);
+                        
+                        // Hit Light jest krótki, zwracamy po 0.5s
+                        SimplePool.Despawn(lightObj, hitLightPrefab, 0.5f);
                     }
+
                 }
                 else
                 {
