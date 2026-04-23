@@ -15618,30 +15618,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0a8196992d1eb74a835b34b52cc7ff8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DogAI
-  lookRange: 15
-  fieldOfViewAngle: 120
-  obstacleMask:
-    m_Bits: 8
-  lookInterval: 0.2
-  _isInCombat: 0
-  _lookTimer: 0
-  _cachedCanSeePlayer: 0
-  strafeDistance: 5
-  rotationSpeed: 8
-  maxChaseDistance: 25
-  availableAttacks: []
-  _allHitboxes: []
-  _playerAnimator: {fileID: 0}
-  _spawnPosition: {x: 0, y: 0, z: 0}
-  _currentState: 0
-  _lastAttackTime: -10
-  _currentAttackCooldown: 1.5
-  _strafeDir: 1
-  _nextStrafeChangeTime: 0
-  _strafeForwardBias: 0
-  _minStrafeEndTime: 0
-  _canRotate: 1
-  _validAttacksCache: []
 --- !u!95 &629251099
 Animator:
   serializedVersion: 7
