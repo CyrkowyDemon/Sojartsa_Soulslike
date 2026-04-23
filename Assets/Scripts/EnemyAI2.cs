@@ -21,8 +21,6 @@ public class EnemyAI2 : EnemyBase
     [Header("System Walki")]
     [SerializeField] private WeaponHitbox weaponHitbox;
     
-    private NavMeshAgent _agent;
-    private Animator _animator;
     private Animator _playerAnimator;
 
     private Vector3 _spawnPosition;
@@ -42,10 +40,7 @@ public class EnemyAI2 : EnemyBase
 
     protected override void Start()
     {
-        base.Start(); // Ważne! Odpala funkcję z Matki (szuka gracza)
-
-        _agent = GetComponent<NavMeshAgent>();
-        _animator = GetComponent<Animator>();
+        base.Start(); // Ważne! Odpala funkcję z Matki (szuka gracza i komponentów)
 
         if (_target != null) _playerAnimator = _target.GetComponent<Animator>();
 

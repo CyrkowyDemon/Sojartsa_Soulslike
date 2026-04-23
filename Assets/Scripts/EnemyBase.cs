@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.AI;
 
-// Wymusza, żeby na obiekcie zawsze był EnemyHealth
+// Wymusza, żeby na obiekcie zawsze był EnemyHealth i AIStateMachine
 [RequireComponent(typeof(EnemyHealth))] 
+[RequireComponent(typeof(AI.AIStateMachine))]
 public abstract class EnemyBase : MonoBehaviour
 {
     [Header("Detekcja (Wzrok) - Z bazy!")]
@@ -11,9 +13,19 @@ public abstract class EnemyBase : MonoBehaviour
 
     [SerializeField] protected float lookInterval = 0.2f; // Co ile sekund sprawdzać wzrok
     
-    protected Transform _target;
-    protected EnemyHealth _health;
+    [System.NonSerialized] protected Transform _target;
+    [System.NonSerialized] protected EnemyHealth _health;
+    [System.NonSerialized] protected NavMeshAgent _agent;
+    [System.NonSerialized] protected Animator _animator;
+    [System.NonSerialized] protected AI.AIStateMachine _stateMachine;
+
     protected bool _isInCombat = false;
+
+    public bool IsInCombat 
+    { 
+        get => _isInCombat; 
+        set => _isInCombat = value; 
+    }
     
     private float _lookTimer;
     private bool _cachedCanSeePlayer;
@@ -21,6 +33,9 @@ public abstract class EnemyBase : MonoBehaviour
     protected virtual void Start()
     {
         _health = GetComponent<EnemyHealth>();
+        _agent = GetComponent<NavMeshAgent>();
+        _animator = GetComponent<Animator>();
+        _stateMachine = GetComponent<AI.AIStateMachine>();
         
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
@@ -39,12 +54,19 @@ public abstract class EnemyBase : MonoBehaviour
         UpdateBehavior();
     }
 
-    // Ta funkcja ZMUSZA każde dziecko do napisania własnego ruchu!
+    public Transform Target => _target;
+    public NavMeshAgent Agent => _agent;
+    public Animator Animator => _animator;
+
+    // Przywracam to, żeby stare skrypty (BeeAI, DogAI itp.) przestały wywalać błędy!
     protected abstract void UpdateBehavior();
 
-    // Gotowy system wzroku, który każde dziecko dostaje za darmo
-    // Gotowy system wzroku, który każde dziecko dostaje za darmo
-    // Optymalizacja: Używamy sqrDistance, by nie liczyć pierwiastka w Update
+    // Przeróbka na public, by stany mogły z tego korzystać
+    public bool CheckCanSeePlayer(float sqrDistance)
+    {
+        return CanSeePlayer(sqrDistance);
+    }
+
     protected bool CanSeePlayer(float sqrDistance)
     {
         // Jeśli jesteśmy już w walce, wzrok nas nie interesuje

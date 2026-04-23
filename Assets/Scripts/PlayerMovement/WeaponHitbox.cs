@@ -13,6 +13,7 @@ public class WeaponHitbox : MonoBehaviour
     [SerializeField] private float weaponThickness = 0.2f; // Grubosc "kielbaski"
     [SerializeField] private LayerMask enemyLayer; // Kogo bijemy
     [SerializeField] private int damageAmount = 30;
+    [SerializeField] private float poiseDamage = 35f;
 
     [Header("VFX")]
     [SerializeField] private TrailRenderer swordTrail;
@@ -136,7 +137,7 @@ public class WeaponHitbox : MonoBehaviour
 
                     if (enemyHP != null)
                     {
-                        enemyHP.TakeDamage(damageAmount, isKnockbackAttack);
+                        enemyHP.TakeDamage((int)damageAmount, isKnockbackAttack, poiseDamage);
                         hitEnemy = true;
                     }
                     else if (playerHP != null)

@@ -43,7 +43,7 @@ public class PlayerLookController : MonoBehaviour
         Vector3 toTarget = targetHandler.CurrentTarget.position - transform.position;
         Vector3 toTargetFlat = Vector3.ProjectOnPlane(toTarget, Vector3.up);
         float horizAngle = Vector3.SignedAngle(transform.forward, toTargetFlat.normalized, Vector3.up);
-        return Mathf.Abs(horizAngle) > snapThreshold;
+        return Mathf.Abs(horizAngle) >= snapThreshold;
     }
 
     private void Update()
@@ -62,8 +62,13 @@ public class PlayerLookController : MonoBehaviour
         float horizAngle = Vector3.SignedAngle(transform.forward, toTargetFlat.normalized, Vector3.up);
         float absAngle = Mathf.Abs(horizAngle);
 
+        // --- TYMCZASOWY LOG DEBUG DO ANALIZY ---
+        // Pomoże nam potwierdzić czy kąt faktycznie rośnie!
+        if (Time.frameCount % 20 == 0) // co 20 klatek by nie zabić konsoli
+            Debug.Log($"<color=pink>[ANGLE DEBUG] Kąt wroga od przodu gracza: {absAngle:F2} | Próg Snapa: {snapThreshold}</color>");
+
         // --- Zarządzanie Stanem SNAP (Histereza) ---
-        if (absAngle > snapThreshold)
+        if (absAngle >= snapThreshold)
         {
             IsSnapping = true;
         }
@@ -124,12 +129,46 @@ public class PlayerLookController : MonoBehaviour
             spineBone.rotation = Quaternion.AngleAxis(-_pitch * 0.4f, spineBone.right) * spineBone.rotation;
         }
 
-        // Kamera podąża za wzrokiem
+        // =========================================================
+        // NISZCZENIE OBJAWÓW SZARPANIA (CAMERA JITTER) U KORZENIA
+        // =========================================================
         if (cameraPoint != null)
         {
-            cameraPoint.localRotation = Quaternion.Euler(0, _headYaw + _spineYaw, 0);
+            bool hasTarget = targetHandler != null && targetHandler.IsLockedOn && targetHandler.CurrentTarget != null;
+            if (hasTarget)
+            {
+                Vector3 toTarget = targetHandler.CurrentTarget.position - transform.position;
+                toTarget.y = 0;
+                
+                if (toTarget.sqrMagnitude > 0.01f)
+                {
+                    // 1. Zignoruj "trzęsącą się" animację kości. Oblicz czysty wektor do celu w świecie.
+                    Quaternion targetWorldRot = Quaternion.LookRotation(toTarget.normalized);
+                    
+                    // 2. Obróć punkt kamery absolutnie płynnie w świecie (rekompensuje nagłe skoki rotacji kapsuły).
+                    cameraPoint.rotation = Quaternion.Slerp(cameraPoint.rotation, targetWorldRot, lookSpeed * 1.5f * Time.deltaTime);
+
+                    // 3. Po zrobieniu obrotu upewnijmy się, czy nie "zepsuło się jak kiedyś" i ograniczmy to do 50 stopni (headLimit + spineLimit).
+                    float maxAllowedRotation = headLimit + spineLimit; // Wyliczony próg
+                    
+                    // Bezpieczne clampowanie kąta kamery (przestrzeń lokalna)
+                    float currentLocalY = cameraPoint.localEulerAngles.y;
+                    if (currentLocalY > 180f) currentLocalY -= 360f; // Konwersja 0->360 na -180->180
+                    
+                    float clampedY = Mathf.Clamp(currentLocalY, -maxAllowedRotation, maxAllowedRotation);
+                    
+                    // Zapinamy ograniczoną rotację z powrotem.
+                    cameraPoint.localRotation = Quaternion.Euler(0, clampedY, 0);
+                }
+            }
+            else
+            {
+                // Powrót do bycia na wprost pleców (gdy nie ma LockOn)
+                cameraPoint.localRotation = Quaternion.Slerp(cameraPoint.localRotation, Quaternion.identity, lookSpeed * 1.5f * Time.deltaTime);
+            }
         }
     }
+
 }
 
 

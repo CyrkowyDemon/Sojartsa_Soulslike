@@ -54,11 +54,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Transform leftKneeHint;
     [SerializeField] private Transform rightKneeHint;
 
-    private Vector2 _moveInput;
     private float _verticalVelocity;
     private bool _isGrounded;
+    private Vector2 _moveInput;
     private Quaternion _targetRotation; // NOWE: Przechowywanie celu rotacji dla Root Motion
     private bool _shouldManualRotate;   // NOWE: Czy skrypt ma przejąć kontrolę nad rotacją?
+    private bool _isSnappingActive;     // NOWE: Flag dla LateUpdate
+    private float _currentRotationSpeed; // NOWE: Prędkość dla LateUpdate
     private float _currentPelvisOffset;
     private float _originalAnimatorY;
     private float _leftFootWeight;
@@ -99,7 +101,16 @@ public class PlayerMovement : MonoBehaviour
         if (animator != null) 
         {
             _originalAnimatorY = animator.transform.localPosition.y;
+            _playerCombat = GetComponent<PlayerCombat>();
             
+            // --- FAILSAFE REFERENCJI ---
+            if (lookController == null)
+            {
+                lookController = GetComponent<PlayerLookController>();
+                if (lookController == null) 
+                    lookController = GetComponentInChildren<PlayerLookController>();
+            }
+
             // Rejestrujemy parametry by nie spamować konsoli błędami
             _leftWeightHash = Animator.StringToHash(leftFootWeightParam);
             _rightWeightHash = Animator.StringToHash(rightFootWeightParam);
@@ -184,10 +195,12 @@ public class PlayerMovement : MonoBehaviour
                     if (_shouldManualRotate)
                     {
                         _targetRotation = Quaternion.LookRotation(dir);
+                        _isSnappingActive = snappingFlag;
+                        _currentRotationSpeed = currentRotationSpeed;
                         
                         // Logika pomocnicza dla Update (żeby np. kamera widziała że się obracamy)
                         if (snappingFlag && !isMoving) 
-                            Debug.Log("<color=orange>[SNAP] Przygotowuję obrót w miejscu...</color>");
+                            Debug.Log($"<color=orange>[SNAP] Wykryto twardy SNAP!</color>");
                     }
                 }
             }
@@ -213,6 +226,24 @@ public class PlayerMovement : MonoBehaviour
 
     private void LateUpdate()
     {
+        // === OSTATECZNE WYMUSZENIE ROTACJI (PO ANIMATORZE) ===
+        if (_shouldManualRotate && targetHandler != null && targetHandler.IsLockedOn)
+        {
+            if (_isSnappingActive)
+            {
+                // Zamiast RotateTowards (które jest mechaniczne i brutalne), używamy szybkiego Slerpa
+                // Da to efekt płynnego "doskoczenia" do celu z ładnym miękkim lądowaniem ramy.
+                float snapSpeed = rotationSpeed * snapRotationMultiplier;
+                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, snapSpeed * Time.deltaTime);
+            }
+            else
+            {
+                // Zwykły płynny obrót przy chodzeniu
+                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, _currentRotationSpeed * Time.deltaTime);
+            }
+            _shouldManualRotate = false; // zużyte
+        }
+
         HandleFootIK();
     }
 
@@ -460,27 +491,11 @@ public class PlayerMovement : MonoBehaviour
         
         controller.Move(movement);
 
-        // Jeśli skrypt (Snap/Strafe) chce rotacji, to my tu rządzimy, a nie Idle!
-        if (_shouldManualRotate)
-        {
-            // Sprawdzamy czy to SNAP czy zwykły ruch (dla prędkości)
-            bool isSnapping = lookController != null && (lookController.IsSnapping || lookController.CheckSnapThreshold());
-            
-            if (isSnapping)
-            {
-                float snapSpeed = rotationSpeed * snapRotationMultiplier * 60f;
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, _targetRotation, snapSpeed * Time.deltaTime);
-            }
-            else
-            {
-                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, rotationSpeed * Time.deltaTime);
-            }
-        }
-        else
+        // Jeśli NIE ma Snapa ani Strafe'u z lockiem, to Animator decyduje o obrocie
+        // ManualRotation jest teraz robione w LateUpdate (aby nadpisało wszystko po Animatorze)
+        if (!_shouldManualRotate)
         {
             transform.rotation *= deltaRot;
         }
-        
-        _shouldManualRotate = false; // Reset na koniec klatki 
     }
 }

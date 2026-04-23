@@ -22,8 +22,6 @@ public class BeeAI_DataDriven : EnemyBase
     [Header("System Walki")]
     private WeaponHitbox[] _allHitboxes;
 
-    private NavMeshAgent _agent;
-    private Animator _animator;
     private Vector3 _spawnPosition;
     private BeeState _currentState = BeeState.Idle;
     private float _lastAttackTime = -10f;
@@ -38,11 +36,12 @@ public class BeeAI_DataDriven : EnemyBase
     protected override void Start()
     {
         base.Start();
-        _agent = GetComponent<NavMeshAgent>();
-        _animator = GetComponent<Animator>();
         _spawnPosition = transform.position;
-        _agent.updatePosition = false;
-        _agent.updateRotation = false;
+        if (_agent != null)
+        {
+            _agent.updatePosition = false;
+            _agent.updateRotation = false;
+        }
         _orbitDir = Random.value > 0.5f ? 1 : -1;
 
         // Znajdujemy wszystkie hithoxy

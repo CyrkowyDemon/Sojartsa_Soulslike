@@ -137,20 +137,21 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
 
         LookValue = rawValue;
 
+        // --- ZMIANA CELU (Tylko Pad) ---
+        // Omijamy myszkę, aby uniknąć irytujących zmian celu przy lekkim drgnięciu dłonią.
+        if (isMouse) return;
+
         if (Mathf.Abs(rawValue.x) < 0.4f) return;
 
         bool isHorizontal = Mathf.Abs(rawValue.x) > Mathf.Abs(rawValue.y);
         float timeSinceLastSwitch = Time.time - _lastSwitchTime;
         bool cooldownPassed = timeSinceLastSwitch > switchCooldown;
 
-        if (isHorizontal)
+        if (isHorizontal && cooldownPassed)
         {
-            if (cooldownPassed)
-            {
-                Vector2 cleanDirection = new Vector2(Mathf.Sign(rawValue.x), 0);
-                SwitchTargetEvent?.Invoke(cleanDirection); 
-                _lastSwitchTime = Time.time;          
-            }
+            Vector2 cleanDirection = new Vector2(Mathf.Sign(rawValue.x), 0);
+            SwitchTargetEvent?.Invoke(cleanDirection); 
+            _lastSwitchTime = Time.time;          
         }
     }
 

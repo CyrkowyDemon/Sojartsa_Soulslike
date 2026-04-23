@@ -20,8 +20,6 @@ public class RomeroAI_DataDriven : EnemyBase
     [Header("PULA ATAKÓW (ScriptableObjects)")]
     [SerializeField] private List<EnemyAttackData> availableAttacks = new List<EnemyAttackData>();
 
-    private NavMeshAgent _agent;
-    private Animator _animator;
     private Animator _playerAnimator;
     private WeaponHitbox[] _allHitboxes;
 
@@ -42,8 +40,6 @@ public class RomeroAI_DataDriven : EnemyBase
     protected override void Start()
     {
         base.Start();
-        _agent = GetComponent<NavMeshAgent>();
-        _animator = GetComponent<Animator>();
         if (_target != null) _playerAnimator = _target.GetComponent<Animator>();
 
         _allHitboxes = GetComponentsInChildren<WeaponHitbox>();

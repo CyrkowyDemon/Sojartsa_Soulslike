@@ -18,8 +18,6 @@ public class EnemyAI_DataDriven : EnemyBase
     [Header("System Walki")]
     private WeaponHitbox[] _allHitboxes;
     
-    private NavMeshAgent _agent;
-    private Animator _animator;
     private Animator _playerAnimator;
 
     private Vector3 _spawnPosition;
@@ -36,13 +34,14 @@ public class EnemyAI_DataDriven : EnemyBase
     protected override void Start()
     {
         base.Start();
-        _agent = GetComponent<NavMeshAgent>();
-        _animator = GetComponent<Animator>();
         if (_target != null) _playerAnimator = _target.GetComponent<Animator>();
 
         _spawnPosition = transform.position;
-        _agent.updatePosition = false;
-        _agent.updateRotation = false;
+        if (_agent != null)
+        {
+            _agent.updatePosition = false;
+            _agent.updateRotation = false;
+        }
         _strafeDir = Random.value > 0.5f ? 1 : -1;
 
         // Znajdujemy wszystkie hithoxy

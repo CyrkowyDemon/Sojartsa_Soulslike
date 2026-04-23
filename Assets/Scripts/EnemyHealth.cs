@@ -17,7 +17,11 @@ public class EnemyHealth : MonoBehaviour
     private bool _isDead = false;
 
     [Header("Anty-Stunlock (Poise)")]
-    [SerializeField] private float staggerCooldown = 1.5f; // Jak czesto mozna go "zastunowac"
+    [SerializeField] private float maxPoise = 100f;
+    [SerializeField] private float poiseResetRate = 20f;
+    [SerializeField] private float staggerCooldown = 0.5f; 
+    
+    private float _currentPoise;
     private float _lastStaggerTime = -10f;
 
     [Header("UI")]
@@ -34,6 +38,7 @@ public class EnemyHealth : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth;
+        _currentPoise = maxPoise;
         _animator = GetComponent<Animator>();
         _agent = GetComponent<NavMeshAgent>();
         _attackTagHash = Animator.StringToHash("Attack");
@@ -43,6 +48,12 @@ public class EnemyHealth : MonoBehaviour
     {
         if (_isBroken || _isDead) return;
 
+        // Regeneracja Poise z czasem (fromsoftware style)
+        if (_currentPoise < maxPoise)
+        {
+            _currentPoise = Mathf.MoveTowards(_currentPoise, maxPoise, poiseResetRate * Time.deltaTime);
+        }
+
         if (_currentWounds > 0)
         {
             _woundTimer -= Time.deltaTime;
@@ -50,7 +61,7 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-   public void TakeDamage(int damage, bool isKnockback = false)
+   public void TakeDamage(int damage, bool isKnockback = false, float poiseDamage = 50f)
     {
         if (_isDead) return;
 
@@ -75,7 +86,7 @@ public class EnemyHealth : MonoBehaviour
             return;
         }
 
-        CheckForStagger(isKnockback);
+        CheckForStagger(isKnockback, poiseDamage);
         UpdateUI();
     }
 
@@ -108,25 +119,29 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-    private void CheckForStagger(bool isKnockback = false)
+    private void CheckForStagger(bool isKnockback = false, float poiseDamage = 0)
     {
         if (_animator == null || _isBroken) return;
 
-        // Jeśli wróg ma jeszcze Hyper Armor po poprzednim ciosie - ignorujemy
+        _currentPoise -= poiseDamage;
+
+        // Jeśli wróg ma jeszcze niewidzialną "pamięć" po poprzednim ciosie - ignorujemy fizyczny stagger (anty-stunlock)
         if (Time.time < _lastStaggerTime + staggerCooldown) return;
 
-        AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
-        
-        // Jeśli wróg JEST w trakcie ataku - Hyper Armor (nie przerywamy mu)
-        if (stateInfo.tagHash == _attackTagHash)
+        // JEŚLI POISE NIE PĘKŁO - WRÓG PRZYJMUJE Cios "na klatę" (tylko efekt wizualny/dźwiękowy)
+        if (_currentPoise > 0)
         {
+            // Można tu dodać mały "flinch" lub krew, ale nie przerywamy animacji ataku!
             return;
         }
+
+        // PĘKNIĘCIE POISE! Resetujemy pasek i odpalamy stagger
+        _currentPoise = maxPoise;
 
         _lastStaggerTime = Time.time;
         if (_agent != null && _agent.isOnNavMesh) _agent.isStopped = true;
 
-        // Informujemy mózg AI, że dostał w twarz i ma zresetować swoje plany
+        // Informujemy mózg AI, że dostał w twarz i ma zresetować swoje plany (przełączyć na stan Stagger)
         SendMessage("ForceInterrupt", SendMessageOptions.DontRequireReceiver);
 
         if (isKnockback) 
