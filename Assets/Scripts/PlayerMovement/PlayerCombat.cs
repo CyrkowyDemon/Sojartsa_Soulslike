@@ -187,6 +187,11 @@ public class PlayerCombat : MonoBehaviour
         if (_attackBuffered) ExecuteAttack();
     }
 
+    public void PlaySwingSound()
+    {
+        if (weaponHitbox != null) weaponHitbox.PlaySwingSound();
+    }
+
     public void ResetCombatFlags()
     {
         _attackBuffered = false;

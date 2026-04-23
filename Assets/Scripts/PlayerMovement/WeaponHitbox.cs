@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Cinemachine; // W nowych wersjach (3.0+) dodali "Unity." na początku
-
+using FMODUnity;
 
 public class WeaponHitbox : MonoBehaviour
 {
@@ -19,6 +19,10 @@ public class WeaponHitbox : MonoBehaviour
     [SerializeField] private TrailRenderer swordTrail;
     [SerializeField] private GameObject hitVFXPrefab; // NOWE: Prefab efektu trafienia (np. Impact Flash / Krew)
     [SerializeField] private GameObject hitLightPrefab; // NOWE: Prefab światła trafienia (Hit Light - FromSoftware style)
+
+    [Header("Audio (FMOD)")]
+    [SerializeField] private EventReference swingSound; // Dźwięk zamachu (windup/swing)
+    [SerializeField] private EventReference hitSound;   // Dźwięk trafienia (impact)
 
     [Header("Hit Stop")]
     [SerializeField] private float hitStopDuration = 0.04f; // Szybsze, bardziej "ostre"
@@ -67,6 +71,17 @@ public class WeaponHitbox : MonoBehaviour
         _isAttacking = false;
         if (swordTrail != null) swordTrail.emitting = false;
         Debug.Log("<color=red>[MIECZ] Koniec uderzenia. Miecz jest tepy.</color>");
+    }
+
+    /// <summary>
+    /// Wywoływane przez Animation Event w dowolnym momencie wymachu.
+    /// </summary>
+    public void PlaySwingSound()
+    {
+        if (!swingSound.IsNull)
+        {
+            RuntimeManager.PlayOneShot(swingSound, transform.position);
+        }
     }
 
     private void OnDisable()
@@ -189,6 +204,12 @@ public class WeaponHitbox : MonoBehaviour
                         
                         // Hit Light jest krótki, zwracamy po 0.5s
                         SimplePool.Despawn(lightObj, hitLightPrefab, 0.5f);
+                    }
+
+                    // --- NOWE: Dźwięk trafienia (FMOD) ---
+                    if (!hitSound.IsNull)
+                    {
+                        RuntimeManager.PlayOneShot(hitSound, hit.point != Vector3.zero ? hit.point : transform.position);
                     }
 
                 }
