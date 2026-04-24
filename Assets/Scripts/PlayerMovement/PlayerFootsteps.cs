@@ -7,70 +7,58 @@ public class PlayerFootsteps : MonoBehaviour
     [Header("FMOD")]
     [SerializeField] private EventReference footstepEvent;
     [SerializeField] private string parameterName = "footsteps";
-    [SerializeField] private string defaultLayer = "dirt";
+    [SerializeField] private string defaultLayer = "Unknown"; // Zmieniłem na Unknown pod Twój błąd
 
     [Header("Detekcja")]
     [SerializeField] private float rayDistance = 1.5f;
+    [SerializeField] private float rayHeightOffset = 0.5f; // Punkt startowy nad stopami
     [SerializeField] private LayerMask floorLayer;
     [SerializeField] private float movementThreshold = 0.1f;
-    
+
+    [Header("Animacja")]
+    [SerializeField] private int actionLayerIndex = 2; // Wyciągnięty Magic Number
+
     private string[] _cachedTerrainLayerNames;
-    private Animator animator;
+    private Terrain _currentTerrain; // Pamięta teren, na którym stoimy
+
+    private Animator _animator;
+    private CharacterController _controller;
 
     void Start()
     {
-        animator = GetComponent<Animator>();
-        if (animator == null) animator = GetComponentInChildren<Animator>();
+        _animator = GetComponent<Animator>();
+        if (_animator == null) _animator = GetComponentInChildren<Animator>();
 
-        // OPTYMALIZACJA: Cache'ujemy nazwy tekstur na starcie, żeby nie robić tego co krok
-        CacheTerrainLayers();
-    }
-
-    private void CacheTerrainLayers()
-    {
-        Terrain terrain = Terrain.activeTerrain;
-        if (terrain != null && terrain.terrainData != null)
-        {
-            var layers = terrain.terrainData.terrainLayers;
-            _cachedTerrainLayerNames = new string[layers.Length];
-            for (int i = 0; i < layers.Length; i++)
-            {
-                _cachedTerrainLayerNames[i] = layers[i].name.ToLower();
-            }
-            Debug.Log($"[Footsteps] Zcache'owano {layers.Length} warstw terenu.");
-        }
+        // OPTYMALIZACJA: Pobieramy to raz na starcie
+        _controller = GetComponentInParent<CharacterController>();
     }
 
     public void PlayFootstep()
     {
-        float currentSpeed = (animator != null) ? animator.velocity.magnitude : 0f;
+        float currentSpeed = (_animator != null) ? _animator.velocity.magnitude : 0f;
         if (currentSpeed < movementThreshold) return;
 
-        // --- FROMSOFTWARE FIX: Blokada w powietrzu i w trakcie walki/uników ---
-        CharacterController controller = GetComponentInParent<CharacterController>();
-        if (controller != null && !controller.isGrounded) return; // Zabezpieczenie przed chodzeniem w powietrzu
+        // FROMSOFTWARE FIX: Z użyciem zcache'owanego kontrolera (nie obciąża procesora)
+       // if (_controller != null && !_controller.isGrounded) return;
 
-        if (animator != null && animator.layerCount > 2)
+        if (_animator != null && _animator.layerCount > actionLayerIndex)
         {
-            // Sprawdzamy warstwę ACTIONS (indeks 2) - tak samo jak w PlayerMovement i PlayerCombat
-            AnimatorStateInfo actionState = animator.GetCurrentAnimatorStateInfo(2);
+            AnimatorStateInfo actionState = _animator.GetCurrentAnimatorStateInfo(actionLayerIndex);
             int nothingHash = Animator.StringToHash("Nothing");
-            
-            // Jeśli gramy animację na warstwie ataku/uniku lub jesteśmy w przejściu
-            if (actionState.shortNameHash != nothingHash || animator.IsInTransition(2))
+
+            if (actionState.shortNameHash != nothingHash || _animator.IsInTransition(actionLayerIndex))
             {
-                return; // Gracz atakuje albo robi unik, wycisz kroki!
+                return;
             }
         }
-        // ----------------------------------------------------------------------
 
         string materialLabel = DetermineMaterial();
 
-        // System One-Shot - naprawia opóźnienia i kolejkowanie
         EventInstance instance = RuntimeManager.CreateInstance(footstepEvent);
         instance.set3DAttributes(RuntimeUtils.To3DAttributes(gameObject));
         instance.setParameterByNameWithLabel(parameterName, materialLabel);
-        instance.setPitch(1.5f);
+
+        // Zostawiam Pitch do decyzji Sound Designera w FMOD Studio
         instance.start();
         instance.release();
 
@@ -79,34 +67,45 @@ public class PlayerFootsteps : MonoBehaviour
 
     private string DetermineMaterial()
     {
-        // Strzelamy Raycastem lekko z przodu (0.2f), żeby zniwelować lag Root Motion
-        Vector3 rayStart = transform.position + (transform.forward * 0.2f) + (Vector3.up * 0.2f);
+        // FIX: Strzelamy centralnie w dół ze środka postaci (lekko uniesione żeby nie wejść w podłogę)
+        // Usunąłem transform.forward, żeby moonwalk i strafe działały poprawnie
+        Vector3 rayStart = transform.position + (Vector3.up * rayHeightOffset);
+
+        // DEBUG: Narysuje Ci czerwoną linię w oknie Scene podczas grania!
+        Debug.DrawRay(rayStart, Vector3.down * rayDistance, Color.red, 1f);
 
         if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, rayDistance, floorLayer))
         {
-            // Sprawdzamy tylko teren
             if (hit.collider is TerrainCollider terrainCollider)
             {
-                return GetTerrainTexture(terrainCollider.terrainData, hit.point, terrainCollider.transform.position);
+                Terrain hitTerrain = terrainCollider.GetComponent<Terrain>();
+                return GetTerrainTexture(terrainCollider.terrainData, hit.point, terrainCollider.transform.position, hitTerrain);
             }
 
-            // Jeśli to nie teren (np. model mostu), możesz tu opcjonalnie 
-            // sprawdzać nazwę obiektu, ale na razie zwracamy default:
+            // Możesz tu dodawać kolejne ify dla innych modeli, np. jeśli mają tag "Wood" itp.
             return defaultLayer;
         }
+
+        // Raycast nic nie trafił
         return defaultLayer;
     }
 
-    private string GetTerrainTexture(TerrainData terrainData, Vector3 worldPos, Vector3 terrainPos)
+    private string GetTerrainTexture(TerrainData terrainData, Vector3 worldPos, Vector3 terrainPos, Terrain hitTerrain)
     {
+        // FIX: Dynamiczny cache. Jeśli weszliśmy na nowy kawałek terenu, to robi cache tylko raz.
+        if (_currentTerrain != hitTerrain)
+        {
+            _currentTerrain = hitTerrain;
+            CacheTerrainLayers(_currentTerrain);
+        }
+
         if (_cachedTerrainLayerNames == null || _cachedTerrainLayerNames.Length == 0) return defaultLayer;
 
         int mapX = Mathf.RoundToInt(((worldPos.x - terrainPos.x) / terrainData.size.x) * (terrainData.alphamapWidth - 1));
         int mapZ = Mathf.RoundToInt(((worldPos.z - terrainPos.z) / terrainData.size.z) * (terrainData.alphamapHeight - 1));
 
-        // TO JEST CIĘŻKIE API, ale pobieramy tylko 1x1 piksel
         float[,,] splatmapData = terrainData.GetAlphamaps(mapX, mapZ, 1, 1);
-        
+
         float maxWeight = 0f;
         int textureIndex = 0;
 
@@ -118,8 +117,20 @@ public class PlayerFootsteps : MonoBehaviour
                 textureIndex = i;
             }
         }
-        
-        // ZWRACAMY ZCACHE'OWANY STRING (brak nowych alokacji pamięci!)
+
         return _cachedTerrainLayerNames[textureIndex];
+    }
+
+    private void CacheTerrainLayers(Terrain terrain)
+    {
+        if (terrain != null && terrain.terrainData != null)
+        {
+            var layers = terrain.terrainData.terrainLayers;
+            _cachedTerrainLayerNames = new string[layers.Length];
+            for (int i = 0; i < layers.Length; i++)
+            {
+                _cachedTerrainLayerNames[i] = layers[i].name.ToLower();
+            }
+        }
     }
 }
