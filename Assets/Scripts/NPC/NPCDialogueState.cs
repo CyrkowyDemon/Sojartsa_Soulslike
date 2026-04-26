@@ -4,7 +4,7 @@ public class NPCDialogueState : INPCState
 {
     public void EnterState(PeacefulNPC npc)
     {
-        DialogueConversation conv = npc.GetCurrentConversation();
+        DialogueConversation conv = npc.GetPriorityConversation();
         if (conv == null) return;
 
         Debug.Log($"[NPC] {npc.name} wchodzi w stan Rozmowy. LocksPlayer: {conv.locksPlayer}");

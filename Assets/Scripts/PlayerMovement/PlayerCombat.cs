@@ -6,27 +6,36 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private TargetHandler targetHandler;
 
-    [Header("Nowy System Miecza")]
-    [SerializeField] private WeaponHitbox weaponHitbox;
+    [Header("Nowy System Miecza (Dynamiczny)")]
+    private WeaponHitbox _activeWeaponHitbox;
     [SerializeField] private float bufferWindow = 0.5f;
-    [SerializeField] private float dodgeDelay = 0.5f; // NOWOŚĆ: Czas na obrót przed unikiem
+    [SerializeField] private float dodgeDelay = 0.5f; 
 
     // Indeks warstwy "Actions" w Animatorze (Base=0, UpperBody=1, Actions=2)
     private const int ACTIONS_LAYER = 2;
 
     public bool IsDamageWindowOpen { get; private set; } 
     public bool IsDodgingAnim { get; private set; } 
-    public bool IsRotationLocked { get; private set; } // NOWOŚĆ: Twarda blokada obrotu (od uderzenia do cancela)
+    public bool IsRotationLocked { get; private set; } 
 
     private bool _attackBuffered = false;
     private float _bufferTimer = 0f;
     private int _nothingStateHash;
 
-    private Coroutine _dodgeCoroutine; // NOWOŚĆ: Referencja do asynchronicznego uniku
+    private Coroutine _dodgeCoroutine; 
 
     private void Start()
     {
         _nothingStateHash = Animator.StringToHash("Nothing");
+    }
+
+    /// <summary>
+    /// Wywoływane automatycznie przez skrypt WeaponHitbox przy narodzinach broni.
+    /// </summary>
+    public void SetActiveWeapon(WeaponHitbox hitbox)
+    {
+        _activeWeaponHitbox = hitbox;
+        Debug.Log($"<color=cyan>[COMBAT] Zarejestrowano nową broń: {hitbox.gameObject.name}</color>");
     }
 
     private void OnEnable() 
@@ -149,7 +158,7 @@ public class PlayerCombat : MonoBehaviour
         animator.SetFloat("DodgeY", dodgeDir.y);
 
         // Zamykamy hitbox miecza awaryjnie w razie czego
-        if(weaponHitbox != null) weaponHitbox.CloseDamageWindow();
+        if(_activeWeaponHitbox != null) _activeWeaponHitbox.CloseDamageWindow();
         IsDamageWindowOpen = false;
         IsDodgingAnim = true; // --- ZACZYNAMY FIZYCZNY UNIK, BLOKUJEMY ROTACJĘ ---
 
@@ -167,17 +176,48 @@ public class PlayerCombat : MonoBehaviour
     // Dodaj to na początku wymachu
     public void OpenDamage()
     {
-        if (weaponHitbox != null) weaponHitbox.OpenDamageWindow();
-        IsDamageWindowOpen = true; 
-        IsRotationLocked = true; // --- BLOKADA START ---
+        IsDamageWindowOpen = true; // Zawsze odpalamy celowanie przy ataku!
+        IsRotationLocked = true; 
+
+        // FAILSAFE: Szukamy broni
+        if (_activeWeaponHitbox == null)
+        {
+            _activeWeaponHitbox = GetComponentInChildren<WeaponHitbox>(true);
+            if (_activeWeaponHitbox == null)
+            {
+                WeaponHitbox[] allHitboxes = GetComponentsInChildren<WeaponHitbox>(true);
+                if (allHitboxes.Length > 0) _activeWeaponHitbox = allHitboxes[0];
+            }
+        }
+
+        if (_activeWeaponHitbox != null)
+        {
+            _activeWeaponHitbox.OpenDamageWindow();
+        }
+        else 
+        {
+            Debug.Log("<color=white>[COMBAT] Atak bez broni (pięściami).</color>");
+        }
+    }
+
+
+
+    public void OpenTrail()
+    {
+        if (_activeWeaponHitbox != null) _activeWeaponHitbox.StartWeaponTrail();
+    }
+
+    public void CloseTrail()
+    {
+        if (_activeWeaponHitbox != null) _activeWeaponHitbox.StopWeaponTrail();
     }
 
     public void CloseDamage()
     {
-        if (weaponHitbox != null) weaponHitbox.CloseDamageWindow();
-        IsDamageWindowOpen = false;
-        // UWAGA: Nie wyłączamy IsRotationLocked tutaj (zgodnie z prośbą Reżysera!)
+        if (_activeWeaponHitbox != null) _activeWeaponHitbox.CloseDamageWindow();
+        IsDamageWindowOpen = false; // Kończymy celowanie
     }
+
 
     public void EnableCancel()
     {
@@ -189,7 +229,7 @@ public class PlayerCombat : MonoBehaviour
 
     public void PlaySwingSound()
     {
-        if (weaponHitbox != null) weaponHitbox.PlaySwingSound();
+        if (_activeWeaponHitbox != null) _activeWeaponHitbox.PlaySwingSound();
     }
 
     public void ResetCombatFlags()

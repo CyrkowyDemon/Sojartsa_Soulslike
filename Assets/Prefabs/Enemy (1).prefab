@@ -352,6 +352,7 @@ GameObject:
   - component: {fileID: 632408343729333368}
   - component: {fileID: 6915823986769630527}
   - component: {fileID: 171128171979670845}
+  - component: {fileID: 159388355961552430}
   m_Layer: 6
   m_Name: Enemy (1)
   m_TagString: Enemy
@@ -416,6 +417,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8
+  lookInterval: 0.2
   strafeDistance: 5
   rotationSpeed: 8
   maxChaseDistance: 25
@@ -460,6 +462,8 @@ MonoBehaviour:
   maxHealth: 400
   maxWounds: 10
   timeToResetWounds: 10
+  maxPoise: 100
+  poiseResetRate: 20
   staggerCooldown: 3
   enemyUI: {fileID: 6257395992261938615}
 --- !u!195 &171128171979670845
@@ -484,6 +488,18 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &159388355961552430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2902917289471212879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f37a374bed8e648aee30f360d206d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AI.AIStateMachine
 --- !u!1 &3674547379352093501
 GameObject:
   m_ObjectHideFlags: 0
@@ -689,14 +705,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
   hitboxID: 1
   isKnockbackAttack: 0
-  basePoint: {fileID: 8762483623138003064}
-  tipPoint: {fileID: 2715425130049859137}
+  hitPoints:
+  - {fileID: 8762483623138003064}
+  - {fileID: 2715425130049859137}
   weaponThickness: 0.3
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   damageAmount: 30
-  swordTrail: {fileID: 7847255569393043830}
+  poiseDamage: 10
+  swingVFX: {fileID: 0}
+  hitVFXPrefab: {fileID: 0}
+  hitLightPrefab: {fileID: 0}
+  swingSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  hitSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  materialParameterName: Surface
+  defaultMaterialLabel: Flesh
   hitStopDuration: 0.03
   hitStopOnPlayerHit: 0.05
 --- !u!1 &6726498152898380914
@@ -1200,6 +1236,7 @@ MonoBehaviour:
   hpSlider: {fileID: 362226729879189664}
   woundSlider: {fileID: 949645979484937315}
   showDuration: 5
+  updateDistance: 25
 --- !u!225 &3528673111383026084
 CanvasGroup:
   m_ObjectHideFlags: 0

@@ -42,8 +42,8 @@ public class NPCTriggerZone : MonoBehaviour
             {
                 Debug.Log($"[TriggerZone] Gracz {other.name} wchodzi w zasięg {targetNPC.name}.");
                 
-                // Wywołujemy interakcję u NPC (on sam dobierze odpowiedni dialog na liście)
-                targetNPC.Interact(other.transform); 
+                // Wywołujemy interakcję automatyczną
+                targetNPC.InteractWithIntent(isAutomaticTrigger: true); 
                 
                 _hasTriggered = true;
             }

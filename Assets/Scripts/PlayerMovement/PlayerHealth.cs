@@ -28,6 +28,22 @@ public class PlayerHealth : MonoBehaviour
 
     public bool IsStaggered => _isStaggered;
 
+    private void OnEnable()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnEquipmentChanged += SyncWithStats;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnEquipmentChanged -= SyncWithStats;
+        }
+    }
+
     void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
@@ -35,12 +51,37 @@ public class PlayerHealth : MonoBehaviour
 
     void Start()
     {
+        SyncWithStats();
         currentHealth = maxHealth;
+        
         if (hud != null) 
         {
             hud.UpdateHP(currentHealth, maxHealth);
             hud.UpdateWounds(0f, maxWounds);
         }
+    }
+
+    /// <summary>
+    /// Aktualizuje Max HP na podstawie aktualnych statystyk (Baza + Eq).
+    /// </summary>
+    public void SyncWithStats()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            int oldMax = maxHealth;
+            maxHealth = PlayerStats.Instance.GetMaxHealth();
+            
+            // Jeśli Max HP wzrosło, dodajemy różnicę do aktualnego zdrowia (leczymy gracza o bonus)
+            if (maxHealth > oldMax && oldMax > 0)
+            {
+                currentHealth += (maxHealth - oldMax);
+            }
+            
+            // Zabezpieczenie: Aktualne HP nie może być większe niż nowe Max HP
+            currentHealth = Mathf.Min(currentHealth, maxHealth);
+        }
+
+        if (hud != null) hud.UpdateHP(currentHealth, maxHealth);
     }
 
     void Update()

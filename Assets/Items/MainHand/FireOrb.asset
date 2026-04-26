@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70ea1ce0c426fe045a3d7f26ec901fd1, type: 3}
+  m_Name: FireOrb
+  m_EditorClassIdentifier: Assembly-CSharp::EnchantData
+  itemID: fire_orb_01
+  itemName: Orb Ognia
+  type: 4
+  icon: {fileID: 21300000, guid: 556ff701996aefe4dbdfacf753ac0bae, type: 3}
+  description: "Ogniowa moc... Pozwala sp\u0142owi\u0107 bro\u0144 w wiecznym ogniu,
+    kt\xF3ry podpali przeciwnika"
+  extraStats: "Obra\u017Cenia w czasie"
+  bonusVitality: 0
+  bonusAttackPower: 0
+  isStackable: 0
+  maxStackSize: 1
+  buyValue: 100
+  sellValue: 50
+  skillID: 
+  manaCost: 10

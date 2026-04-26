@@ -13,7 +13,7 @@ EditorBuildSettings:
     guid: 01c08f47a229a90409a25566c8804075
   - enabled: 1
     path: Assets/Scenes/Mazury/Pojezierza.unity
-    guid: a6cc3493b8bbcb04fa8b0252ca20a8e1
+    guid: 157cf78d846fb0241b531570c83780e0
   - enabled: 1
     path: Assets/Scenes/HUB.unity
     guid: 7ac9473a8cdbf274f8ffe8eb336ddf41

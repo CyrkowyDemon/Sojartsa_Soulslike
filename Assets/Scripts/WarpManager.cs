@@ -29,6 +29,16 @@ public class WarpManager : MonoBehaviour
     private string _lastSceneName;
     private string _lastSpawnPointID;
 
+    /// <summary>
+    /// Ustawia punkt odrodzenia (np. przy ognisku).
+    /// </summary>
+    public void SetLastCheckpoint(string sceneName, string spawnPointID)
+    {
+        _lastSceneName = sceneName;
+        _lastSpawnPointID = spawnPointID;
+        Debug.Log($"<color=lime>[WARP] Nowy punkt odrodzenia: {sceneName} / {spawnPointID}</color>");
+    }
+
     private void Awake()
     {
         if (_instance != null && _instance != this)

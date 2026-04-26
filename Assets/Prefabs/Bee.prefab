@@ -256,14 +256,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
   hitboxID: 1
   isKnockbackAttack: 0
-  basePoint: {fileID: 2528908209892182138}
-  tipPoint: {fileID: 2528908209892182138}
+  hitPoints:
+  - {fileID: 2528908209892182138}
   weaponThickness: 0.4
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   damageAmount: 30
-  swordTrail: {fileID: 3416948711261795354}
+  poiseDamage: 10
+  swingVFX: {fileID: 0}
+  hitVFXPrefab: {fileID: 0}
+  hitLightPrefab: {fileID: 0}
+  swingSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  hitSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  materialParameterName: Surface
+  defaultMaterialLabel: Flesh
   hitStopDuration: 0.04
   hitStopOnPlayerHit: 0.04
 --- !u!1 &940598696904098402
@@ -388,14 +407,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
   hitboxID: 2
   isKnockbackAttack: 0
-  basePoint: {fileID: 7081137880077486228}
-  tipPoint: {fileID: 7081137880077486228}
+  hitPoints: []
   weaponThickness: 0.6
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   damageAmount: 30
-  swordTrail: {fileID: 0}
+  poiseDamage: 10
+  swingVFX: {fileID: 0}
+  hitVFXPrefab: {fileID: 0}
+  hitLightPrefab: {fileID: 0}
+  swingSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  hitSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  materialParameterName: Surface
+  defaultMaterialLabel: Flesh
   hitStopDuration: 0.04
   hitStopOnPlayerHit: 0.04
 --- !u!1 &1029856811081195160
@@ -1397,6 +1434,7 @@ GameObject:
   - component: {fileID: 13309024623993602}
   - component: {fileID: 9088098281749102511}
   - component: {fileID: 9072760472659937816}
+  - component: {fileID: 1749729707974376333}
   m_Layer: 6
   m_Name: Bee
   m_TagString: Enemy
@@ -1460,6 +1498,8 @@ MonoBehaviour:
   maxHealth: 100
   maxWounds: 3
   timeToResetWounds: 4
+  maxPoise: 100
+  poiseResetRate: 20
   staggerCooldown: 1.5
   enemyUI: {fileID: 5402747190849020441}
 --- !u!114 &13309024623993602
@@ -1479,6 +1519,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8
+  lookInterval: 0.2
   orbitDistance: 5
   rotationSpeed: 8
   maxChaseDistance: 25
@@ -1532,6 +1573,18 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 5
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1749729707974376333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4760474610527320766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f37a374bed8e648aee30f360d206d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AI.AIStateMachine
 --- !u!1 &5144876659910525371
 GameObject:
   m_ObjectHideFlags: 0
@@ -2037,6 +2090,7 @@ MonoBehaviour:
   hpSlider: {fileID: 5135965905832826162}
   woundSlider: {fileID: 8679334476786285080}
   showDuration: 5
+  updateDistance: 25
 --- !u!225 &7709255251192445556
 CanvasGroup:
   m_ObjectHideFlags: 0

@@ -18,9 +18,17 @@ public class PauseManager : MonoBehaviour
     [Header("Panele")]
     public GameObject pauseMainPanel; 
     public GameObject settingsPanel;
-    public GameObject keybindsPanel; // NOWE: PauseManager musi wiedziec o tym panelu!
+    public GameObject keybindsPanel;
+    public GameObject inventoryPanel;
+    public GameObject enchantPanel;
+
+    [Header("Podświetlenia (Focus)")]
     public GameObject firstSettingsButton; 
     public GameObject settingsButtonInPause;
+    public GameObject firstInventoryButton;
+    public GameObject inventoryButtonInPause;
+    public GameObject firstEnchantButton;
+    public GameObject enchantButtonInPause;
 
     [Header("Kamera - Zabezpieczenie")]
     [Tooltip("Przeciągnij tu obiekt kamery z komponentem Cinemachine Input Axis Controller")]
@@ -28,14 +36,7 @@ public class PauseManager : MonoBehaviour
 
     private CinemachineBrain _brain;
     private bool isPaused = false;
-    
-    // Zmienna do ignorowania podwójnych sygnałów z ESC w tej samej klatce
     private int _lastToggleFrame = -1; 
-
-    private void Awake()
-    {
-        Debug.Log($"<color=cyan>[PAUSE] PauseManager budzi się na obiekcie: {gameObject.name} (InstanceID: {gameObject.GetInstanceID()}). Rodzic: {transform.parent?.name}</color>");
-    }
 
     private void OnEnable()
     {
@@ -59,32 +60,44 @@ public class PauseManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Resetujemy stan przy każdej załadowanej scenie
         ResetUI();
     }
 
-    void Start()
+    private void Start()
     {
-        ResetUI();
         _brain = Camera.main?.GetComponent<CinemachineBrain>();
+        ResetUI();
     }
 
     private void ResetUI()
     {
         isPaused = false;
-        
-        // Wyłączamy wszystkie panele na start, żeby nic nie straszyło na ekranie
         if (pauseCanvas != null) pauseCanvas.SetActive(false);
+        CloseAllPanels();
+        if (inputReader != null) inputReader.UnlockAllInput();
+    }
+
+    /// <summary>
+    /// Wyłącza wszystkie panele menu (Settings, Inventory, Keybinds itp.)
+    /// </summary>
+    private void CloseAllPanels()
+    {
+        if (pauseMainPanel != null) pauseMainPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(false);
         if (keybindsPanel != null) keybindsPanel.SetActive(false);
-
-        // Odblokowujemy kursor i input (nie ruszamy czasu, zgodnie z Twoją prośbą)
-        if (inputReader != null) inputReader.UnlockAllInput();
+        if (inventoryPanel != null) inventoryPanel.SetActive(false);
+        if (enchantPanel != null) enchantPanel.SetActive(false);
     }
 
     public void TogglePause()
     {
-        // Magiczne rozwiązanie problemu z ESC: jeśli w tej samej klatce już to wywołaliśmy, zignoruj!
+        // Blokada: nie pozwalamy włączyć pauzy, jeśli gracz jest w trakcie dialogu lub menu u NPC.
+        if (!isPaused)
+        {
+            if (DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy) return;
+            if (NPCMenuUI.Instance != null && NPCMenuUI.Instance.menuPanel != null && NPCMenuUI.Instance.menuPanel.activeInHierarchy) return;
+        }
+
         if (Time.frameCount == _lastToggleFrame) return;
         _lastToggleFrame = Time.frameCount;
 
@@ -95,8 +108,8 @@ public class PauseManager : MonoBehaviour
             pauseCanvas.SetActive(isPaused);
             if (isPaused)
             {
+                CloseAllPanels();
                 if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
-                if (settingsPanel != null) settingsPanel.SetActive(false);
             }
         }
 
@@ -105,60 +118,78 @@ public class PauseManager : MonoBehaviour
             Time.timeScale = 1f; 
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
-            
             if (inputReader != null) inputReader.SetPauseMenuState(); 
-            
-            // WYŁĄCZAMY KOMPONENT KAMERY
             if (cameraInputController != null) cameraInputController.enabled = false;
-
             SelectButton(firstSelectedButton);
-            if (_brain != null) _brain.enabled = true;
         }
         else
         {
-            Time.timeScale = 1f; 
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
-            
             if (inputReader != null) inputReader.UnlockAllInput(); 
-            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
-
-            // WŁĄCZAMY KAMERĘ Z POWROTEM
             if (cameraInputController != null) cameraInputController.enabled = true;
-
-            // Zamykamy WSZYSTKIE panele przy wyjsciu z pauzy
-            if (settingsPanel != null) settingsPanel.SetActive(false);
-            if (keybindsPanel != null) keybindsPanel.SetActive(false); // NOWE
-            if (_brain != null) _brain.enabled = true;
+            CloseAllPanels();
         }
     }
 
+    // --- USTAWIENIA ---
     public void OpenSettings()
     {
-        if (pauseMainPanel != null) pauseMainPanel.SetActive(false);
+        CloseAllPanels();
         if (settingsPanel != null) settingsPanel.SetActive(true);
-
         if (inputReader != null) inputReader.SetSettingsMenuState();
         SelectButton(firstSettingsButton);
     }
 
     public void CloseSettings()
     {
-        if (settingsPanel != null) settingsPanel.SetActive(false);
+        CloseAllPanels();
         if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
-
         if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(settingsButtonInPause);
+    }
+
+    // --- EKWIPUNEK ---
+    public void OpenInventory()
+    {
+        CloseAllPanels();
+        if (inventoryPanel != null) inventoryPanel.SetActive(true);
+        if (inputReader != null) inputReader.SetPauseMenuState();
+        SelectButton(firstInventoryButton);
+    }
+
+    public void CloseInventory()
+    {
+        CloseAllPanels();
+        if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
+        if (inputReader != null) inputReader.SetPauseMenuState();
+        SelectButton(inventoryButtonInPause);
+    }
+
+    // --- ENCHANT ---
+    public void OpenEnchant()
+    {
+        CloseAllPanels();
+        if (enchantPanel != null) enchantPanel.SetActive(true);
+        if (inputReader != null) inputReader.SetPauseMenuState();
+        SelectButton(firstEnchantButton);
+    }
+
+    public void CloseEnchant()
+    {
+        CloseAllPanels();
+        if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
+        if (inputReader != null) inputReader.SetPauseMenuState();
+        SelectButton(enchantButtonInPause);
     }
 
     private void HandleCancel()
     {
         if (!isPaused) return;
 
-        // Hierarchia Cancel: Keybinds -> Settings -> Pauza
+        // Hierarchia Cancel: Keybinds -> Settings/Inventory -> Pauza
         if (keybindsPanel != null && keybindsPanel.activeSelf)
         {
-            // Zamykamy keybindy, wracamy do ustawień
             keybindsPanel.SetActive(false);
             if (settingsPanel != null) settingsPanel.SetActive(true);
             SelectButton(firstSettingsButton);
@@ -168,6 +199,14 @@ public class PauseManager : MonoBehaviour
         if (settingsPanel != null && settingsPanel.activeSelf)
         {
             CloseSettings();
+        }
+        else if (inventoryPanel != null && inventoryPanel.activeSelf)
+        {
+            CloseInventory();
+        }
+        else if (enchantPanel != null && enchantPanel.activeSelf)
+        {
+            CloseEnchant();
         }
         else
         {

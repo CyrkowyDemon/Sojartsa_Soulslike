@@ -48,6 +48,16 @@ public class RootMotionProxy : MonoBehaviour
         if (playerCombat != null) playerCombat.CloseDamage();
     }
 
+    public void OpenTrail()
+    {
+        if (playerCombat != null) playerCombat.OpenTrail();
+    }
+
+    public void CloseTrail()
+    {
+        if (playerCombat != null) playerCombat.CloseTrail();
+    }
+
     public void EnableCancel()
     {
         if (playerCombat != null) playerCombat.EnableCancel();

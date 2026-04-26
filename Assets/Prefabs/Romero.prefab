@@ -89,6 +89,7 @@ GameObject:
   - component: {fileID: 2552718283179140686}
   - component: {fileID: 824491305353751792}
   - component: {fileID: 1998127241115773132}
+  - component: {fileID: 1472794761734201547}
   m_Layer: 6
   m_Name: Romero
   m_TagString: Enemy
@@ -129,6 +130,8 @@ MonoBehaviour:
   maxHealth: 1000
   maxWounds: 3
   timeToResetWounds: 4
+  maxPoise: 100
+  poiseResetRate: 20
   staggerCooldown: 1.5
   enemyUI: {fileID: 7614687387538028129}
 --- !u!114 &823610848222530508
@@ -148,6 +151,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8
+  lookInterval: 0.2
   strafeDistance: 4
   rotationSpeed: 10
   maxChaseDistance: 25
@@ -224,6 +228,18 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0.8, z: 0}
+--- !u!114 &1472794761734201547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 432968220429619719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9f37a374bed8e648aee30f360d206d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AI.AIStateMachine
 --- !u!1 &1226166327395959141
 GameObject:
   m_ObjectHideFlags: 0
@@ -510,14 +526,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
   hitboxID: 1
   isKnockbackAttack: 0
-  basePoint: {fileID: 473794349344332745}
-  tipPoint: {fileID: 5194639870442947688}
+  hitPoints:
+  - {fileID: 473794349344332745}
+  - {fileID: 5194639870442947688}
   weaponThickness: 3
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   damageAmount: 30
-  swordTrail: {fileID: 808355117503879670}
+  poiseDamage: 10
+  swingVFX: {fileID: 0}
+  hitVFXPrefab: {fileID: 0}
+  hitLightPrefab: {fileID: 0}
+  swingSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  hitSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  materialParameterName: Surface
+  defaultMaterialLabel: Flesh
   hitStopDuration: 0.04
   hitStopOnPlayerHit: 0.04
 --- !u!1 &2547081116659173960
@@ -829,14 +865,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
   hitboxID: 2
   isKnockbackAttack: 1
-  basePoint: {fileID: 4612546178534810965}
-  tipPoint: {fileID: 4612546178534810965}
+  hitPoints: []
   weaponThickness: 0.6
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   damageAmount: 30
-  swordTrail: {fileID: 0}
+  poiseDamage: 10
+  swingVFX: {fileID: 0}
+  hitVFXPrefab: {fileID: 0}
+  hitLightPrefab: {fileID: 0}
+  swingSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  hitSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  materialParameterName: Surface
+  defaultMaterialLabel: Flesh
   hitStopDuration: 0.04
   hitStopOnPlayerHit: 0.04
 --- !u!1 &5878463953444644763
@@ -990,6 +1044,7 @@ MonoBehaviour:
   hpSlider: {fileID: 4534893152823220059}
   woundSlider: {fileID: 8855912141275274393}
   showDuration: 5
+  updateDistance: 25
 --- !u!225 &566278014737424004
 CanvasGroup:
   m_ObjectHideFlags: 0

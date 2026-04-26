@@ -12,10 +12,15 @@ public class PeacefulNPC : MonoBehaviour, IInteractable
 
     public NPCIdleState IdleState = new NPCIdleState();
     public NPCDialogueState DialogueState = new NPCDialogueState();
+    public NPCMenuState MenuState = new NPCMenuState(); // Nowy stan menu!
 
-    [Header("Dialogi (ScriptableObjects)")]
-    [Tooltip("Lista rozmów. Gra wybierze z góry na dół pierwszą rZECZ, której wymóg jest spełniony. Zostaw puste pole flagi na samym dole jako domyślny dialog!")]
-    public List<DialogueConversation> conversations; 
+    [Header("Ważne Dialogi (Automatyczne/Priorytety)")]
+    [Tooltip("Odpali się od razu po wciśnięciu E lub po wejściu w strefę (TriggerZone).")]
+    public List<DialogueConversation> priorityConversations = new List<DialogueConversation>(); 
+
+    [Header("Dialogi Opcjonalne (Pod menu 'Porozmawiaj')")]
+    [Tooltip("Pojawią się tylko jako opcje do wyboru w menu NPC.")]
+    public List<DialogueConversation> talkConversations = new List<DialogueConversation>();
 
     [Header("System Kamery")]
     [Tooltip("Punkt, na którym skupi się kamera gracza. Jeśli puste, użyje środka NPC.")]
@@ -41,17 +46,39 @@ public class PeacefulNPC : MonoBehaviour, IInteractable
         _currentState?.EnterState(this);
     }
 
-    // Interfejs IInteractable (Co się dzieje po kliknięciu [E])
+    // Interfejs IInteractable (Domyślne kliknięcie [E])
     public void Interact(Transform interactor)
+    {
+        InteractWithIntent(isAutomaticTrigger: false);
+    }
+
+    /// <summary>
+    /// Główna logika rozmowy. Rozróżnia wciśnięcie E od strefy automatycznej.
+    /// </summary>
+    public void InteractWithIntent(bool isAutomaticTrigger)
     {
         if (_currentState == IdleState)
         {
-            SwitchState(DialogueState);
+            if (isAutomaticTrigger)
+            {
+                // To wywołanie ze strefy (NPCTriggerZone). Sprawdzamy czy jest ważna rozmowa.
+                DialogueConversation priority = GetPriorityConversation();
+                if (priority != null)
+                {
+                    SwitchState(DialogueState);
+                }
+            }
+            else
+            {
+                // Gracz wcisnął E "z palca" - ZAWSZE otwieramy Hub Menu (Sklep, Porozmawiaj, Bywaj).
+                Debug.Log($"[NPC] Otwieram Menu dla {name} (Porozmawiaj, Sklep, Bywaj)");
+                SwitchState(MenuState); 
+            }
         }
         else if (_currentState == DialogueState)
         {
             // Gdy jesteśmy w rozmowie, kliknięcie E przesuwa tekst do przodu.
-            if (DialogueManager.Instance != null)
+            if (!isAutomaticTrigger && DialogueManager.Instance != null)
             {
                 DialogueManager.Instance.DisplayNextNode();
             }
@@ -69,30 +96,40 @@ public class PeacefulNPC : MonoBehaviour, IInteractable
         return true; 
     }
 
-    // Profesjonalne szukanie odpowiedniego tekstu
-    public DialogueConversation GetCurrentConversation()
+    // Szuka najważniejszej rozmowy (z góry na dół)
+    public DialogueConversation GetPriorityConversation()
     {
-        foreach (var conv in conversations)
+        if (priorityConversations == null) return null;
+
+        foreach (var conv in priorityConversations)
         {
+            if (conv == null) continue;
+
             // Czy spełniamy WSZYSTKIE wymagania?
             bool hasAllRequired = true;
-            foreach (var flag in conv.requiredFlags)
+            if (conv.requiredFlags != null)
             {
-                if (!WorldStateManager.Instance.HasFlag(flag))
+                foreach (var flag in conv.requiredFlags)
                 {
-                    hasAllRequired = false;
-                    break;
+                    if (!WorldStateManager.Instance.HasFlag(flag))
+                    {
+                        hasAllRequired = false;
+                        break;
+                    }
                 }
             }
             
             // Czy NIE jesteśmy wykluczeni (przez którąkolwiek flagę)?
             bool anyExcluded = false;
-            foreach (var flag in conv.excludeFlags)
+            if (conv.excludeFlags != null)
             {
-                if (WorldStateManager.Instance.HasFlag(flag))
+                foreach (var flag in conv.excludeFlags)
                 {
-                    anyExcluded = true;
-                    break;
+                    if (WorldStateManager.Instance.HasFlag(flag))
+                    {
+                        anyExcluded = true;
+                        break;
+                    }
                 }
             }
 
@@ -101,7 +138,44 @@ public class PeacefulNPC : MonoBehaviour, IInteractable
                 return conv;
             }
         }
-        Debug.LogWarning($"[NPC] {name} chce coś powiedzieć, ale nie znalazł odpowiedniego pliku dialogu (może wszystkie jednorazówki już wystrzelały?)!");
+        Debug.Log($"[NPC] Brak priorytetowych dialogów dla {name}.");
         return null; 
+    }
+
+    // Pobiera wszystkie opcjonalne dialogi, które gracz odblokował (do wrzucenia w listę przycisków)
+    public List<DialogueConversation> GetAvailableTalkConversations()
+    {
+        List<DialogueConversation> available = new List<DialogueConversation>();
+        if (talkConversations == null) return available;
+        
+        foreach (var conv in talkConversations)
+        {
+            if (conv == null) continue;
+
+            bool hasAllRequired = true;
+            if (conv.requiredFlags != null)
+            {
+                foreach (var flag in conv.requiredFlags)
+                {
+                    if (!WorldStateManager.Instance.HasFlag(flag)) { hasAllRequired = false; break; }
+                }
+            }
+            
+            bool anyExcluded = false;
+            if (conv.excludeFlags != null)
+            {
+                foreach (var flag in conv.excludeFlags)
+                {
+                    if (WorldStateManager.Instance.HasFlag(flag)) { anyExcluded = true; break; }
+                }
+            }
+
+            if (hasAllRequired && !anyExcluded)
+            {
+                available.Add(conv);
+            }
+        }
+
+        return available;
     }
 }
