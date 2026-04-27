@@ -40,8 +40,11 @@ public class NPCMenuUI : MonoBehaviour
         
         if (menuPanel != null) 
         {
-            menuPanel.SetActive(true);
-            Debug.Log("[NPCMenuUI] 2. Włączyłem MenuPanel!");
+            UIFadeHelper fader = menuPanel.GetComponent<UIFadeHelper>();
+            if (fader != null) fader.FadeIn();
+            else menuPanel.SetActive(true);
+
+            Debug.Log("[NPCMenuUI] 2. Włączyłem MenuPanel (płynnie)!");
         }
         else Debug.LogError("[NPCMenuUI] Nie przypisałeś MenuPanel w inspektorze!");
 
@@ -88,7 +91,9 @@ public class NPCMenuUI : MonoBehaviour
 
     private void StartOptionalDialogue(DialogueConversation conv)
     {
-        menuPanel.SetActive(false); // Chowamy menu na czas rozmowy
+        UIFadeHelper fader = menuPanel.GetComponent<UIFadeHelper>();
+        if (fader != null) fader.FadeOut();
+        else menuPanel.SetActive(false); 
         
         // Zmieniamy stan NPC z Menu na Rozmowę, podając mu konkretny dialog
         _currentNPC.SwitchState(_currentNPC.DialogueState);
@@ -102,7 +107,9 @@ public class NPCMenuUI : MonoBehaviour
 
     public void CloseMenu()
     {
-        menuPanel.SetActive(false);
+        UIFadeHelper fader = menuPanel.GetComponent<UIFadeHelper>();
+        if (fader != null) fader.FadeOut();
+        else menuPanel.SetActive(false);
         if (_currentNPC != null)
         {
             _currentNPC.SwitchState(_currentNPC.IdleState);

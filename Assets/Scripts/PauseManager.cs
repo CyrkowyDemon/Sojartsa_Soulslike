@@ -71,8 +71,9 @@ public class PauseManager : MonoBehaviour
 
     private void ResetUI()
     {
+        Debug.Log("[PauseManager] ResetUI wywołane!");
         isPaused = false;
-        if (pauseCanvas != null) pauseCanvas.SetActive(false);
+        SetPanelState(pauseCanvas, false);
         CloseAllPanels();
         if (inputReader != null) inputReader.UnlockAllInput();
     }
@@ -82,34 +83,71 @@ public class PauseManager : MonoBehaviour
     /// </summary>
     private void CloseAllPanels()
     {
-        if (pauseMainPanel != null) pauseMainPanel.SetActive(false);
-        if (settingsPanel != null) settingsPanel.SetActive(false);
-        if (keybindsPanel != null) keybindsPanel.SetActive(false);
-        if (inventoryPanel != null) inventoryPanel.SetActive(false);
-        if (enchantPanel != null) enchantPanel.SetActive(false);
+        SetPanelState(pauseMainPanel, false);
+        SetPanelState(settingsPanel, false);
+        SetPanelState(keybindsPanel, false);
+        SetPanelState(inventoryPanel, false);
+        SetPanelState(enchantPanel, false);
+    }
+
+    private void SetPanelState(GameObject panel, bool isActive)
+    {
+        if (panel == null) return;
+        Debug.Log($"[PauseManager] SetPanelState dla {panel.name} na {isActive}. Klatka: {Time.frameCount}");
+
+        UIFadeHelper fader = panel.GetComponent<UIFadeHelper>();
+        if (fader != null)
+        {
+            if (isActive) fader.FadeIn();
+            else fader.FadeOut();
+        }
+        else
+        {
+            Debug.Log($"[PauseManager] {panel.name} nie ma Fadera - robię SetActive({isActive})");
+            panel.SetActive(isActive);
+        }
     }
 
     public void TogglePause()
     {
-        // Blokada: nie pozwalamy włączyć pauzy, jeśli gracz jest w trakcie dialogu lub menu u NPC.
+        Debug.Log($"[PauseManager] TogglePause wywołane! Obecny stan isPaused: {isPaused}");
         if (!isPaused)
         {
-            if (DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy) return;
-            if (NPCMenuUI.Instance != null && NPCMenuUI.Instance.menuPanel != null && NPCMenuUI.Instance.menuPanel.activeInHierarchy) return;
+            if (DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy) 
+            {
+                Debug.Log("[PauseManager] Blokada: DialoguePanel jest aktywny!");
+                return;
+            }
+            if (NPCMenuUI.Instance != null && NPCMenuUI.Instance.menuPanel != null && NPCMenuUI.Instance.menuPanel.activeInHierarchy) 
+            {
+                Debug.Log("[PauseManager] Blokada: NPCMenuUI jest aktywny!");
+                return;
+            }
         }
 
-        if (Time.frameCount == _lastToggleFrame) return;
+        if (Time.frameCount == _lastToggleFrame) 
+        {
+            Debug.Log($"[PauseManager] BLOKADA KLATKI: Próba wywołania w tej samej klatce ({Time.frameCount}). Ignoruję.");
+            return;
+        }
         _lastToggleFrame = Time.frameCount;
 
         isPaused = !isPaused;
+        Debug.Log($"[PauseManager] PRZEŁĄCZAM STAN NA: {isPaused}");
         
         if (pauseCanvas != null)
         {
-            pauseCanvas.SetActive(isPaused);
             if (isPaused)
             {
+                Debug.Log("[PauseManager] Wykonuję: WŁĄCZANIE (SetPanelState True)");
+                SetPanelState(pauseCanvas, true);
                 CloseAllPanels();
-                if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
+                SetPanelState(pauseMainPanel, true);
+            }
+            else
+            {
+                Debug.Log("[PauseManager] Wykonuję: WYŁĄCZANIE (SetPanelState False)");
+                SetPanelState(pauseCanvas, false);
             }
         }
 
@@ -124,19 +162,18 @@ public class PauseManager : MonoBehaviour
         }
         else
         {
+            Debug.Log("[PauseManager] Przywracam stan gry (InputReader Unlock)");
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
             if (inputReader != null) inputReader.UnlockAllInput(); 
             if (cameraInputController != null) cameraInputController.enabled = true;
-            CloseAllPanels();
         }
     }
 
-    // --- USTAWIENIA ---
     public void OpenSettings()
     {
         CloseAllPanels();
-        if (settingsPanel != null) settingsPanel.SetActive(true);
+        SetPanelState(settingsPanel, true);
         if (inputReader != null) inputReader.SetSettingsMenuState();
         SelectButton(firstSettingsButton);
     }
@@ -144,16 +181,15 @@ public class PauseManager : MonoBehaviour
     public void CloseSettings()
     {
         CloseAllPanels();
-        if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
+        SetPanelState(pauseMainPanel, true);
         if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(settingsButtonInPause);
     }
 
-    // --- EKWIPUNEK ---
     public void OpenInventory()
     {
         CloseAllPanels();
-        if (inventoryPanel != null) inventoryPanel.SetActive(true);
+        SetPanelState(inventoryPanel, true);
         if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(firstInventoryButton);
     }
@@ -161,16 +197,15 @@ public class PauseManager : MonoBehaviour
     public void CloseInventory()
     {
         CloseAllPanels();
-        if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
+        SetPanelState(pauseMainPanel, true);
         if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(inventoryButtonInPause);
     }
 
-    // --- ENCHANT ---
     public void OpenEnchant()
     {
         CloseAllPanels();
-        if (enchantPanel != null) enchantPanel.SetActive(true);
+        SetPanelState(enchantPanel, true);
         if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(firstEnchantButton);
     }
@@ -178,7 +213,7 @@ public class PauseManager : MonoBehaviour
     public void CloseEnchant()
     {
         CloseAllPanels();
-        if (pauseMainPanel != null) pauseMainPanel.SetActive(true);
+        SetPanelState(pauseMainPanel, true);
         if (inputReader != null) inputReader.SetPauseMenuState();
         SelectButton(enchantButtonInPause);
     }
@@ -190,8 +225,8 @@ public class PauseManager : MonoBehaviour
         // Hierarchia Cancel: Keybinds -> Settings/Inventory -> Pauza
         if (keybindsPanel != null && keybindsPanel.activeSelf)
         {
-            keybindsPanel.SetActive(false);
-            if (settingsPanel != null) settingsPanel.SetActive(true);
+            SetPanelState(keybindsPanel, false);
+            SetPanelState(settingsPanel, true);
             SelectButton(firstSettingsButton);
             return;
         }
