@@ -42,10 +42,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639120248395703377
+  lastModified: 639129773811150233
   FileSizes:
   - Name: Desktop
-    Value: 1094
+    Value: 1314
   Exists: 1
 --- !u!114 &-4715419453808957309
 MonoBehaviour:
@@ -100,6 +100,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 61000
+--- !u!114 &-2170712167792877585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: snapshot:/Outside
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: snapshot:/Outside
+  Guid:
+    Data1: -938076163
+    Data2: 1118027638
+    Data3: -1995870307
+    Data4: -826922920
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 0
 --- !u!114 &-1395164888046074251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,10 +142,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639120248395662275
+  lastModified: 639129773811134959
   FileSizes:
   - Name: Desktop
-    Value: 2619296
+    Value: 2620576
   Exists: 1
 --- !u!114 &-897539636616960276
 MonoBehaviour:
@@ -169,13 +196,14 @@ MonoBehaviour:
   - {fileID: 7175402441396577716}
   - {fileID: 7849781739912008267}
   - {fileID: -2337784836147937662}
+  - {fileID: -2170712167792877585}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1395164888046074251}
   StringsBanks:
   - {fileID: -8055644028912070556}
   cacheVersion: 131859
-  cacheTime: 639120248395703377
+  cacheTime: 639129773811150233
   SerializableEventsDict:
   - key: event:/Tavern
     index: 0
@@ -189,6 +217,8 @@ MonoBehaviour:
     index: 4
   - key: event:/Asdasd
     index: 5
+  - key: snapshot:/Outside
+    index: 6
 --- !u!114 &5059730038469999015
 MonoBehaviour:
   m_ObjectHideFlags: 0

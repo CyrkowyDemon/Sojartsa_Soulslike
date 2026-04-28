@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="Snapshot" id="{c81617fd-bf76-42a3-9d6f-09895828b6ce}">
+		<property name="name">
+			<value>Outside</value>
+		</property>
+		<relationship name="mixer">
+			<destination>{dd2df13e-e367-45d8-92fa-b23774156b08}</destination>
+		</relationship>
+		<relationship name="automatableProperties">
+			<destination>{e730bb88-84e1-4881-90c1-ff6245eb2746}</destination>
+		</relationship>
+		<relationship name="markerTracks">
+			<destination>{0fa0aa96-efda-4fc4-84ff-c9d140aa3250}</destination>
+		</relationship>
+		<relationship name="timeline">
+			<destination>{0df4e517-d3e5-403b-8a9e-f92c53e29caf}</destination>
+		</relationship>
+		<relationship name="snapshotMasterTrack">
+			<destination>{0ccd0bc4-c9c2-457f-8a52-8abff70beef2}</destination>
+		</relationship>
+	</object>
+	<object class="EventAutomatableProperties" id="{e730bb88-84e1-4881-90c1-ff6245eb2746}">
+		<relationship name="modulators">
+			<destination>{79d57bab-6d13-465e-a4bb-11616897fd9b}</destination>
+		</relationship>
+	</object>
+	<object class="MarkerTrack" id="{0fa0aa96-efda-4fc4-84ff-c9d140aa3250}" />
+	<object class="Timeline" id="{0df4e517-d3e5-403b-8a9e-f92c53e29caf}" />
+	<object class="SnapshotMasterTrack" id="{0ccd0bc4-c9c2-457f-8a52-8abff70beef2}" />
+	<object class="ADSRModulator" id="{79d57bab-6d13-465e-a4bb-11616897fd9b}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>snapshotIntensity</value>
+		</property>
+		<property name="peakValue">
+			<value>100</value>
+		</property>
+		<property name="sustainValue">
+			<value>100</value>
+		</property>
+	</object>
+</objects>

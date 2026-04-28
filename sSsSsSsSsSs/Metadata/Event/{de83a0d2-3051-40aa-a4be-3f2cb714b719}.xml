@@ -57,7 +57,7 @@
 			<destination>{bae03b2d-b12e-4328-85d9-f8376a0c120b}</destination>
 		</relationship>
 		<relationship name="output">
-			<destination>{aaf34498-2368-48c2-821c-8aa28c3e73c8}</destination>
+			<destination>{2af842af-98a9-4778-8d16-873629a88c41}</destination>
 		</relationship>
 	</object>
 	<object class="EventAutomatableProperties" id="{07964018-baf7-44ec-aa23-6008f9f0abdc}" />
@@ -110,7 +110,6 @@
 		<property name="length">
 			<value>1.3756041666666667</value>
 		</property>
-		<property name="name" />
 		<relationship name="triggerConditions">
 			<destination>{e5044f28-e770-467f-acfe-341918cba25d}</destination>
 		</relationship>
