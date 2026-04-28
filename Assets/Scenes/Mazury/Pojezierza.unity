@@ -13133,7 +13133,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4760474610527320766, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
   m_PrefabInstance: {fileID: 700655924}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &431245964
+--- !u!114 &431245971
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -13142,20 +13142,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 431245963}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62584f8f050f8204581541602de760ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 5757e79db07cad34fb560d0b08ab72f7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SoulsAI
-  lookRange: 15
-  fieldOfViewAngle: 120
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 8
-  lookInterval: 0.2
-  availableAttacks:
-  - {fileID: 11400000, guid: 093024b14b4adb44fa9c925b467a17f7, type: 2}
-  - {fileID: 11400000, guid: df1784267e449bc488e5c1193176fbf8, type: 2}
-  - {fileID: 11400000, guid: 86ed014a3abfea242b625fcace7b0764, type: 2}
-  behaviorConfig: {fileID: 11400000, guid: 6317f88391c7e3844b5ab8a7c99493f2, type: 2}
+  m_EditorClassIdentifier: Assembly-CSharp::AIBrain
+  archetype: {fileID: 11400000, guid: bf598addb152ad14984beaf619c7cfc7, type: 2}
+  patrolPoints: []
+  <IsInCombat>k__BackingField: 0
+  <LastAttackTime>k__BackingField: -100
+  <CurrentAttackCooldown>k__BackingField: 1
+  <UseRootMotion>k__BackingField: 0
+  _agent: {fileID: 0}
+  _animator: {fileID: 0}
+  _health: {fileID: 0}
+  _target: {fileID: 0}
+  _allHitboxes: []
+  _spawnPosition: {x: 0, y: 0, z: 0}
+  _interruptLockTimer: 0
+  _lastAttackUsed: {fileID: 0}
 --- !u!1 &432289399
 GameObject:
   m_ObjectHideFlags: 0
@@ -20811,7 +20814,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4760474610527320766, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 431245964}
+      addedObject: {fileID: 431245971}
   m_SourcePrefab: {fileID: 100100000, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
 --- !u!1 &709066941
 GameObject:

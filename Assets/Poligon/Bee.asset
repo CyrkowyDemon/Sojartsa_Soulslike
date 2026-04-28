@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49461fe7dee4dcf44bb2c09f405656ed, type: 3}
+  m_Name: Bee
+  m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.AIArchetype
+  lookRange: 15
+  fieldOfView: 120
+  obstacleMask:
+    m_Bits: 0
+  preferredCombatDistance: 3.5
+  maxChaseDistance: 25
+  leashRadius: 30
+  rotationSpeed: 8
+  aggressionLevel: 3.5
+  strafeChance: 40
+  minStrafeDuration: 1.5
+  maxStrafeDuration: 4
+  attackCooldownMultiplier: 1
+  maxAttackDuration: 3
+  dodgeChance: 0.3
+  counterChance: 0.2
+  punishHealChance: 0.5
+  reactionCooldown: 2
+  canPatrol: 0
+  patrolSpeed: 2
+  patrolWaitTime: 3
+  availableAttacks:
+  - {fileID: 11400000, guid: df1784267e449bc488e5c1193176fbf8, type: 2}
+  - {fileID: 11400000, guid: 093024b14b4adb44fa9c925b467a17f7, type: 2}
+  - {fileID: 11400000, guid: 86ed014a3abfea242b625fcace7b0764, type: 2}

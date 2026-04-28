@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
+using SojartsaAI;
+using SojartsaAI.v3;
 
 public class EnemyHealth : MonoBehaviour
 {
@@ -73,9 +75,18 @@ public class EnemyHealth : MonoBehaviour
 
         currentHealth -= damage;
 
-        // Budzimy AI (działa z KAŻDYM typem wroga dzięki EnemyBase!)
-        EnemyBase ai = GetComponent<EnemyBase>();
-        if (ai != null) ai.OnDamagedByPlayer();
+        // Budzimy AI – szukamy nowego interfejsu IDamageable (AIBrain),
+        // a jeśli go nie ma, próbujemy starego EnemyBase (kompatybilność wsteczna)
+        IDamageable damageable = GetComponent<IDamageable>();
+        if (damageable != null)
+        {
+            damageable.OnDamagedByPlayer(damage, poiseDamage, transform.position);
+        }
+        else
+        {
+            EnemyBase ai = GetComponent<EnemyBase>();
+            if (ai != null) ai.OnDamagedByPlayer();
+        }
 
         // Jeśli wróg jest w stanie Broken, nie dodajemy kolejnych ran - on już "pęka"
         if (!_isBroken) AddWound();
@@ -166,6 +177,14 @@ public class EnemyHealth : MonoBehaviour
         
         EnemyBase aiBase = GetComponent<EnemyBase>();
         if (aiBase != null) aiBase.enabled = false;
+
+        AIBrain brain = GetComponent<AIBrain>();
+        if (brain != null) 
+        {
+            if (SojartsaAI.v3.GlobalCombatDirector.Instance != null)
+                SojartsaAI.v3.GlobalCombatDirector.Instance.UnregisterEnemy(brain);
+            brain.enabled = false;
+        }
 
         if (_agent != null && _agent.isOnNavMesh) 
         {
