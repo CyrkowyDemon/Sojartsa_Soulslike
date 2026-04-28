@@ -51306,6 +51306,31 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1158032991577925662, guid: b806b42e6c979ff4295ccac241afc5a9, type: 3}
   m_PrefabInstance: {fileID: 2022418524}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1700261187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700261182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5835a0e4ac46182489113c75a6701f66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIFadeHelper
+  fadeDuration: 0.25
+--- !u!225 &1700261188
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700261182}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!224 &1706270120 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5904103281785472903, guid: 7f2424893dc3e4a44879f6b9201577ef, type: 3}
@@ -61854,6 +61879,12 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1258047526}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5084119131773379818, guid: b806b42e6c979ff4295ccac241afc5a9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1700261188}
+    - targetCorrespondingSourceObject: {fileID: 5084119131773379818, guid: b806b42e6c979ff4295ccac241afc5a9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1700261187}
     - targetCorrespondingSourceObject: {fileID: 5687556985360786878, guid: b806b42e6c979ff4295ccac241afc5a9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 649925530}

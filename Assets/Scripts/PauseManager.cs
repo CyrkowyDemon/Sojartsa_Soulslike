@@ -103,7 +103,7 @@ public class PauseManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[PauseManager] {panel.name} nie ma Fadera - robię SetActive({isActive})");
+            // Brak skryptu = natychmiastowe działanie
             panel.SetActive(isActive);
         }
     }
@@ -147,6 +147,16 @@ public class PauseManager : MonoBehaviour
             else
             {
                 Debug.Log("[PauseManager] Wykonuję: WYŁĄCZANIE (SetPanelState False)");
+                
+                // Zamykamy pod-panele (jeśli nie mają skryptu, znikną od razu)
+                SetPanelState(settingsPanel, false);
+                SetPanelState(keybindsPanel, false);
+                SetPanelState(inventoryPanel, false);
+                SetPanelState(enchantPanel, false);
+                
+                // GŁÓWNEGO panelu (pauseMainPanel) NIE wyłączamy tutaj.
+                // Dzięki temu zniknie on płynnie razem z tłem (pauseCanvas).
+                
                 SetPanelState(pauseCanvas, false);
             }
         }
@@ -245,7 +255,7 @@ public class PauseManager : MonoBehaviour
         }
         else
         {
-            TogglePause();
+            TogglePause(); // To jedyne wywołanie zostanie płynne
         }
     }
 
