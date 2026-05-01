@@ -27,3 +27,9 @@ MonoBehaviour:
   sellValue: 50
   skillID: 
   manaCost: 10
+  enchantType: 1
+  duration: 15
+  cooldown: 3
+  weaponVFXPrefab: {fileID: 8752486452262766316, guid: df02762e36fad3a4c91e7befebd73832, type: 3}
+  overrideTrailMaterial: {fileID: 2100000, guid: a0cf25cc2e4de2b4bad2b6c471f6d6e2, type: 2}
+  trailColor: {r: 3.0314326, g: 0.51524734, b: 0, a: 0.22745098}

@@ -19,9 +19,9 @@
 			<value>3</value>
 		</property>
 		<property name="enumerationLabels">
-			<value>mud</value>
-			<value>dirt</value>
-			<value>wood</value>
+			<value>Mud</value>
+			<value>Grass</value>
+			<value>Wood</value>
 		</property>
 		<property name="initialValue">
 			<value>0</value>

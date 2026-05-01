@@ -19,7 +19,7 @@ namespace SojartsaAI.v3
             if (GlobalCombatDirector.Instance != null)
                 GlobalCombatDirector.Instance.RegisterEnemy(brain);
                 
-            _decisionTimer = brain.archetype.thinkDelay;
+            _decisionTimer = Random.Range(brain.archetype.minThinkDelay, brain.archetype.maxThinkDelay);
         }
 
         public override void LogicUpdate()
@@ -38,6 +38,9 @@ namespace SojartsaAI.v3
             {
                 foreach (var reaction in brain.archetype.reactions)
                 {
+                    // AAA: Sprawdzamy Cooldown reakcji
+                    if (!brain.IsActionReady(reaction.actionToPerform)) continue;
+
                     bool conditionMet = false;
                     if (reaction.condition == AIReactionCondition.OnPlayerHeal && brain.Sensory.IsPlayerHealing()) conditionMet = true;
                     
@@ -68,24 +71,40 @@ namespace SojartsaAI.v3
 
             if (bestReaction != null && bestReaction.actionToPerform != null)
             {
-                // Sprawdzamy czy akcja reakcji jest w zasięgu
                 float d = brain.Sensory.Distance;
                 if (d >= bestReaction.actionToPerform.minDistance && d <= bestReaction.actionToPerform.maxDistance)
                 {
+                    brain.RecordActionUse(bestReaction.actionToPerform);
                     brain.ChangeState(new State_Action(brain, bestReaction.actionToPerform));
                     return;
                 }
             }
 
-            // 2. RUCH TAKTYCZNY (Flankowanie za pomocą Slotów)
+            // 2. RUCH TAKTYCZNY (Flankowanie i Strafing)
             if (GlobalCombatDirector.Instance != null)
             {
                 Vector3 slotPos = GlobalCombatDirector.Instance.GetSlotPosition(brain, brain.target);
                 brain.MoveTo(slotPos);
                 
-                // Animacja (krążenie w boki)
-                float distToSlot = Vector3.Distance(brain.transform.position, slotPos);
-                brain.anim.SetFloat("ForwardSpeed", distToSlot > 0.5f ? 0.5f : 0f);
+                // AAA: Obliczamy wektor ruchu względem wroga, żeby obsłużyć Strafing (RightSpeed)
+                Vector3 moveDir = (slotPos - brain.transform.position);
+                float distToSlot = moveDir.magnitude;
+                
+                if (distToSlot > 0.5f)
+                {
+                    moveDir.Normalize();
+                    // Mapujemy ruch na osie Forward/Right wroga
+                    float forwardMove = Vector3.Dot(brain.transform.forward, moveDir);
+                    float rightMove = Vector3.Dot(brain.transform.right, moveDir);
+
+                    brain.anim.SetFloat("ForwardSpeed", forwardMove * 0.5f, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("SidewaysSpeed", rightMove * 0.5f, 0.1f, Time.deltaTime);
+                }
+                else
+                {
+                    brain.anim.SetFloat("ForwardSpeed", 0, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("SidewaysSpeed", 0, 0.1f, Time.deltaTime);
+                }
             }
 
             // 3. DECYZJA O ATAKU
@@ -94,7 +113,7 @@ namespace SojartsaAI.v3
             {
                 if (TryAttack())
                 {
-                    _decisionTimer = brain.archetype.thinkDelay;
+                    _decisionTimer = Random.Range(brain.archetype.minThinkDelay, brain.archetype.maxThinkDelay);
                 }
             }
 
@@ -104,16 +123,15 @@ namespace SojartsaAI.v3
 
         private bool TryAttack(bool force = false)
         {
-            // Pytamy Dyrektora o żeton (Token)
             if (GlobalCombatDirector.Instance != null)
             {
                 if (!GlobalCombatDirector.Instance.RequestAttackToken(brain)) return false;
             }
 
-            // Wybieramy akcję
             AIActionData action = SelectAction(AIActionType.Attack);
             if (action != null)
             {
+                brain.RecordActionUse(action);
                 brain.ChangeState(new State_Action(brain, action));
                 return true;
             }
@@ -123,18 +141,18 @@ namespace SojartsaAI.v3
 
         private AIActionData SelectAction(AIActionType type)
         {
-            // Ważone losowanie akcji z Archetypu
             List<AIActionData> valid = new List<AIActionData>();
             float totalWeight = 0;
 
             foreach (var action in brain.archetype.actions)
             {
                 if (action.type != type) continue;
+                if (!brain.IsActionReady(action)) continue; // AAA: Sprawdzenie Cooldownu
+                
                 if (brain.Sensory.Distance < action.minDistance || brain.Sensory.Distance > action.maxDistance) continue;
                 
-                // Kierunkowość
+                // Kierunkowość (Relaxed: Z tyłu preferujemy backstaby, ale zwykłe ataki też dopuszczalne jeśli brak innych)
                 if (action.isBehindOnly && brain.Sensory.Side != AISensory.PlayerSide.Behind) continue;
-                if (!action.isBehindOnly && brain.Sensory.Side == AISensory.PlayerSide.Behind) continue;
 
                 // --- AAA: Environmental Awareness ---
                 if (action.checkEnvironment)

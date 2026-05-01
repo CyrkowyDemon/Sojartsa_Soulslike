@@ -2,13 +2,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using Sojartsa.UI.DragDrop;
 
 namespace Sojartsa.Inventory.UI
 {
     /// <summary>
     /// Reprezentacja wizualna pojedynczego slotu w UI.
+    /// 
+    /// UNIWERSALNY – nie zna żadnego konkretnego systemu (sklepu, barteru).
+    /// Wie tylko, że jest slotem w jakimś kontenerze (Inventory, Bag lub Equipment).
     /// </summary>
-    public class InventorySlotUI : MonoBehaviour, IPointerDownHandler
+    public class InventorySlotUI : MonoBehaviour, IPointerDownHandler, IDragSource, IDropTarget
     {
         private Button _button;
 
@@ -17,19 +21,14 @@ namespace Sojartsa.Inventory.UI
             _button = GetComponent<Button>();
             if (_button != null)
             {
-                // Wyłączamy nawigację, żeby przycisk nie "zostawał" zaznaczony
                 Navigation customNav = new Navigation();
                 customNav.mode = Navigation.Mode.None;
                 _button.navigation = customNav;
             }
         }
 
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            // Natychmiastowe odznaczenie przy dotknięciu
-            // if (EventSystem.current != null)
-            //     EventSystem.current.SetSelectedGameObject(null);
-        }
+        public void OnPointerDown(PointerEventData eventData) { }
+
         [Header("Elementy UI")]
         [SerializeField] private Image iconImage;
         [SerializeField] private TextMeshProUGUI amountText;
@@ -45,13 +44,12 @@ namespace Sojartsa.Inventory.UI
         /// </summary>
         public void UpdateSlot(InventorySlot newSlot)
         {
-            Debug.Log($"UpdateSlot wywołany dla: {gameObject.name}. Czy nowy slot pusty? {(newSlot == null || newSlot.IsEmpty)}");
             _slot = newSlot;
 
             if (_slot == null || _slot.IsEmpty)
             {
                 if (iconImage != null) iconImage.enabled = false;
-                amountText.text = "";
+                if (amountText != null) amountText.text = "";
                 SetBackgroundSprite(emptySprite);
                 return;
             }
@@ -62,7 +60,12 @@ namespace Sojartsa.Inventory.UI
                 iconImage.sprite = _slot.item.icon;
             }
             SetBackgroundSprite(filledSprite);
-            amountText.text = (_slot.amount > 1) ? _slot.amount.ToString() : "";
+            
+            if (amountText != null) 
+            {
+                amountText.enabled = true;
+                amountText.text = (_slot.amount > 1) ? _slot.amount.ToString() : "";
+            }
         }
 
         /// <summary>
@@ -76,7 +79,6 @@ namespace Sojartsa.Inventory.UI
                 return;
             }
 
-            // Pokazujemy detale przedmiotu i podgląd statystyk
             if (ItemDetailsUI.Instance != null)
                 ItemDetailsUI.Instance.ShowItemDetails(_slot.item);
             
@@ -86,11 +88,10 @@ namespace Sojartsa.Inventory.UI
             if (EventSystem.current != null)
                 EventSystem.current.SetSelectedGameObject(null);
         }
+
         private void SetBackgroundSprite(Sprite sprite)
         {
             if (sprite == null) return;
-
-            // Zmieniamy tło przez Image na samym przycisku
             Image bg = GetComponent<Image>();
             if (bg != null) bg.sprite = sprite;
         }
@@ -107,6 +108,70 @@ namespace Sojartsa.Inventory.UI
             if (amountText != null) amountText.enabled = active && !IsEmpty();
         }
 
-        // ---
+        // --- IDragSource Implementation ---
+        public bool CanDrag() => !IsEmpty();
+        public Sprite GetDragIcon() => GetIcon();
+        public void OnDragStarted() => SetVisualsActive(false);
+        public void OnDragEnded() => SetVisualsActive(true);
+
+        public ItemPayload GetTransferPayload()
+        {
+            InventoryDisplay display = GetComponentInParent<InventoryDisplay>();
+            if (display == null) return null;
+
+            bool isEquip;
+            int index = display.GetSlotIndex(this, out isEquip);
+            if (index == -1) return null;
+
+            ItemPayload.SourceType sourceType;
+            if (isEquip)
+                sourceType = ItemPayload.SourceType.Equipment;
+            else if (display.IsBagMode())
+                sourceType = ItemPayload.SourceType.Bag;
+            else
+                sourceType = ItemPayload.SourceType.Inventory;
+
+            return new ItemPayload
+            {
+                Source = sourceType,
+                Item = _slot?.item,
+                Amount = _slot?.amount ?? 0,
+                SlotIndex = index,
+                Offer = null
+            };
+        }
+
+        // --- IDropTarget Implementation ---
+        public ItemPayload GetTargetPayload()
+        {
+            // Zwracamy info o SOBIE – "kim jestem jako cel"
+            InventoryDisplay display = GetComponentInParent<InventoryDisplay>();
+            if (display == null) return new ItemPayload();
+
+            bool isEquip;
+            int index = display.GetSlotIndex(this, out isEquip);
+
+            ItemPayload.SourceType targetType;
+            if (isEquip)
+                targetType = ItemPayload.SourceType.Equipment;
+            else if (display.IsBagMode())
+                targetType = ItemPayload.SourceType.Bag;
+            else
+                targetType = ItemPayload.SourceType.Inventory;
+
+            return new ItemPayload
+            {
+                Source = targetType,
+                Item = _slot?.item,
+                Amount = _slot?.amount ?? 0,
+                SlotIndex = index,
+                Offer = null
+            };
+        }
+
+        public void OnDropCompleted()
+        {
+            // UI odświeży się automatycznie przez event OnInventoryChanged
+        }
     }
 }

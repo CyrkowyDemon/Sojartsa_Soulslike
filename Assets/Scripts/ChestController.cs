@@ -59,7 +59,17 @@ public class ChestController : MonoBehaviour, IInteractable
             if (entry.requiredOpenCount == _openCount)
             {
                 if (entry.giveOnlyOnce && !_claimedLootIndices.Add(i)) continue;
-                CurrencyManager.Instance.AddCurrency(entry.soulsAmount);
+                
+                // Dodajemy dusze (jeśli są)
+                if (entry.soulsAmount > 0 && CurrencyManager.Instance != null)
+                    CurrencyManager.Instance.AddCurrency(entry.soulsAmount);
+
+                // NOWOŚĆ: Dodajemy przedmioty do EQ
+                if (entry.itemReward != null && InventoryController.Instance != null)
+                {
+                    InventoryController.Instance.AddItem(entry.itemReward, entry.itemAmount);
+                    Debug.Log($"[CHEST] Dodano do EQ: {entry.itemReward.itemName} x{entry.itemAmount}");
+                }
             }
         }
     }

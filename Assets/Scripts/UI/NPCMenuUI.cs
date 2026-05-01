@@ -57,15 +57,35 @@ public class NPCMenuUI : MonoBehaviour
             CreateButton("Porozmawiaj", () => OpenTalkMenu(availableTalks));
         }
 
-        // 2. Opcja: Sklep (TODO: Dodamy warunek gdy NPC dostanie ShopData)
-        // CreateButton("Sklep", () => OpenShop());
+        // 2. Opcja: Handel (Pojawia się tylko jeśli NPC ma TradeShopData)
+        if (npc.tradeShopData != null)
+        {
+            CreateButton("Kupno", () => OpenBuyMenu(npc.tradeShopData));
+            CreateButton("Skup", () => OpenSellMenu(npc.tradeShopData));
+        }
 
         // 3. Opcja: Odejdź (Zawsze na samym dole)
-        Debug.Log("[NPCMenuUI] 3. Tworzę przycisk Odejdź...");
         CreateButton("Odejdź", CloseMenu);
 
         SelectFirstButton();
-        Debug.Log("[NPCMenuUI] 4. Zakończono generowanie menu!");
+    }
+
+    private void OpenBuyMenu(TradeShopData data)
+    {
+        if (menuPanel != null) menuPanel.SetActive(false);
+        
+        Debug.Log("[NPCMenuUI] Otwieram Kupno");
+        if (BarterUI.Instance != null) BarterUI.Instance.OpenBuy(data);
+        if (BarterTradingController.Instance != null) BarterTradingController.Instance.OpenTrade(data);
+    }
+
+    private void OpenSellMenu(TradeShopData data)
+    {
+        if (menuPanel != null) menuPanel.SetActive(false);
+
+        Debug.Log("[NPCMenuUI] Otwieram Skup");
+        if (BarterUI.Instance != null) BarterUI.Instance.OpenSell(data);
+        if (BarterTradingController.Instance != null) BarterTradingController.Instance.OpenTrade(data);
     }
 
     /// <summary>

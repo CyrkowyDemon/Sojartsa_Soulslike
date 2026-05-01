@@ -9,8 +9,8 @@ public class DeveloperTools : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        // R - Reset gry
-        if (keyboard.rKey.wasPressedThisFrame)
+        // P - Reset gry (Zmienione z R, bo R jest teraz do Enchantu)
+        if (keyboard.pKey.wasPressedThisFrame)
         {
             Debug.Log("<color=yellow>[DEV] Resetowanie sceny...</color>");
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);

@@ -5,6 +5,7 @@ public class RootMotionProxy : MonoBehaviour
     private PlayerMovement playerMovement;
     private PlayerCombat playerCombat;
     private PlayerHealth playerHealth;
+    private PlayerEnchantController playerEnchantController;
     private Animator animator;
 
     private void Awake()
@@ -14,6 +15,7 @@ public class RootMotionProxy : MonoBehaviour
         playerMovement = GetComponentInParent<PlayerMovement>();
         playerCombat = GetComponentInParent<PlayerCombat>();
         playerHealth = GetComponentInParent<PlayerHealth>();
+        playerEnchantController = GetComponentInParent<PlayerEnchantController>();
     }
 
     private void OnAnimatorMove()
@@ -27,6 +29,11 @@ public class RootMotionProxy : MonoBehaviour
     }
 
     // --- PRZEKIEROWANIE ANIMATION EVENTS ---
+
+    public void ActivateEnchantEffects()
+    {
+        if (playerEnchantController != null) playerEnchantController.ActivateEnchantEffects();
+    }
 
     public void EnableIFrames()
     {

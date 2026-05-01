@@ -123,6 +123,11 @@ public class PauseManager : MonoBehaviour
                 Debug.Log("[PauseManager] Blokada: NPCMenuUI jest aktywny!");
                 return;
             }
+            if (BarterUI.Instance != null && BarterUI.Instance.mainPanel != null && BarterUI.Instance.mainPanel.activeInHierarchy) 
+            {
+                Debug.Log("[PauseManager] Blokada: BarterUI jest aktywny!");
+                return;
+            }
         }
 
         if (Time.frameCount == _lastToggleFrame) 

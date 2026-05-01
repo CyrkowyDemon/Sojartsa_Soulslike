@@ -15,8 +15,8 @@ TagManager:
   - Enemy
   - Player
   - Interactable
-  - 
-  - 
+  - Hitbox
+  - Envirovment
   - 
   - 
   - 

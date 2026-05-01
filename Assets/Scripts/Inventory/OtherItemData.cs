@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewOtherItem", menuName = "Sojartsa/Inventory/Other (Offhand)")]
+[CreateAssetMenu(fileName = "NewOffhandItem", menuName = "Sojartsa/Inventory/Offhand")]
 public class OtherItemData : ItemData
 {
     [Header("Ustawienia Offhand")]

@@ -28,8 +28,15 @@ namespace SojartsaAI.v3
         private AIState _currentState;
         public AIState CurrentState => _currentState;
 
+        // --- PAMIĘĆ AI (Cooldowny) ---
+        private System.Collections.Generic.Dictionary<AIActionData, float> _lastUsedTime = new System.Collections.Generic.Dictionary<AIActionData, float>();
+
         // Sensory (Osobny moduł)
         public AISensory Sensory { get; private set; }
+        
+        // --- AAA - Hitboxy i Akcje ---
+        private WeaponHitbox[] _hitboxes;
+        public AIActionData ActiveAction { get; set; }
 
         // Taktyka (Zarządzana przez Director)
         public int CombatSlotIndex { get; set; } = -1;
@@ -40,8 +47,17 @@ namespace SojartsaAI.v3
             if (anim == null) anim = GetComponentInChildren<Animator>();
             if (agent == null) agent = GetComponent<NavMeshAgent>();
             
+            // Znajdujemy wszystkie hitboxy na starcie
+            _hitboxes = GetComponentsInChildren<WeaponHitbox>(true);
+
+            if (agent != null)
+            {
+                agent.updatePosition = false;
+                agent.updateRotation = false;
+            }
+
             Sensory = new AISensory(transform, target, archetype, playerInput);
-            currentPoise = archetype != null ? archetype.maxPoise : 100f;
+            currentPoise = 0f; // Zaczynamy od 0 (Sekiro Style)
         }
 
         private void Start()
@@ -51,15 +67,58 @@ namespace SojartsaAI.v3
 
         private void Update()
         {
+            if (target == null && Sensory != null && Sensory.Player != null)
+            {
+                target = Sensory.Player;
+            }
+
             _currentState?.LogicUpdate();
             HandlePoiseRegen();
             
-            gameObject.name = $"Enemy [{_currentState?.GetType().Name}] (Poise: {currentPoise:F0})";
+            // UI Debug
+            gameObject.name = $"Enemy [{_currentState?.GetType().Name}] (Poise: {currentPoise:F0}/{archetype.maxPoise})";
         }
 
         private void OnDestroy()
         {
             Sensory?.Cleanup();
+        }
+
+        public bool IsActionReady(AIActionData action)
+        {
+            if (action == null) return false;
+            if (!_lastUsedTime.ContainsKey(action)) return true;
+            return Time.time >= _lastUsedTime[action] + action.cooldown;
+        }
+
+        public void RecordActionUse(AIActionData action)
+        {
+            if (action == null) return;
+            ActiveAction = action; // Ustawiamy aktywną akcję dla hitboxów
+            if (_lastUsedTime.ContainsKey(action)) _lastUsedTime[action] = Time.time;
+            else _lastUsedTime.Add(action, Time.time);
+        }
+
+        // --- ZARZĄDZANIE HITBOXAMI ---
+        public void OpenHitbox(int id)
+        {
+            if (_hitboxes == null) return;
+            foreach (var hb in _hitboxes)
+                if (hb != null && hb.hitboxID == id) hb.OpenDamageWindow();
+        }
+
+        public void CloseHitbox(int id)
+        {
+            if (_hitboxes == null) return;
+            foreach (var hb in _hitboxes)
+                if (hb != null && hb.hitboxID == id) hb.CloseDamageWindow();
+        }
+
+        public void CloseAllHitboxes()
+        {
+            if (_hitboxes == null) return;
+            foreach (var hb in _hitboxes)
+                if (hb != null) hb.CloseDamageWindow();
         }
 
         private void HandlePoiseRegen()
@@ -68,9 +127,9 @@ namespace SojartsaAI.v3
             {
                 _poiseRegenTimer -= Time.deltaTime;
             }
-            else if (currentPoise < archetype.maxPoise)
+            else if (currentPoise > 0)
             {
-                currentPoise = Mathf.MoveTowards(currentPoise, archetype.maxPoise, archetype.poiseRegenRate * Time.deltaTime);
+                currentPoise = Mathf.MoveTowards(currentPoise, 0, archetype.poiseRegenRate * Time.deltaTime);
             }
         }
 
@@ -90,23 +149,25 @@ namespace SojartsaAI.v3
         // --- IDamageable AAA Implementation ---
         public void OnDamagedByPlayer(float healthDamage, float poiseDamage, Vector3 hitSource)
         {
-            currentPoise -= poiseDamage;
+            // Dodajemy obrażenia postury (rośnie od 0 do Max)
+            currentPoise += poiseDamage;
             _poiseRegenTimer = archetype.poiseResetDelay;
 
-            if (currentPoise <= 0)
+            if (_currentState is State_Passive)
             {
-                currentPoise = 0;
-                ForceInterrupt(); // Postawa przełamana!
+                ChangeState(new State_Combat(this));
             }
-            else
+
+            if (currentPoise >= archetype.maxPoise)
             {
-                // Small stagger or hyper armor?
-                // Tu można dodać animację drgnięcia "SmallHit"
+                currentPoise = archetype.maxPoise;
+                ForceInterrupt(); // Postawa przełamana!
             }
         }
 
         public void ForceInterrupt()
         {
+            CloseAllHitboxes(); // Awaryjne zamknięcie przy staggerze
             ChangeState(new State_Stagger(this));
         }
 
@@ -119,6 +180,14 @@ namespace SojartsaAI.v3
         // ================================================================
         // ROOT MOTION (The AAA Movement)
         // ================================================================
+        
+        // Puste zdarzenie animacji dla starszych animacji
+        public void CheckDistractionDash() {}
+        public void ResetAttack() {}
+        
+        public void OpenDamageByID(int id) => OpenHitbox(id);
+        public void CloseDamageByID(int id) => CloseHitbox(id);
+
         private void OnAnimatorMove()
         {
             if (anim == null || Time.deltaTime <= 0) return;
@@ -140,7 +209,16 @@ namespace SojartsaAI.v3
             }
 
             transform.position = nextPos;
-            transform.rotation *= anim.deltaRotation;
+            
+            // AAA: Płynniejsza rotacja podczas ruchu (jeśli nie jesteśmy w akcji, która blokuje rotację)
+            if (agent != null && agent.velocity.sqrMagnitude > 0.1f)
+            {
+                transform.rotation = Quaternion.LookRotation(agent.velocity.normalized);
+            }
+            else
+            {
+                transform.rotation *= anim.deltaRotation;
+            }
         }
     }
 }

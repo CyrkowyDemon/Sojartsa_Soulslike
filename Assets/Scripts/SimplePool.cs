@@ -52,15 +52,14 @@ public class SimplePool : MonoBehaviour
         {
             // Szukamy instancji poola na scenie, żeby móc odpalić Coroutine
             SimplePool pool = FindFirstObjectByType<SimplePool>();
-            if (pool != null)
+            if (pool == null)
             {
-                pool.StartCoroutine(pool.DespawnCoroutine(instance, prefab, delay));
+                // Automatycznie tworzymy Managera jeśli go nie ma na scenie
+                GameObject poolGo = new GameObject("[SYSTEM] SimplePool Manager");
+                pool = poolGo.AddComponent<SimplePool>();
             }
-            else
-            {
-                // Fallback na wypadek braku skryptu SimplePool na scenie (choć powinien być)
-                instance.SetActive(false);
-            }
+            
+            pool.StartCoroutine(pool.DespawnCoroutine(instance, prefab, delay));
         }
         else
         {

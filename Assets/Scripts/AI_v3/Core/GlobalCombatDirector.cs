@@ -66,12 +66,14 @@ namespace SojartsaAI.v3
         {
             if (enemy.CombatSlotIndex == -1 || player == null) return enemy.transform.position;
 
-            // Obliczamy kąt dla danego slotu (0, 60, -60, 120, -120...)
+            // AAA: Używamy Vector3.forward (World Space) zamiast player.forward.
+            // Dzięki temu jeśli gracz szybko się obraca, sloty nie "skaczą" wokół niego.
             float angle = (enemy.CombatSlotIndex % 2 == 0) 
                 ? (enemy.CombatSlotIndex / 2) * anglePerSlot 
                 : (enemy.CombatSlotIndex / 2 + 1) * -anglePerSlot;
 
-            Vector3 offset = Quaternion.Euler(0, angle, 0) * player.forward * circleRadius;
+            float radius = enemy.archetype.combatCircleRadius > 0 ? enemy.archetype.combatCircleRadius : circleRadius;
+            Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * radius;
             return player.position + offset;
         }
 

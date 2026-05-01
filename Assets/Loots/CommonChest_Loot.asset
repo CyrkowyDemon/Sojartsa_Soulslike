@@ -15,4 +15,6 @@ MonoBehaviour:
   entries:
   - requiredOpenCount: 1
     soulsAmount: 200
+    itemReward: {fileID: 11400000, guid: 02633b486c3e5014cb5444acfc500c4b, type: 2}
+    itemAmount: 20
     giveOnlyOnce: 1

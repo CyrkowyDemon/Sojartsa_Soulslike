@@ -48,9 +48,22 @@ namespace SojartsaAI.v3
                 }
             }
 
-            // Jeśli animacja wysłała sygnał końca - wracamy do Combat
+            // Jeśli animacja wysłała sygnał końca - decydujemy co dalej
             if (_isActionComplete)
             {
+                // --- SYSTEM COMBO (AAA Extension) ---
+                if (_data != null && _data.followUpAction != null)
+                {
+                    // Sprawdzamy czy mamy żeton na kolejny cios
+                    if (GlobalCombatDirector.Instance != null && GlobalCombatDirector.Instance.RequestAttackToken(brain))
+                    {
+                        brain.RecordActionUse(_data.followUpAction);
+                        brain.ChangeState(new State_Action(brain, _data.followUpAction));
+                        return;
+                    }
+                }
+
+                // Jeśli nie ma combo lub brak żetonu - wracamy do krążenia
                 brain.ChangeState(new State_Combat(brain));
             }
         }
@@ -72,18 +85,6 @@ namespace SojartsaAI.v3
             // Zawsze uwalniamy żeton ataku po zakończeniu akcji
             if (GlobalCombatDirector.Instance != null)
                 GlobalCombatDirector.Instance.ReleaseAttackToken(brain);
-
-            // --- SYSTEM COMBO (AAA Extension) ---
-            // Jeśli akcja ma Follow-up (Combo) i nie została przerwana (np. przez Stagger)
-            if (_isActionComplete && _data != null && _data.followUpAction != null)
-            {
-                // Ważne: Sprawdzamy czy mamy żeton na kolejny cios
-                if (GlobalCombatDirector.Instance != null && GlobalCombatDirector.Instance.RequestAttackToken(brain))
-                {
-                    // Używamy opóźnienia, żeby zmiana stanu nastąpiła "płynnie" po aktualnej klatce
-                    brain.ChangeState(new State_Action(brain, _data.followUpAction));
-                }
-            }
         }
     }
 

@@ -6,17 +6,16 @@ public class WeaponTrailMesh : MonoBehaviour
 {
     [Header("Ustawienia Wizualne")]
     public Material trailMaterial;
-    public float targetLifeTime = 0.2f; // Długość smugi
-    public float fadeSpeed = 5f;        // Szybkość kurczenia
+    public float targetLifeTime = 0.2f; // Stała długość "ogona"
+    public float fadeSpeed = 5f;        // Szybkość pojawiania/znikania (alpha)
     public float minDistance = 0.01f;
 
     [Header("Płynność")]
-    [Range(1, 10)]
-    public int interpolationSteps = 5;
+    [Range(1, 30)]
+    public int interpolationSteps = 10;
 
     [Header("Punkty Broni")]
-    public Transform basePoint;
-    public Transform tipPoint;
+    public List<Transform> sourcePoints = new List<Transform>();
 
     private List<TrailPoint> _pointHistory = new List<TrailPoint>(256);
     private List<TrailPoint> _smoothedPoints = new List<TrailPoint>(1024);
@@ -30,24 +29,22 @@ public class WeaponTrailMesh : MonoBehaviour
     private MeshRenderer _mr;
     
     private bool _isEmitting;
-    private float _currentLifeTime;
+    private float _currentAlpha;
 
     private struct TrailPoint
     {
-        public Vector3 BasePos;
-        public Vector3 TipPos;
+        public Vector3[] Positions;
         public float TimeStamp;
     }
 
     private void Start()
     {
-        // WYMUSZAMY odłączenie od miecza na starcie gry
         DetachFromParent();
 
         _mf = GetComponent<MeshFilter>() ?? gameObject.AddComponent<MeshFilter>();
         _mr = GetComponent<MeshRenderer>() ?? gameObject.AddComponent<MeshRenderer>();
         
-        _trailMesh = new Mesh { name = "WeaponTrail_Pro" };
+        _trailMesh = new Mesh { name = "WeaponTrail_MultiPoint" };
         _trailMesh.MarkDynamic();
         _mf.mesh = _trailMesh;
         
@@ -68,100 +65,114 @@ public class WeaponTrailMesh : MonoBehaviour
 
     public void StartTrail()
     {
-        // Na wypadek gdyby Awake/Start nie zadziałało (np. prefab)
         DetachFromParent();
-        
         _isEmitting = true;
-        _currentLifeTime = 0f;
+        _currentAlpha = 0f;
         _pointHistory.Clear();
         _mr.enabled = true;
     }
 
     public void StopTrail() => _isEmitting = false;
 
+    public void SetMaterial(Material mat)
+    {
+        trailMaterial = mat;
+        if (_mr != null) _mr.material = mat;
+    }
+
     private void LateUpdate()
     {
         float now = Time.time;
 
-        // 1. DYNAMIKA DŁUGOŚCI (Lustrzane odbicie / Zipper Effect)
+        // 1. FADE
         if (_isEmitting)
-        {
-            // ROZSZERZANIE: Smuga rośnie z miecza (OpenTrail)
-            _currentLifeTime = Mathf.MoveTowards(_currentLifeTime, targetLifeTime, Time.deltaTime * (fadeSpeed * 0.5f));
-        }
+            _currentAlpha = Mathf.MoveTowards(_currentAlpha, 1f, Time.deltaTime * fadeSpeed);
         else
-        {
-            // ZWIJANIE: Ogon smugi goni ostrze (CloseTrail)
-            // Zmniejszamy okno czasu, co powoduje, że najstarsze punkty znikają szybciej
-            _currentLifeTime = Mathf.MoveTowards(_currentLifeTime, 0f, Time.deltaTime * fadeSpeed);
-        }
+            _currentAlpha = Mathf.MoveTowards(_currentAlpha, 0f, Time.deltaTime * fadeSpeed);
 
-        // 2. PRZESYŁANIE ALPHY (Fade out)
         if (trailMaterial != null && _mr.enabled)
         {
-            // Obliczamy zanikanie na podstawie aktualnego czasu życia względem docelowego
-            float alpha = targetLifeTime > 0 ? (_currentLifeTime / targetLifeTime) : 0;
-            _mr.material.SetFloat("_Fade", alpha); // Wysyłamy do shadera (dodaj parametr _Fade w Shader Graph!)
+            _mr.material.SetFloat("_Fade", _currentAlpha);
         }
 
-        // 3. CZYSZCZENIE HISTORII (na podstawie dynamicznego okna _currentLifeTime)
-        while (_pointHistory.Count > 0 && now - _pointHistory[0].TimeStamp > _currentLifeTime)
+        // 2. USUWANIE STARYCH PUNKTÓW
+        while (_pointHistory.Count > 0 && now - _pointHistory[0].TimeStamp > targetLifeTime)
         {
             _pointHistory.RemoveAt(0);
         }
 
-        // 4. ZBIERANIE PUNKTÓW (Tylko podczas emisji)
-        if (_isEmitting && basePoint != null && tipPoint != null)
+        // 3. ZBIERANIE PUNKTÓW
+        if (_isEmitting && sourcePoints != null && sourcePoints.Count >= 2 && _mr.enabled)
         {
-            Vector3 b = basePoint.position;
-            Vector3 t = tipPoint.position;
-
-            if (_pointHistory.Count == 0 || Vector3.Distance(b, _pointHistory[_pointHistory.Count - 1].BasePos) > minDistance)
+            Vector3[] currentPositions = new Vector3[sourcePoints.Count];
+            for (int i = 0; i < sourcePoints.Count; i++)
             {
-                _pointHistory.Add(new TrailPoint { BasePos = b, TipPos = t, TimeStamp = now });
+                if (sourcePoints[i] != null) currentPositions[i] = sourcePoints[i].position;
+            }
+
+            // Sprawdzamy dystans tylko po ostatnim punkcie (tip)
+            Vector3 lastTip = currentPositions[currentPositions.Length - 1];
+            if (_pointHistory.Count == 0 || Vector3.Distance(lastTip, _pointHistory[_pointHistory.Count - 1].Positions[currentPositions.Length - 1]) > minDistance)
+            {
+                _pointHistory.Add(new TrailPoint { Positions = currentPositions, TimeStamp = now });
             }
         }
 
-        // 5. GENEROWANIE I RENDEROWANIE
-        GenerateSmoothedPath();
-        RebuildMesh();
+        // 4. RENDEROWANIE
+        if (_pointHistory.Count > 1)
+        {
+            GenerateSmoothedPath();
+            RebuildMesh();
+        }
 
-        // 6. AUTO-OFF (Kiedy smuga całkiem się "zwini")
-        if (!_isEmitting && (_pointHistory.Count == 0 || _currentLifeTime <= 0.001f))
+        // 5. AUTO-OFF
+        if (!_isEmitting && _currentAlpha <= 0.001f)
         {
             _mr.enabled = false;
+            _pointHistory.Clear();
+            _trailMesh.Clear();
         }
     }
-
-
 
     private void GenerateSmoothedPath()
     {
         _smoothedPoints.Clear();
-        int count = _pointHistory.Count;
-        if (count < 2) return;
+        int historyCount = _pointHistory.Count;
+        if (historyCount < 2) return;
 
-        for (int i = 0; i < count - 1; i++)
+        int pointsPerStep = sourcePoints.Count;
+
+        for (int i = 0; i < historyCount - 1; i++)
         {
+            _smoothedPoints.Add(_pointHistory[i]);
+
             int p0 = Mathf.Max(i - 1, 0);
             int p1 = i;
             int p2 = i + 1;
-            int p3 = Mathf.Min(i + 2, count - 1);
-
-            _smoothedPoints.Add(_pointHistory[p1]);
+            int p3 = Mathf.Min(i + 2, historyCount - 1);
 
             for (int j = 1; j <= interpolationSteps; j++)
             {
                 float t = j / (float)(interpolationSteps + 1);
+                Vector3[] interpPositions = new Vector3[pointsPerStep];
+
+                for (int k = 0; k < pointsPerStep; k++)
+                {
+                    interpPositions[k] = GetCatmullRom(t, 
+                        _pointHistory[p0].Positions[k], 
+                        _pointHistory[p1].Positions[k], 
+                        _pointHistory[p2].Positions[k], 
+                        _pointHistory[p3].Positions[k]);
+                }
+
                 _smoothedPoints.Add(new TrailPoint
                 {
-                    BasePos = GetCatmullRom(t, _pointHistory[p0].BasePos, _pointHistory[p1].BasePos, _pointHistory[p2].BasePos, _pointHistory[p3].BasePos),
-                    TipPos = GetCatmullRom(t, _pointHistory[p0].TipPos, _pointHistory[p1].TipPos, _pointHistory[p2].TipPos, _pointHistory[p3].TipPos),
+                    Positions = interpPositions,
                     TimeStamp = Mathf.Lerp(_pointHistory[p1].TimeStamp, _pointHistory[p2].TimeStamp, t)
                 });
             }
         }
-        _smoothedPoints.Add(_pointHistory[count - 1]);
+        _smoothedPoints.Add(_pointHistory[historyCount - 1]);
     }
 
     private Vector3 GetCatmullRom(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
@@ -173,26 +184,37 @@ public class WeaponTrailMesh : MonoBehaviour
     {
         _vBuffer.Clear(); _uBuffer.Clear(); _tBuffer.Clear();
 
-        if (_smoothedPoints.Count < 2)
+        var historySteps = _smoothedPoints;
+        int pointsPerStep = sourcePoints.Count;
+
+        for (int i = 0; i < historySteps.Count; i++)
         {
-            _trailMesh.Clear();
-            return;
-        }
-
-        for (int i = 0; i < _smoothedPoints.Count; i++)
-        {
-            _vBuffer.Add(transform.InverseTransformPoint(_smoothedPoints[i].BasePos));
-            _vBuffer.Add(transform.InverseTransformPoint(_smoothedPoints[i].TipPos));
-
-            float uCoord = (float)i / (_smoothedPoints.Count - 1);
-            _uBuffer.Add(new Vector2(uCoord, 0));
-            _uBuffer.Add(new Vector2(uCoord, 1));
-
-            if (i < _smoothedPoints.Count - 1)
+            for (int k = 0; k < pointsPerStep; k++)
             {
-                int v = i * 2;
-                _tBuffer.Add(v); _tBuffer.Add(v + 1); _tBuffer.Add(v + 2);
-                _tBuffer.Add(v + 2); _tBuffer.Add(v + 1); _tBuffer.Add(v + 3);
+                _vBuffer.Add(transform.InverseTransformPoint(historySteps[i].Positions[k]));
+                
+                float uCoord = (float)i / (historySteps.Count - 1);
+                float vCoord = (float)k / (pointsPerStep - 1);
+                _uBuffer.Add(new Vector2(uCoord, vCoord));
+            }
+
+            if (i < historySteps.Count - 1)
+            {
+                for (int k = 0; k < pointsPerStep - 1; k++)
+                {
+                    int baseIdx = i * pointsPerStep + k;
+                    int nextStepIdx = (i + 1) * pointsPerStep + k;
+
+                    // Triangle 1
+                    _tBuffer.Add(baseIdx); 
+                    _tBuffer.Add(baseIdx + 1); 
+                    _tBuffer.Add(nextStepIdx);
+
+                    // Triangle 2
+                    _tBuffer.Add(nextStepIdx); 
+                    _tBuffer.Add(baseIdx + 1); 
+                    _tBuffer.Add(nextStepIdx + 1);
+                }
             }
         }
 

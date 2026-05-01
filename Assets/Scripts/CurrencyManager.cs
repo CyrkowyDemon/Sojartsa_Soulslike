@@ -2,114 +2,113 @@ using UnityEngine;
 using System;
 
 /// <summary>
-/// Mordo, to nasz "Bankier". Jeden obiekt w całej grze, który
-/// pilnuje ile masz kasy. Działa jak FromSoftware - jeden centralny
-/// punkt do zarządzania walutą.
-/// 
-/// UŻYCIE Z DOWOLNEGO SKRYPTU:
-///   CurrencyManager.Instance.AddCurrency(100);
-///   CurrencyManager.Instance.SpendCurrency(50);
-///   int kasa = CurrencyManager.Instance.CurrentCurrency;
+/// Mordo, to jest nowy "Bankier" w wersji ITEMOWEJ.
+/// Już nie trzyma kasy w pamięci, tylko patrzy ile masz monet w plecaku.
 /// </summary>
 public class CurrencyManager : MonoBehaviour
 {
     public static CurrencyManager Instance { get; private set; }
 
-    // Klucz zapisu w PlayerPrefs (do wymiany na SaveManager w przyszłości)
-    private const string SAVE_KEY = "PlayerCurrency";
+    [Header("Ustawienia Waluty")]
+    [SerializeField] private ItemData currencyItem; // Przeciągnij tu asset monety!
+    [SerializeField] private string currencyItemID = "gold_coin"; // ID przedmiotu który jest kasą
 
-    private int _currentCurrency = 0;
-
-    /// <summary>Aktualna ilość waluty (read-only z zewnątrz).</summary>
-    public int CurrentCurrency => _currentCurrency;
+    /// <summary>Aktualna ilość waluty pobrana prosto z Inventory.</summary>
+    public int CurrentCurrency 
+    {
+        get 
+        {
+            if (InventoryController.Instance != null)
+                return InventoryController.Instance.GetTotalItemCount(currencyItemID);
+            return 0;
+        }
+    }
 
     /// <summary>
-    /// Event wywoływany za każdym razem gdy waluta się zmienia.
-    /// HUD subskrybuje go i sam się aktualizuje - zero spamowania.
+    /// Event wywoływany za każdym razem gdy zmieni się stan posiadania monet.
+    /// HUD subskrybuje to i odświeża licznik.
     /// </summary>
     public event Action<int> OnCurrencyChanged;
 
     private void Awake()
     {
-        // Singleton: tylko jeden Bankier może istnieć
         if (Instance != null && Instance != this)
         {
-            Debug.Log("<color=yellow>[CURRENCY] Klon Bankiera wykryty! Niszczę nadmiar.</color>");
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
-        // NIE robimy DontDestroyOnLoad - jesteśmy już dzieckiem PersistentRoot,
-        // który sam jest DontDestroyOnLoad. Nie podwajamy zabezpieczenia.
+    }
 
-        LoadCurrency();
+    private void Start()
+    {
+        // Podpinamy się pod zmiany w ekwipunku, żeby UI kasy odświeżało się "samo"
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged += HandleInventoryChanged;
+        }
+        
+        // Pierwsze odświeżenie po starcie
+        HandleInventoryChanged();
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.OnInventoryChanged -= HandleInventoryChanged;
+        }
+    }
+
+    private void HandleInventoryChanged()
+    {
+        OnCurrencyChanged?.Invoke(CurrentCurrency);
     }
 
     /// <summary>
-    /// Dodaje walutę graczowi. Wywołuj przy zbieraniu dusz/monet.
+    /// Dodaje fizyczne monety do ekwipunku gracza.
     /// </summary>
     public void AddCurrency(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0 || currencyItem == null) return;
 
-        _currentCurrency += amount;
-        Debug.Log($"<color=green>[CURRENCY] +{amount} | Razem: {_currentCurrency}</color>");
-
-        SaveCurrency();
-        OnCurrencyChanged?.Invoke(_currentCurrency);
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.AddItem(currencyItem, amount);
+            // OnInventoryChanged wywoła HandleInventoryChanged automatycznie!
+        }
     }
 
     /// <summary>
-    /// Próbuje wydać walutę. Zwraca TRUE jeśli gracz miał wystarczająco,
-    /// FALSE jeśli był za biedny.
+    /// Sprawdza czy stać nas na zakupy i usuwa monety z plecaka.
     /// </summary>
     public bool SpendCurrency(int amount)
     {
         if (amount <= 0) return true;
 
-        if (_currentCurrency < amount)
+        if (CurrentCurrency < amount)
         {
-            Debug.Log($"<color=red>[CURRENCY] Za mało kasy! Masz {_currentCurrency}, potrzebujesz {amount}.</color>");
+            Debug.Log($"<color=red>[CURRENCY] Za mało monet! Masz {CurrentCurrency}, potrzebujesz {amount}.</color>");
             return false;
         }
 
-        _currentCurrency -= amount;
-        Debug.Log($"<color=orange>[CURRENCY] -{amount} | Razem: {_currentCurrency}</color>");
+        if (InventoryController.Instance != null)
+        {
+            bool success = InventoryController.Instance.RemoveItem(currencyItemID, amount);
+            return success;
+        }
 
-        SaveCurrency();
-        OnCurrencyChanged?.Invoke(_currentCurrency);
-        return true;
+        return false;
     }
 
     /// <summary>
-    /// Zeruje portfel. Wywołuj przy zgonie gracza (strata dusz jak u FromSoft).
+    /// Czyści wszystkie monety z plecaka (np. przy zgonie).
     /// </summary>
     public void ResetCurrency()
     {
-        Debug.Log($"<color=red>[CURRENCY] ZGON! Tracisz {_currentCurrency} dusz!</color>");
-        _currentCurrency = 0;
-
-        SaveCurrency();
-        OnCurrencyChanged?.Invoke(_currentCurrency);
-    }
-
-    // ============================================================
-    // ZAPIS I ODCZYT (PlayerPrefs - placeholder do przyszłego SaveManagera)
-    // ============================================================
-
-    private void SaveCurrency()
-    {
-        PlayerPrefs.SetInt(SAVE_KEY, _currentCurrency);
-        PlayerPrefs.Save();
-    }
-
-    private void LoadCurrency()
-    {
-        _currentCurrency = PlayerPrefs.GetInt(SAVE_KEY, 0);
-        Debug.Log($"<color=cyan>[CURRENCY] Wczytano portfel: {_currentCurrency} dusz.</color>");
-
-        // Informujemy UI od razu po załadowaniu
-        OnCurrencyChanged?.Invoke(_currentCurrency);
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.RemoveItem(currencyItemID, CurrentCurrency);
+        }
     }
 }

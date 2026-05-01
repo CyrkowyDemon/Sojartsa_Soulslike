@@ -26,6 +26,9 @@ public class PeacefulNPC : MonoBehaviour, IInteractable
     [Tooltip("Punkt, na którym skupi się kamera gracza. Jeśli puste, użyje środka NPC.")]
     public Transform lockOnTransform;
 
+    [Header("Sklep")]
+    public TradeShopData tradeShopData;
+
     private void Start()
     {
         if (lockOnTransform == null) lockOnTransform = this.transform;

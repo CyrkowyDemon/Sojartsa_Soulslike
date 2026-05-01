@@ -10,16 +10,10 @@ public class PlayerFootsteps : MonoBehaviour
     [SerializeField] private string defaultLayer = "Unknown"; // Zmieniłem na Unknown pod Twój błąd
 
     [Header("Detekcja")]
-    [SerializeField] private float rayDistance = 1.5f;
-    [SerializeField] private float rayHeightOffset = 0.5f; // Punkt startowy nad stopami
-    [SerializeField] private LayerMask floorLayer;
     [SerializeField] private float movementThreshold = 0.1f;
 
     [Header("Animacja")]
     [SerializeField] private int actionLayerIndex = 2; // Wyciągnięty Magic Number
-
-    private string[] _cachedTerrainLayerNames;
-    private Terrain _currentTerrain; // Pamięta teren, na którym stoimy
 
     private Animator _animator;
     private CharacterController _controller;
@@ -36,10 +30,11 @@ public class PlayerFootsteps : MonoBehaviour
     public void PlayFootstep()
     {
         float currentSpeed = (_animator != null) ? _animator.velocity.magnitude : 0f;
-        if (currentSpeed < movementThreshold) return;
-
-        // FROMSOFTWARE FIX: Z użyciem zcache'owanego kontrolera (nie obciąża procesora)
-       // if (_controller != null && !_controller.isGrounded) return;
+        if (currentSpeed < movementThreshold) 
+        {
+            Debug.Log($"<color=orange>[Footsteps]</color> Zablokowane: Prędkość {currentSpeed} jest mniejsza niż próg {movementThreshold}");
+            return;
+        }
 
         if (_animator != null && _animator.layerCount > actionLayerIndex)
         {
@@ -48,11 +43,13 @@ public class PlayerFootsteps : MonoBehaviour
 
             if (actionState.shortNameHash != nothingHash || _animator.IsInTransition(actionLayerIndex))
             {
+                Debug.Log($"<color=orange>[Footsteps]</color> Zablokowane: Postać robi akcję (atak/unik) na warstwie {actionLayerIndex}");
                 return;
             }
         }
 
-        string materialLabel = DetermineMaterial();
+        Sojartsa.Systems.Surface.SurfaceType currentSurface = Sojartsa.Systems.Surface.SurfaceType.Default;
+        string materialLabel = DetermineMaterial(out currentSurface);
 
         EventInstance instance = RuntimeManager.CreateInstance(footstepEvent);
         instance.set3DAttributes(RuntimeUtils.To3DAttributes(gameObject));
@@ -62,75 +59,41 @@ public class PlayerFootsteps : MonoBehaviour
         instance.start();
         instance.release();
 
-        Debug.Log($"<color=lime>Krok!</color> Materiał: {materialLabel}");
+        // Odpalenie cząsteczek spod butów, jeśli są przypisane w SurfaceData
+        if (Sojartsa.Systems.Surface.SurfaceManager.Instance != null && currentSurface != Sojartsa.Systems.Surface.SurfaceType.Default)
+        {
+            GameObject footstepVFX = Sojartsa.Systems.Surface.SurfaceManager.Instance.GetFootstepVFX(currentSurface);
+            if (footstepVFX != null)
+            {
+                // Odpalamy VFX na ziemi z rotacją do góry
+                GameObject vfx = SimplePool.Spawn(footstepVFX, transform.position, Quaternion.LookRotation(Vector3.up));
+                SimplePool.Despawn(vfx, footstepVFX, 2.0f);
+            }
+        }
     }
 
-    private string DetermineMaterial()
+    private string DetermineMaterial(out Sojartsa.Systems.Surface.SurfaceType outSurfaceType)
     {
-        // FIX: Strzelamy centralnie w dół ze środka postaci (lekko uniesione żeby nie wejść w podłogę)
-        // Usunąłem transform.forward, żeby moonwalk i strafe działały poprawnie
-        Vector3 rayStart = transform.position + (Vector3.up * rayHeightOffset);
+        outSurfaceType = Sojartsa.Systems.Surface.SurfaceType.Default;
 
-        // DEBUG: Narysuje Ci czerwoną linię w oknie Scene podczas grania!
-        Debug.DrawRay(rayStart, Vector3.down * rayDistance, Color.red, 1f);
-
-        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, rayDistance, floorLayer))
+        if (Sojartsa.Systems.Surface.SurfaceManager.Instance != null)
         {
-            if (hit.collider is TerrainCollider terrainCollider)
+            // Pytamy jedyny słuszny system o typ podłoża
+            outSurfaceType = Sojartsa.Systems.Surface.SurfaceManager.Instance.GetSurface(transform.position);
+            
+            // Rysujemy debugowy promień (przejęty ze skasowanego SurfaceTestera)
+            Debug.DrawRay(transform.position + Vector3.up * 0.1f, Vector3.down * 1f, Color.red, 1f);
+            
+            if (outSurfaceType == Sojartsa.Systems.Surface.SurfaceType.Default)
             {
-                Terrain hitTerrain = terrainCollider.GetComponent<Terrain>();
-                return GetTerrainTexture(terrainCollider.terrainData, hit.point, terrainCollider.transform.position, hitTerrain);
+                return defaultLayer;
             }
-
-            // Możesz tu dodawać kolejne ify dla innych modeli, np. jeśli mają tag "Wood" itp.
-            return defaultLayer;
+            
+            // FMOD dostaje stringa z Enuma ("Grass", "Stone", "Wood" itd.)
+            // Jeśli FMOD używa małych liter, dopisz tutaj: .ToLower()
+            return outSurfaceType.ToString();
         }
 
-        // Raycast nic nie trafił
         return defaultLayer;
-    }
-
-    private string GetTerrainTexture(TerrainData terrainData, Vector3 worldPos, Vector3 terrainPos, Terrain hitTerrain)
-    {
-        // FIX: Dynamiczny cache. Jeśli weszliśmy na nowy kawałek terenu, to robi cache tylko raz.
-        if (_currentTerrain != hitTerrain)
-        {
-            _currentTerrain = hitTerrain;
-            CacheTerrainLayers(_currentTerrain);
-        }
-
-        if (_cachedTerrainLayerNames == null || _cachedTerrainLayerNames.Length == 0) return defaultLayer;
-
-        int mapX = Mathf.RoundToInt(((worldPos.x - terrainPos.x) / terrainData.size.x) * (terrainData.alphamapWidth - 1));
-        int mapZ = Mathf.RoundToInt(((worldPos.z - terrainPos.z) / terrainData.size.z) * (terrainData.alphamapHeight - 1));
-
-        float[,,] splatmapData = terrainData.GetAlphamaps(mapX, mapZ, 1, 1);
-
-        float maxWeight = 0f;
-        int textureIndex = 0;
-
-        for (int i = 0; i < _cachedTerrainLayerNames.Length; i++)
-        {
-            if (splatmapData[0, 0, i] > maxWeight)
-            {
-                maxWeight = splatmapData[0, 0, i];
-                textureIndex = i;
-            }
-        }
-
-        return _cachedTerrainLayerNames[textureIndex];
-    }
-
-    private void CacheTerrainLayers(Terrain terrain)
-    {
-        if (terrain != null && terrain.terrainData != null)
-        {
-            var layers = terrain.terrainData.terrainLayers;
-            _cachedTerrainLayerNames = new string[layers.Length];
-            for (int i = 0; i < layers.Length; i++)
-            {
-                _cachedTerrainLayerNames[i] = layers[i].name.ToLower();
-            }
-        }
     }
 }

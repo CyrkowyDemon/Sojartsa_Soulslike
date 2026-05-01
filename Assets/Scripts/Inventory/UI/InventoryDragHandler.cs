@@ -1,29 +1,35 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Sojartsa.Inventory.UI;
+using Sojartsa.UI.DragDrop;
 
 namespace Sojartsa.Inventory.UI
 {
     /// <summary>
-    /// Obsługuje wizualne przeciąganie przedmiotów (Drag & Drop).
+    /// Uniwersalny handler Drag & Drop.
+    /// NIE ZNA żadnego konkretnego systemu – operuje wyłącznie na interfejsach.
+    /// 
+    /// Obsługuje:
+    /// - LPM (Lewy Przycisk): Podnosi cały stack
+    /// - PPM (Prawy Przycisk): Podnosi połowę stacka (split)
     /// </summary>
-    public class InventoryDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    [RequireComponent(typeof(CanvasGroup))]
+    public class InventoryDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
-        [Header("Referencje")]
-        [SerializeField] private InventorySlotUI slotUI;
-        
         private Canvas _mainCanvas;
         private RectTransform _rectTransform;
         private CanvasGroup _canvasGroup;
         
         private static GameObject _dragIconObject;
         private static Image _dragIconImage;
-        private static InventorySlotUI _sourceSlot;
+        
+        private IDragSource _mySource;
+        private static IDragSource _currentSource;
+        private static ItemPayload _currentPayload;
 
         private void Awake()
         {
-            slotUI = GetComponent<InventorySlotUI>();
+            _mySource = GetComponent<IDragSource>();
             _rectTransform = GetComponent<RectTransform>();
             _canvasGroup = GetComponent<CanvasGroup>();
             _mainCanvas = GetComponentInParent<Canvas>();
@@ -31,47 +37,38 @@ namespace Sojartsa.Inventory.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            Debug.Log($"[DRAG] OnBeginDrag na slocie: {gameObject.name}");
-            // KLUCZOWA BLOKADA: Nie pozwalamy zacząć przeciągania, jeśli slot jest pustY!
-            if (slotUI == null || slotUI.IsEmpty()) 
+            if (_mySource == null || !_mySource.CanDrag())
             {
                 eventData.pointerDrag = null;
                 return;
             }
 
-            _sourceSlot = slotUI;
+            _currentSource = _mySource;
+            _currentPayload = _mySource.GetTransferPayload();
+            _currentSource.OnDragStarted();
 
-            // --- WIZUALNE UKRYWANIE SAMEJ IKONKI ---
+            // Wyłączamy kolizje, żeby myszka widziała co jest POD slotem
             if (_canvasGroup != null)
-            {
-                _canvasGroup.blocksRaycasts = false; // Żeby myszka widziała co jest POD slotem
-            }
-            
-            if (slotUI != null)
-                slotUI.SetVisualsActive(false);
+                _canvasGroup.blocksRaycasts = false;
 
-            // Tworzymy ikonę "ducha" jeśli nie istnieje
+            // Tworzymy ikonę "ducha"
             if (_dragIconObject == null)
             {
                 _dragIconObject = new GameObject("DragIcon");
                 _dragIconImage = _dragIconObject.AddComponent<Image>();
-                _dragIconImage.raycastTarget = false; // Żeby nie blokować upuszczania
+                _dragIconImage.raycastTarget = false;
             }
 
-            // ZAWSZE przypinamy do aktualnego canvasu (zapobiega to znikaniu, jeśli stary canvas został wyłączony)
-            // i dajemy na samą górę, żeby ikonka była nad wszystkim innym!
             _dragIconObject.transform.SetParent(_mainCanvas.transform, false);
             _dragIconObject.transform.SetAsLastSibling();
             
-            // Ustawiamy wielkość ducha na taką samą jak slot
             RectTransform rt = _dragIconObject.GetComponent<RectTransform>();
             rt.sizeDelta = _rectTransform.sizeDelta;
 
-            _dragIconImage.sprite = slotUI.GetIcon();
+            _dragIconImage.sprite = _currentSource.GetDragIcon();
             _dragIconImage.enabled = true;
             _dragIconObject.SetActive(true);
             
-            // Lekko przezroczysty duch
             Color c = _dragIconImage.color;
             c.a = 0.6f;
             _dragIconImage.color = c;
@@ -79,67 +76,73 @@ namespace Sojartsa.Inventory.UI
 
         public void OnDrag(PointerEventData eventData)
         {
-            Debug.Log("[DRAG] OnDrag");
-            // Duch podąża za kursorem
-            if (_dragIconObject != null) _dragIconObject.transform.position = eventData.position;
+            if (_dragIconObject != null)
+                _dragIconObject.transform.position = eventData.position;
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            Debug.Log("[DRAG] OnEndDrag wywołane.");
-            // Przywracamy raycasts
+            // Przywracamy kolizje
             if (_canvasGroup != null)
                 _canvasGroup.blocksRaycasts = true;
 
-            if (_dragIconObject == null) return;
-            _dragIconObject.SetActive(false);
+            if (_dragIconObject != null)
+                _dragIconObject.SetActive(false);
 
-            // Sprawdzamy co jest pod kursorem
+            // Szukamy celu pod kursorem
             GameObject over = eventData.pointerCurrentRaycast.gameObject;
-            Debug.Log($"[DRAG] Pod myszką po upuszczeniu: {(over != null ? over.name : "NIC")}");
+            Debug.Log($"[DRAG] Puszczono na: {(over != null ? over.name : "NULL")}");
             
-            if (over != null)
+            if (over != null && _currentPayload != null)
             {
-                InventorySlotUI targetSlot = over.GetComponentInParent<InventorySlotUI>();
-                if (targetSlot != null && targetSlot != _sourceSlot)
+                IDropTarget target = over.GetComponentInParent<IDropTarget>();
+                if (target == null)
                 {
-                    Debug.Log($"[DRAG] Wykryto poprawny target: {targetSlot.gameObject.name}. Robię Swapa!");
-                    ExecuteSwap(_sourceSlot, targetSlot);
+                    Debug.Log($"[DRAG] Obiekt {over.name} nie ma w rodzicach IDropTarget!");
+                }
+                else if (ItemTransferManager.Instance == null)
+                {
+                    Debug.Log("[DRAG] BŁĄD: ItemTransferManager.Instance jest NULL!");
+                }
+                else
+                {
+                    ItemPayload targetPayload = target.GetTargetPayload();
+                    bool success = ItemTransferManager.Instance.Execute(_currentPayload, targetPayload);
+                    Debug.Log($"[DRAG] Transfer z {_currentPayload.Source} na {targetPayload.Source}. Sukces: {success}");
+                    
+                    if (success)
+                        target.OnDropCompleted();
                 }
             }
 
-            // --- ZAWSZE przywracamy wizualia oryginalnego slotu ---
-            if (_sourceSlot != null)
-                _sourceSlot.SetVisualsActive(true);
-
-            // W nowym systemie Eventów, DragHandler nie musi nikogo szukać.
-            // Po prostu zamieniamy dane, a plecak sam powiadomi UI i EquipmentManager.
+            // Informujemy źródło, że przeciąganie się skończyło
+            if (_currentSource != null)
+            {
+                _currentSource.OnDragEnded();
+                _currentSource = null;
+                _currentPayload = null;
+            }
+            
             if (EventSystem.current != null)
                 EventSystem.current.SetSelectedGameObject(null);
         }
 
-        private void ExecuteSwap(InventorySlotUI a, InventorySlotUI b)
+        /// <summary>
+        /// PPM na slocie = dzielenie stacka (split).
+        /// Podnosi połowę stacka i kładzie na pierwszy wolny slot.
+        /// </summary>
+        public void OnPointerClick(PointerEventData eventData)
         {
-            InventoryDisplay displayA = a.GetComponentInParent<InventoryDisplay>();
-            InventoryDisplay displayB = b.GetComponentInParent<InventoryDisplay>();
-            
-            if (displayA == null || displayB == null) return;
+            if (eventData.button != PointerEventData.InputButton.Right) return;
+            if (_mySource == null || !_mySource.CanDrag()) return;
 
-            bool isAEquip, isBEquip;
-            int indexA = displayA.GetSlotIndex(a, out isAEquip);
-            int indexB = displayB.GetSlotIndex(b, out isBEquip);
+            ItemPayload payload = _mySource.GetTransferPayload();
+            if (payload == null || payload.IsEmpty || payload.Amount <= 1) return;
 
-            if (indexA != -1 && indexB != -1)
+            // Dzielimy stack na pół
+            if (ItemTransferManager.Instance != null)
             {
-                InventoryController inv = InventoryController.Instance;
-                if (inv == null) return;
-
-                // Pobieramy prawidłowe listy dla obu slotów
-                System.Collections.Generic.List<InventorySlot> listA = isAEquip ? inv.equipmentSlots : (displayA.IsBagMode() ? inv.bagSlots : inv.inventorySlots);
-                System.Collections.Generic.List<InventorySlot> listB = isBEquip ? inv.equipmentSlots : (displayB.IsBagMode() ? inv.bagSlots : inv.inventorySlots);
-
-                // Uniwersalna metoda zamiany (działa też wewnątrz tej samej listy)
-                inv.SwapSlotsBetweenLists(listA, indexA, listB, indexB);
+                ItemTransferManager.Instance.SplitStack(payload);
             }
         }
     }

@@ -18,6 +18,7 @@ namespace SojartsaAI.v3
         [Header("Balans")]
         public float weight = 1.0f;
         public float cooldown = 2.0f;
+        public int damageAmount = 10;
         public float poiseDamage = 10f;
         
         [Header("AAA - Dynamic Tracking (The Hunting)")]

@@ -145,7 +145,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 188320563}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: f8662468c90aaef4bba16dbdeedcc839, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -672,6 +672,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e0e0d3f1c736e004e80cc3030965e070, type: 2}
   talkConversations: []
   lockOnTransform: {fileID: 1371557776}
+  tradeShopData: {fileID: 11400000, guid: 6256a1547ed665840a90ac5607b0cb2a, type: 2}
 --- !u!4 &1926524660
 Transform:
   m_ObjectHideFlags: 0

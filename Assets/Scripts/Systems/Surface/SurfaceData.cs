@@ -10,10 +10,12 @@ namespace Sojartsa.Systems.Surface
         Grass,
         Stone,
         Wood,
+        Mud,
         Metal,
         Water,
         Sand,
-        Snow
+        Snow,
+        Flesh // Dodane pod nowy system walki
     }
 
     [CreateAssetMenu(fileName = "NewSurfaceData", menuName = "Sojartsa/Surface System/Surface Data")]
@@ -37,6 +39,17 @@ namespace Sojartsa.Systems.Surface
         {
             public TerrainLayer layer;
             public SurfaceType type;
+        }
+
+        [Header("Efekty Cząsteczkowe (VFX) dla Podłoża")]
+        public List<SurfaceVFXMapping> vfxMappings = new List<SurfaceVFXMapping>();
+
+        [Serializable]
+        public struct SurfaceVFXMapping
+        {
+            public SurfaceType type;
+            public GameObject hitVFXPrefab;
+            public GameObject footstepVFXPrefab;
         }
     }
 }

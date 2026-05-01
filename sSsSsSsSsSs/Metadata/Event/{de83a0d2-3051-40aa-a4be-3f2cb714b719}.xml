@@ -108,7 +108,7 @@
 	<object class="MixerBusPanner" id="{bae03b2d-b12e-4328-85d9-f8376a0c120b}" />
 	<object class="SingleSound" id="{80327856-7123-4ca9-a6c9-e65cf56670bd}">
 		<property name="length">
-			<value>1.3756041666666667</value>
+			<value>1.1500000000000001</value>
 		</property>
 		<relationship name="triggerConditions">
 			<destination>{e5044f28-e770-467f-acfe-341918cba25d}</destination>

@@ -80,6 +80,13 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleHeavyAttackInput()
     {
+        // BLOKADA: Brak broni = brak ataku
+        if (_activeWeaponHitbox == null)
+        {
+            Debug.Log("<color=yellow>[COMBAT] Brak broni - ciężki atak zablokowany.</color>");
+            return;
+        }
+
         bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
         bool canAttack = animator.GetBool("CanCancel") || isIdle;
 
@@ -98,8 +105,11 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
-    private void ExecuteAttack()
+    public void ExecuteAttack()
     {
+        // BLOKADA: Brak broni = brak ataku
+        if (_activeWeaponHitbox == null) return;
+
         _attackBuffered = false;
         _bufferTimer = 0;
 
@@ -109,8 +119,38 @@ public class PlayerCombat : MonoBehaviour
         animator.ResetTrigger("Attack");
         animator.ResetTrigger("HeavyAttack");
         animator.ResetTrigger("Dodge");
+        animator.ResetTrigger("ApplyEnchant");
 
         animator.SetTrigger("Attack");
+    }
+
+    public bool RequestEnchantAction()
+    {
+        if (animator.layerCount <= ACTIONS_LAYER)
+        {
+            Debug.LogError($"<color=red>[COMBAT] Brak warstwy o indeksie {ACTIONS_LAYER} w Animatorze!</color>");
+            return false;
+        }
+
+        bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
+        bool canEnchant = animator.GetBool("CanCancel") || isIdle;
+
+        if (canEnchant)
+        {
+            _attackBuffered = false;
+            _bufferTimer = 0;
+            animator.SetBool("CanCancel", false);
+
+            animator.ResetTrigger("Attack");
+            animator.ResetTrigger("HeavyAttack");
+            animator.ResetTrigger("Dodge");
+            animator.ResetTrigger("ApplyEnchant");
+
+            animator.SetTrigger("ApplyEnchant");
+            return true;
+        }
+
+        return false;
     }
 
     private void HandleDodgeInput()

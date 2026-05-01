@@ -32,9 +32,11 @@ public class EnemyUI : MonoBehaviour
 
     void LateUpdate()
     {
+        if (_playerTransform == null) return;
+
         // OPTYMALIZACJA: Jeśli gracz jest za daleko, nie marnujemy mocy na obracanie pasków
         float sqrDist = (transform.position - _playerTransform.position).sqrMagnitude;
-        if (_playerTransform == null || sqrDist > updateDistance * updateDistance)
+        if (sqrDist > updateDistance * updateDistance)
         {
             return;
         }

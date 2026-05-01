@@ -37,10 +37,16 @@ public class WeaponHitbox : MonoBehaviour
     private readonly Dictionary<Transform, Vector3> _previousPositions = new Dictionary<Transform, Vector3>();
     private RaycastHit[] _hitCache = new RaycastHit[10];
     private PlayerCombat _ownerCombat;
+    private SojartsaAI.v3.AIBrain _ownerBrain;
+
+    private void Awake()
+    {
+        _ownerBrain = transform.root.GetComponentInChildren<SojartsaAI.v3.AIBrain>();
+        _ownerCombat = transform.root.GetComponentInChildren<PlayerCombat>();
+    }
 
     private void Start()
     {
-        _ownerCombat = transform.root.GetComponentInChildren<PlayerCombat>();
         if (_ownerCombat != null) _ownerCombat.SetActiveWeapon(this);
     }
 
@@ -78,8 +84,7 @@ public class WeaponHitbox : MonoBehaviour
         {
             if (hitPoints != null && hitPoints.Count >= 2)
             {
-                trailMesh.basePoint = hitPoints[0];
-                trailMesh.tipPoint = hitPoints[hitPoints.Count - 1];
+                trailMesh.sourcePoints = hitPoints;
             }
             trailMesh.StartTrail();
         }
@@ -144,36 +149,64 @@ public class WeaponHitbox : MonoBehaviour
         EnemyHealth enemyHP = col.GetComponentInParent<EnemyHealth>();
         PlayerHealth playerHP = col.GetComponentInParent<PlayerHealth>();
 
-        GameObject target = enemyHP != null ? enemyHP.gameObject : (playerHP != null ? playerHP.gameObject : null);
+        bool isEnvironment = (enemyHP == null && playerHP == null);
+        GameObject target = enemyHP != null ? enemyHP.gameObject : (playerHP != null ? playerHP.gameObject : col.gameObject);
 
-        if (target != null && !_hitObjectsThisSwing.Contains(target))
+        if (target != null)
         {
-            _hitObjectsThisSwing.Add(target);
-            if (enemyHP != null)
+            // Elden Ring Fix: Jeśli to podłoga/ściana, sypiemy cząsteczkami ZAWSZE,
+            // dopóki miecz sunie po ziemi.
+            if (isEnvironment)
             {
-                int finalDamage = damageAmount;
-                if (transform.root.CompareTag("Player") && EquipmentManager.Instance != null)
-                    finalDamage = EquipmentManager.Instance.GetCurrentAttackDamage();
-                enemyHP.TakeDamage(finalDamage, isKnockbackAttack, poiseDamage);
-                isEnemy = true;
-            }
-            else if (playerHP != null)
-            {
-                playerHP.TakeDamage(damageAmount, isKnockbackAttack);
-                isPlayer = true;
+                SpawnHitVFX(hit);
             }
 
-            SpawnHitVFX(hit);
-            PlayHitSound(hit, target);
-            return true;
+            // Ale rejestrujemy główne trafienie (dźwięki, obrażenia, wibracje kamery) TYLKO RAZ
+            if (!_hitObjectsThisSwing.Contains(target))
+            {
+                _hitObjectsThisSwing.Add(target);
+
+                int finalDamage = damageAmount;
+                float finalPoiseDamage = poiseDamage;
+
+                if (_ownerBrain != null && _ownerBrain.ActiveAction != null)
+                {
+                    finalDamage = _ownerBrain.ActiveAction.damageAmount;
+                    finalPoiseDamage = _ownerBrain.ActiveAction.poiseDamage;
+                }
+
+                if (enemyHP != null)
+                {
+                    if (transform.root.CompareTag("Player") && EquipmentManager.Instance != null)
+                        finalDamage = EquipmentManager.Instance.GetCurrentAttackDamage();
+                    enemyHP.TakeDamage(finalDamage, isKnockbackAttack, (int)finalPoiseDamage);
+                    isEnemy = true;
+                }
+                else if (playerHP != null)
+                {
+                    playerHP.TakeDamage(finalDamage, isKnockbackAttack);
+                    isPlayer = true;
+                }
+
+                // Dla żywych przeciwników sypiemy krwią tylko raz
+                if (!isEnvironment) SpawnHitVFX(hit);
+
+                PlayHitSound(hit, target); // Dźwięk zderzenia też tylko raz (inaczej rozwali bębenki)
+                return true; // Odsyłamy true (wibracja kamery) tylko przy uderzeniu początkowym
+            }
         }
         return false;
     }
 
     private void TriggerHitEffects(bool hitEnemy, bool hitPlayer)
     {
-        float duration = hitPlayer ? hitStopOnPlayerHit : hitStopDuration;
-        if (HitStop.Instance != null) HitStop.Instance.Freeze(duration);
+        // Pętla zatrzymuje czas tylko jeśli trafiono w istotę żywą, nie w ścianę
+        if (hitEnemy || hitPlayer)
+        {
+            float duration = hitPlayer ? hitStopOnPlayerHit : hitStopDuration;
+            if (HitStop.Instance != null) HitStop.Instance.Freeze(duration);
+        }
+        
         var source = GetComponent<CinemachineImpulseSource>() ?? GetComponentInParent<CinemachineImpulseSource>();
         if (source != null) source.GenerateImpulse();
     }
@@ -181,10 +214,20 @@ public class WeaponHitbox : MonoBehaviour
     private void SpawnHitVFX(RaycastHit hit)
     {
         Vector3 pos = hit.point == Vector3.zero ? hit.collider.bounds.center : hit.point;
-        if (hitVFXPrefab != null)
+        
+        // Nowość: Pobieramy specyficzny efekt cząsteczkowy dla danego materiału (np. krew dla Flesh, drzazgi dla Wood)
+        GameObject dynamicVFX = hitVFXPrefab; 
+        if (Sojartsa.Systems.Surface.SurfaceManager.Instance != null)
         {
-            GameObject vfx = SimplePool.Spawn(hitVFXPrefab, pos, Quaternion.LookRotation(hit.normal == Vector3.zero ? Vector3.up : hit.normal));
-            SimplePool.Despawn(vfx, hitVFXPrefab, 2.0f);
+            var surfaceType = Sojartsa.Systems.Surface.SurfaceManager.Instance.GetSurface(hit);
+            var customVFX = Sojartsa.Systems.Surface.SurfaceManager.Instance.GetHitVFX(surfaceType);
+            if (customVFX != null) dynamicVFX = customVFX;
+        }
+
+        if (dynamicVFX != null)
+        {
+            GameObject vfx = SimplePool.Spawn(dynamicVFX, pos, Quaternion.LookRotation(hit.normal == Vector3.zero ? Vector3.up : hit.normal));
+            SimplePool.Despawn(vfx, dynamicVFX, 2.0f);
         }
         if (hitLightPrefab != null)
         {
@@ -196,7 +239,18 @@ public class WeaponHitbox : MonoBehaviour
     private void PlayHitSound(RaycastHit hit, GameObject target)
     {
         if (hitSound.IsNull) return;
-        string material = target.GetComponentInChildren<SurfaceAudio>()?.surfaceLabel ?? defaultMaterialLabel;
+        
+        // Zamiast powolnego GetComponent na SurfaceAudio, używamy centralnego Managera i PhysicsMaterials!
+        string material = defaultMaterialLabel;
+        if (Sojartsa.Systems.Surface.SurfaceManager.Instance != null)
+        {
+            var surfaceType = Sojartsa.Systems.Surface.SurfaceManager.Instance.GetSurface(hit);
+            if (surfaceType != Sojartsa.Systems.Surface.SurfaceType.Default)
+            {
+                material = surfaceType.ToString(); // Pobiera etykietę (np. "Metal", "Flesh") z Fizyki!
+            }
+        }
+
         var instance = RuntimeManager.CreateInstance(hitSound);
         instance.set3DAttributes(RuntimeUtils.To3DAttributes(hit.point != Vector3.zero ? hit.point : transform.position));
         instance.setParameterByNameWithLabel(materialParameterName, material);

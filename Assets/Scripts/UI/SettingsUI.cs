@@ -47,8 +47,8 @@ public class SettingsUI : MonoBehaviour
         // --- Aktualizacja Suwaków ---
         if (mouseSlider != null)
         {
-            mouseSlider.minValue = 1f;
-            mouseSlider.maxValue = 5f;
+            mouseSlider.minValue = 0.01875f;
+            mouseSlider.maxValue = 0.3f;
             mouseSlider.value = SettingsManager.Instance.mouseSensitivity;
         }
 

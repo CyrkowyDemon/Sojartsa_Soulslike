@@ -26,7 +26,7 @@ public class InventoryController : MonoBehaviour
     private void Awake()
     {
         if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        else Destroy(this);
 
         InitializeInventory();
     }
@@ -91,25 +91,50 @@ public class InventoryController : MonoBehaviour
     }
 
     /// <summary>
-    /// Zamienia przedmioty miejscami (pod Drag & Drop).
+    /// Zamienia przedmioty miejscami (pod Drag & Drop) lub łączy stacki.
     /// </summary>
     public void SwapSlots(List<InventorySlot> targetBag, int indexA, int indexB)
     {
         if (indexA < 0 || indexA >= targetBag.Count || indexB < 0 || indexB >= targetBag.Count) return;
 
-        InventorySlot temp = new InventorySlot(targetBag[indexA].item, targetBag[indexA].amount);
-        
-        targetBag[indexA].item = targetBag[indexB].item;
-        targetBag[indexA].amount = targetBag[indexB].amount;
+        InventorySlot slotA = targetBag[indexA];
+        InventorySlot slotB = targetBag[indexB];
 
-        targetBag[indexB].item = temp.item;
-        targetBag[indexB].amount = temp.amount;
+        // 1. Próba łączenia (Merge), jeśli to ten sam przedmiot i się stackuje
+        if (!slotA.IsEmpty && !slotB.IsEmpty && slotA.item.itemID == slotB.item.itemID && slotA.item.isStackable)
+        {
+            int spaceLeft = slotB.item.maxStackSize - slotB.amount;
+            if (spaceLeft > 0)
+            {
+                int amountToMove = Mathf.Min(spaceLeft, slotA.amount);
+                slotB.amount += amountToMove;
+                slotA.amount -= amountToMove;
+
+                if (slotA.amount <= 0)
+                {
+                    slotA.Clear();
+                }
+
+                if (targetBag == equipmentSlots) TriggerEquipmentUpdate();
+                else TriggerInventoryUpdate();
+                return; // Zakończ, bo połączyliśmy
+            }
+        }
+
+        // 2. Jeśli nie można połączyć (inne itemy, pełne stacki, brak stackowania) -> Swap
+        InventorySlot temp = new InventorySlot(slotA.item, slotA.amount);
+        
+        slotA.item = slotB.item;
+        slotA.amount = slotB.amount;
+
+        slotB.item = temp.item;
+        slotB.amount = temp.amount;
 
         // Powiadamiamy i odświeżamy
         if (targetBag == equipmentSlots) 
             TriggerEquipmentUpdate();
         else 
-            OnInventoryChanged?.Invoke();
+            TriggerInventoryUpdate();
     }
 
     /// <summary>
@@ -130,9 +155,14 @@ public class InventoryController : MonoBehaviour
         listB[indexB].amount = temp.amount;
 
         // Powiadamiamy wszystkich o zmianach
-        OnInventoryChanged?.Invoke();
+        TriggerInventoryUpdate();
         if (listA == equipmentSlots || listB == equipmentSlots) 
             TriggerEquipmentUpdate();
+    }
+
+    public void TriggerInventoryUpdate()
+    {
+        OnInventoryChanged?.Invoke();
     }
 
     /// <summary>
@@ -167,5 +197,81 @@ public class InventoryController : MonoBehaviour
     {
         if (EquipmentManager.Instance == null) return;
         EquipmentManager.Instance.RefreshFromSlots();
+    }
+
+    // ============================================================
+    // NOWE METODY DLA SKLEPU I WALUTY ITEMOWEJ
+    // ============================================================
+
+    /// <summary>
+    /// Zlicza wszystkie sztuki przedmiotu o danym ID w całym ekwipunku (Inventory + Bag).
+    /// </summary>
+    public int GetTotalItemCount(string itemID)
+    {
+        int count = 0;
+        
+        // Sprawdzamy główny ekwipunek
+        foreach (var slot in inventorySlots)
+        {
+            if (!slot.IsEmpty && slot.item.itemID == itemID)
+                count += slot.amount;
+        }
+
+        // Sprawdzamy dodatkową torbę (np. na enchanty)
+        foreach (var slot in bagSlots)
+        {
+            if (!slot.IsEmpty && slot.item.itemID == itemID)
+                count += slot.amount;
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Usuwa określoną liczbę przedmiotów o dany ID.
+    /// Zaczyna od Inventory, potem szuka w Bag.
+    /// Zwraca TRUE jeśli udało się usunąć całość, FALSE jeśli było za mało przedmiotów.
+    /// </summary>
+    public bool RemoveItem(string itemID, int amount)
+    {
+        if (GetTotalItemCount(itemID) < amount) return false;
+
+        int remainingToRemove = amount;
+
+        // 1. Usuwamy z Inventory
+        remainingToRemove = RemoveFromList(inventorySlots, itemID, remainingToRemove);
+
+        // 2. Jeśli jeszcze zostało coś do usunięcia, szukamy w Bag
+        if (remainingToRemove > 0)
+        {
+            remainingToRemove = RemoveFromList(bagSlots, itemID, remainingToRemove);
+        }
+
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    private int RemoveFromList(List<InventorySlot> list, string itemID, int amountToRemove)
+    {
+        for (int i = list.Count - 1; i >= 0; i--) // Idziemy od tyłu, żeby nie psuć iteracji przy usuwaniu
+        {
+            if (amountToRemove <= 0) break;
+
+            var slot = list[i];
+            if (!slot.IsEmpty && slot.item.itemID == itemID)
+            {
+                if (slot.amount <= amountToRemove)
+                {
+                    amountToRemove -= slot.amount;
+                    slot.Clear();
+                }
+                else
+                {
+                    slot.amount -= amountToRemove;
+                    amountToRemove = 0;
+                }
+            }
+        }
+        return amountToRemove;
     }
 }

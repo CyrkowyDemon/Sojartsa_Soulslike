@@ -20,6 +20,7 @@ namespace SojartsaAI.v3
         public float AngleToPlayer { get; private set; }
         public PlayerSide Side { get; private set; }
         public bool IsPlayerVisible { get; private set; }
+        public Transform Player => _player;
 
         // --- AAA INTELLIGENCE (Roll Catching) ---
         public float TimeSinceLastPlayerDodge { get; private set; } = 99f;
@@ -65,11 +66,18 @@ namespace SojartsaAI.v3
 
         public void Tick()
         {
-            if (_player == null) return;
+            // AAA: Autodetekcja gracza jeśli nie został przypisany w Inspektorze
+            if (_player == null)
+            {
+                GameObject p = GameObject.FindGameObjectWithTag("Player");
+                if (p != null) 
+                {
+                    _player = p.transform;
+                    _playerAnim = _player.GetComponentInChildren<Animator>();
+                }
+                else return; // Wciąż nie ma gracza w scenie
+            }
 
-            // Resetujemy flagi inputu na początku klatki (bo zdarzenia są asynchroniczne)
-            // W Soulsach reakcja na input jest błyskawiczna
-            
             Vector3 toPlayer = _player.position - _self.position;
             SqrDistance = toPlayer.sqrMagnitude;
             Distance = Mathf.Sqrt(SqrDistance);
@@ -94,13 +102,11 @@ namespace SojartsaAI.v3
         public bool IsPathBlocked(Vector3 direction, float distance)
         {
             // AAA: Spatial Awareness - Sprawdzamy czy w danym kierunku jest ściana/przepaść
-            // Używamy SphereCast, żeby symulować szerokość ciała AI
             RaycastHit hit;
             Vector3 origin = _self.position + Vector3.up * 1f;
             
-            // Maskujemy warstwę Environment
             int mask = LayerMask.GetMask("Environment", "Default");
-            if (mask == 0) mask = ~0; // Fallback
+            if (mask == 0) mask = ~0; 
 
             return Physics.SphereCast(origin, 0.5f, direction, out hit, distance, mask);
         }
@@ -117,21 +123,28 @@ namespace SojartsaAI.v3
 
         private bool CheckLineOfSight()
         {
-            if (_config == null || SqrDistance > _config.lookRange * _config.lookRange) return false;
+            if (_player == null || _config == null) return false;
+            if (SqrDistance > _config.lookRange * _config.lookRange) return false;
 
-            // Multi-point LoS (Head/Chest)
-            Vector3 eyePos = _self.position + Vector3.up * 1.6f;
-            Vector3 headPos = _player.position + Vector3.up * 1.6f;
-            Vector3 chestPos = _player.position + Vector3.up * 1.0f;
+            // AAA: Dynamiczne dopasowanie wysokości wzroku (pół metra nad pivotem dla małych jednostek jak pszczoły)
+            float selfHeight = 1.0f; 
+            float targetHeight = 1.0f;
 
-            // Jeśli maska jest pusta (Nothing), wymuszamy sensowny fallback (Default + Environment)
+            Vector3 eyePos = _self.position + Vector3.up * selfHeight;
+            Vector3 headPos = _player.position + Vector3.up * targetHeight;
+            Vector3 chestPos = _player.position + Vector3.up * (targetHeight * 0.5f);
+
             LayerMask mask = _config.obstacleMask;
-            if (mask.value == 0) mask = LayerMask.GetMask("Default", "Environment", "Obstacles");
+            if (mask.value == 0) mask = LayerMask.GetMask("Default", "Environment");
 
-            // Sprawdzamy czy cokolwiek blokuje linię wzroku (poza samym sobą)
             RaycastHit hit;
+            // Sprawdzamy Head i Chest
             bool headClear = !Physics.Linecast(eyePos, headPos, out hit, mask) || hit.transform.root == _player.root;
             bool chestClear = !Physics.Linecast(eyePos, chestPos, out hit, mask) || hit.transform.root == _player.root;
+
+            // AAA: Dodatkowe sprawdzenie kąta FOV (tylko w pasywnym wykrywaniu)
+            float angle = Vector3.Angle(_self.forward, (_player.position - _self.position).normalized);
+            if (angle > _config.fieldOfView * 0.5f) return false;
 
             return headClear || chestClear;
         }

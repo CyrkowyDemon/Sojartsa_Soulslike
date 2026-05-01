@@ -12,11 +12,13 @@ namespace SojartsaAI.v3
         public LayerMask obstacleMask;
 
         [Header("Osobowość")]
-        [Tooltip("Minimalny czas namysłu między akcjami")]
-        public float thinkDelay = 1.0f;
+        [Tooltip("Czas namysłu między akcjami (losowany)")]
+        public float minThinkDelay = 0.5f;
+        public float maxThinkDelay = 1.5f;
         public float preferredCombatDistance = 3.5f;
+        public float combatCircleRadius = 4.0f;
 
-        [Header("Statystyki Postury (AAA)")]
+        [Header("Statystyki Postury (AAA - Nabijane od 0)")]
         public float maxPoise = 100f;
         public float poiseRegenRate = 10f;
         public float poiseResetDelay = 3.0f;

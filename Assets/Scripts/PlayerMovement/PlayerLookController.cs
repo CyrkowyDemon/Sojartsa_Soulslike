@@ -63,8 +63,7 @@ public class PlayerLookController : MonoBehaviour
         float absAngle = Mathf.Abs(horizAngle);
 
         // --- TYMCZASOWY LOG DEBUG DO ANALIZY ---
-        // Pomoże nam potwierdzić czy kąt faktycznie rośnie!
-        if (Time.frameCount % 20 == 0) // co 20 klatek by nie zabić konsoli
+        if (Time.frameCount % 20 == 0)
             Debug.Log($"<color=pink>[ANGLE DEBUG] Kąt wroga od przodu gracza: {absAngle:F2} | Próg Snapa: {snapThreshold}</color>");
 
         // --- Zarządzanie Stanem SNAP (Histereza) ---
@@ -77,9 +76,6 @@ public class PlayerLookController : MonoBehaviour
             IsSnapping = false;
         }
 
-        // --- Logika 30/60 ---
-        // Usunęliśmy blok 'if (IsSnapping)', aby głowa śledziła cel do końca.
-        // Ciało się obraca, więc horizAngle maleje, co naturalnie centruje głowę.
         float targetHead;
         float targetSpine;
 
@@ -99,7 +95,6 @@ public class PlayerLookController : MonoBehaviour
         _spineYaw = Mathf.Lerp(_spineYaw, targetSpine, lookSpeed * Time.deltaTime);
 
         _pitch = Mathf.Lerp(_pitch, Mathf.Clamp(Mathf.Atan2(toTarget.y, toTargetFlat.magnitude) * Mathf.Rad2Deg, -maxPitchAngle, maxPitchAngle), lookSpeed * Time.deltaTime);
-
     }
 
     private void LateUpdate()
@@ -117,7 +112,6 @@ public class PlayerLookController : MonoBehaviour
 
     private void ApplyBoneRotations()
     {
-        // Obrót kości (additive na wierzch animacji) - MUSI być w LateUpdate
         if (headBone != null)
         {
             headBone.rotation = Quaternion.AngleAxis(_headYaw, Vector3.up) * headBone.rotation;
@@ -129,9 +123,6 @@ public class PlayerLookController : MonoBehaviour
             spineBone.rotation = Quaternion.AngleAxis(-_pitch * 0.4f, spineBone.right) * spineBone.rotation;
         }
 
-        // =========================================================
-        // NISZCZENIE OBJAWÓW SZARPANIA (CAMERA JITTER) U KORZENIA
-        // =========================================================
         if (cameraPoint != null)
         {
             bool hasTarget = targetHandler != null && targetHandler.IsLockedOn && targetHandler.CurrentTarget != null;
@@ -142,34 +133,32 @@ public class PlayerLookController : MonoBehaviour
                 
                 if (toTarget.sqrMagnitude > 0.01f)
                 {
-                    // 1. Zignoruj "trzęsącą się" animację kości. Oblicz czysty wektor do celu w świecie.
                     Quaternion targetWorldRot = Quaternion.LookRotation(toTarget.normalized);
-                    
-                    // 2. Obróć punkt kamery absolutnie płynnie w świecie (rekompensuje nagłe skoki rotacji kapsuły).
-                    cameraPoint.rotation = Quaternion.Slerp(cameraPoint.rotation, targetWorldRot, lookSpeed * 1.5f * Time.deltaTime);
+                    cameraPoint.rotation = Quaternion.Slerp(cameraPoint.rotation, targetWorldRot, lookSpeed * 0.5f * Time.deltaTime);
 
-                    // 3. Po zrobieniu obrotu upewnijmy się, czy nie "zepsuło się jak kiedyś" i ograniczmy to do 50 stopni (headLimit + spineLimit).
-                    float maxAllowedRotation = headLimit + spineLimit; // Wyliczony próg
-                    
-                    // Bezpieczne clampowanie kąta kamery (przestrzeń lokalna)
+                    float maxAllowedRotation = headLimit + spineLimit;
                     float currentLocalY = cameraPoint.localEulerAngles.y;
-                    if (currentLocalY > 180f) currentLocalY -= 360f; // Konwersja 0->360 na -180->180
+                    if (currentLocalY > 180f) currentLocalY -= 360f;
                     
                     float clampedY = Mathf.Clamp(currentLocalY, -maxAllowedRotation, maxAllowedRotation);
-                    
-                    // Zapinamy ograniczoną rotację z powrotem.
                     cameraPoint.localRotation = Quaternion.Euler(0, clampedY, 0);
                 }
             }
             else
             {
-                // Powrót do bycia na wprost pleców (gdy nie ma LockOn)
-                cameraPoint.localRotation = Quaternion.Slerp(cameraPoint.localRotation, Quaternion.identity, lookSpeed * 1.5f * Time.deltaTime);
+                // Sekiro Style: Powrót do pozycji tylko gdy gracz się porusza
+                bool isMoving = false;
+                
+                // Próbujemy pobrać prędkość (Rigidbody lub CharacterController)
+                if (TryGetComponent<CharacterController>(out var cc)) isMoving = cc.velocity.sqrMagnitude > 0.1f;
+                else if (TryGetComponent<Rigidbody>(out var rb)) isMoving = rb.linearVelocity.sqrMagnitude > 0.1f;
+
+                if (isMoving)
+                {
+                    // Powrót do bycia na wprost pleców - drastycznie zwolniony powrót (0.2f)
+                    cameraPoint.localRotation = Quaternion.Slerp(cameraPoint.localRotation, Quaternion.identity, lookSpeed * 0.2f * Time.deltaTime);
+                }
             }
         }
     }
-
 }
-
-
-

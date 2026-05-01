@@ -15,6 +15,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public event Action TabNextEvent;
     public event Action<Vector2> SwitchTargetEvent;
     public event Action InteractEvent;
+    public event Action UseEnchantEvent;
 
     public enum InputDeviceType { Mouse, Gamepad }
     public InputDeviceType LastUsedDevice { get; private set; } = InputDeviceType.Mouse;
@@ -168,6 +169,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public void OnTabPrev(InputAction.CallbackContext context) { if (context.performed) TabPrevEvent?.Invoke(); }
     public void OnTabNext(InputAction.CallbackContext context) { if (context.performed) TabNextEvent?.Invoke(); }
     public void OnInteraction(InputAction.CallbackContext context) { if (context.performed) InteractEvent?.Invoke(); }
+    public void OnUseEnchant(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) UseEnchantEvent?.Invoke(); }
     public void OnNewaction(InputAction.CallbackContext context) { }
 
     public void RefreshSettings()

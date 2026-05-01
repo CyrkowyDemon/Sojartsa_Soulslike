@@ -104,5 +104,25 @@ namespace Sojartsa.Systems.Surface
 
             return SurfaceType.Default;
         }
+
+        public GameObject GetHitVFX(SurfaceType type)
+        {
+            if (surfaceData == null) return null;
+            foreach (var mapping in surfaceData.vfxMappings)
+            {
+                if (mapping.type == type) return mapping.hitVFXPrefab;
+            }
+            return null;
+        }
+
+        public GameObject GetFootstepVFX(SurfaceType type)
+        {
+            if (surfaceData == null) return null;
+            foreach (var mapping in surfaceData.vfxMappings)
+            {
+                if (mapping.type == type) return mapping.footstepVFXPrefab;
+            }
+            return null;
+        }
     }
 }
