@@ -10965,17 +10965,6 @@ MonoBehaviour:
       Data4: 431428791
     Path: event:/Chest
   fmodParameterName: Chest
---- !u!114 &292382438 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2875721552647563055, guid: ca6b08c87af530b42a828156380c959f, type: 3}
-  m_PrefabInstance: {fileID: 1924257603}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 292382435}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 058ea5d6e28353b4b8385e1624c38189, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChestController
 --- !u!1 &293319244
 GameObject:
   m_ObjectHideFlags: 0
@@ -15903,21 +15892,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0ac40fb9d203b64ab1efdee4fd55d31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationEventRelay
-  OnAnimationFinished:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1852477413}
-        m_TargetAssemblyTypeName: ChestController, Assembly-CSharp
-        m_MethodName: UnlockInteraction
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 1
+  _playerCombat: {fileID: 0}
 --- !u!114 &404204480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29739,7 +29714,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 764770916}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 123.7, y: 0.21, z: 125.5}
   m_LocalScale: {x: 48, y: 1, z: 48}
   m_ConstrainProportionsScale: 0
@@ -34476,21 +34451,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0ac40fb9d203b64ab1efdee4fd55d31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationEventRelay
-  OnAnimationFinished:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 292382438}
-        m_TargetAssemblyTypeName: ChestController, Assembly-CSharp
-        m_MethodName: UnlockInteraction
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 1
+  _playerCombat: {fileID: 0}
 --- !u!1 &917854026
 GameObject:
   m_ObjectHideFlags: 0
@@ -65931,7 +65892,7 @@ MonoBehaviour:
   showDebugGizmos: 1
   leftFootBone: {fileID: 1275191461}
   rightFootBone: {fileID: 1351742768}
-  hipsBone: {fileID: 0}
+  hipsBone: {fileID: 1691857062}
   leftFootIKTarget: {fileID: 1662363965}
   rightFootIKTarget: {fileID: 115197678}
   leftKneeHint: {fileID: 2142542626}
@@ -69066,6 +69027,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8983928606461345370, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2080785411}
+    - targetCorrespondingSourceObject: {fileID: 8983928606461345370, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2080785412}
   m_SourcePrefab: {fileID: 100100000, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
 --- !u!1 &1783815977
 GameObject:
@@ -70969,17 +70933,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2981309436822416202, guid: ca6b08c87af530b42a828156380c959f, type: 3}
   m_PrefabInstance: {fileID: 4550615431907993211}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1852477413 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2875721552647563055, guid: ca6b08c87af530b42a828156380c959f, type: 3}
-  m_PrefabInstance: {fileID: 4550615431907993211}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1852477411}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 058ea5d6e28353b4b8385e1624c38189, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChestController
 --- !u!114 &1852477416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -81621,6 +81574,19 @@ MonoBehaviour:
   maxAngle: 60
   smoothSpeed: 10
   animatorLayer: 2
+--- !u!114 &2080785412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1287309156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bc94449fd260254da0b98c4035271da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEventRelay
+  _playerCombat: {fileID: 0}
 --- !u!1 &2085478886
 GameObject:
   m_ObjectHideFlags: 0
