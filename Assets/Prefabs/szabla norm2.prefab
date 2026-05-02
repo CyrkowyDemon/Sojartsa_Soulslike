@@ -358,11 +358,11 @@ MonoBehaviour:
   hitLightPrefab: {fileID: 6037506901154312284, guid: 1dfcfc159d6a15c47885f3102e1bc46c, type: 3}
   swingSound:
     Guid:
-      Data1: 0
-      Data2: 0
-      Data3: 0
-      Data4: 0
-    Path: 
+      Data1: 235142855
+      Data2: 1179554966
+      Data3: -870776402
+      Data4: 16384006
+    Path: event:/Woosh/Woosh
   hitSound:
     Guid:
       Data1: 0
@@ -387,7 +387,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponEnchantVisuals
   weaponTrail: {fileID: 607647511758657800}
-  weaponHitbox: {fileID: 0}
+  weaponHitbox: {fileID: 161053218817081530}
 --- !u!4 &9006257637844061065 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fbd60922a73787849a684d6bbe8b72e4, type: 3}

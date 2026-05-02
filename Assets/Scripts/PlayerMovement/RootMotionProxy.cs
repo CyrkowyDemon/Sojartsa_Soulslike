@@ -74,4 +74,9 @@ public class RootMotionProxy : MonoBehaviour
     {
         if (playerCombat != null) playerCombat.ResetCombatFlags();
     }
+
+    public void PlaySwingSound()
+    {
+        if (playerCombat != null) playerCombat.PlaySwingSound();
+    }
 }
