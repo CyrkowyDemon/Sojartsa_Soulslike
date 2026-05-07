@@ -157,7 +157,7 @@ MonoBehaviour:
   holdNormalizedTime: 0.4
   maxHoldDuration: 1
   useHitboxWindow: 1
-  hitboxID: 0
+  hitboxID: 1
   hitboxStartNormalized: 0.2
   hitboxEndNormalized: 0.6
   useCancelWindow: 0
@@ -886,7 +886,7 @@ MonoBehaviour:
   holdNormalizedTime: 0.4
   maxHoldDuration: 1
   useHitboxWindow: 1
-  hitboxID: 0
+  hitboxID: 2
   hitboxStartNormalized: 0.2
   hitboxEndNormalized: 0.6
   useCancelWindow: 0

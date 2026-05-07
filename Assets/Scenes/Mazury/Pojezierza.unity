@@ -26990,6 +26990,14 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 520772790793753971, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
+      propertyPath: hitPoints.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 520772790793753971, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
+      propertyPath: 'hitPoints.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1346151232}
     - target: {fileID: 3194442245729356978, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -27053,7 +27061,8 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 13309024623993602, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
     - {fileID: 4834046228670577354, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2349274351880361895, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 7549795627311400469, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
       insertIndex: -1
@@ -52176,6 +52185,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1343846062}
   m_CullTransparentMesh: 1
+--- !u!4 &1346151232 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7081137880077486228, guid: 99a0cbce64acbeb468012660490bb829, type: 3}
+  m_PrefabInstance: {fileID: 700655924}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1346303481
 GameObject:
   m_ObjectHideFlags: 0
