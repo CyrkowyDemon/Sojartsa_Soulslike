@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using FMODUnity;
 
 public class WeaponEnchantVisuals : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class WeaponEnchantVisuals : MonoBehaviour
 
     private List<GameObject> activeVFXList = new List<GameObject>();
     private GameObject currentActivePrefab;
+    private FMOD.Studio.EventInstance _loopInstance;
 
     // Cache na oryginalne dane, żeby móc do nich wrócić po zgaśnięciu
     private Material originalTrailMaterial;
@@ -89,6 +91,14 @@ public class WeaponEnchantVisuals : MonoBehaviour
                 activeVFXList.Add(vfx);
             }
         }
+
+        // 3. Audio Loop (DODANO)
+        if (!data.loopSound.IsNull)
+        {
+            _loopInstance = RuntimeManager.CreateInstance(data.loopSound);
+            RuntimeManager.AttachInstanceToGameObject(_loopInstance, transform);
+            _loopInstance.start();
+        }
     }
 
     public void DeactivateVisuals()
@@ -110,6 +120,22 @@ public class WeaponEnchantVisuals : MonoBehaviour
             }
             activeVFXList.Clear();
             currentActivePrefab = null;
+        }
+
+        // 3. Stop Audio Loop (DODANO)
+        if (_loopInstance.isValid())
+        {
+            _loopInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+            _loopInstance.release();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_loopInstance.isValid())
+        {
+            _loopInstance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+            _loopInstance.release();
         }
     }
 }

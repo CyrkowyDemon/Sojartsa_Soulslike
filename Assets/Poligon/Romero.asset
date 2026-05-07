@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1cbe464d4c02e49942ba60fc7a0e34, type: 3}
+  m_Name: Romero
+  m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIArchetype
+  lookRange: 20
+  fieldOfView: 120
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1032
+  minThinkDelay: 1
+  maxThinkDelay: 2.5
+  preferredCombatDistance: 2.5
+  combatCircleRadius: 3
+  maxPoise: 100
+  poiseRegenRate: 10
+  poiseResetDelay: 3
+  reactions:
+  - {fileID: 11400000, guid: 26af802e56e30ef43b8cd84e85d831aa, type: 2}
+  actions:
+  - {fileID: 11400000, guid: 59b84199e00a221498c9790e19ceb50c, type: 2}

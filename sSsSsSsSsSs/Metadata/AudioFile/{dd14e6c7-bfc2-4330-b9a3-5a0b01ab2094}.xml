@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{dd14e6c7-bfc2-4330-b9a3-5a0b01ab2094}">
+		<property name="assetPath">
+			<value>Music/Tavern/Tavern Ambient - Baza.flac</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>142.4069375</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{e8575e4d-bada-4f95-91e3-12159b86d4aa}</destination>
+		</relationship>
+	</object>
+</objects>

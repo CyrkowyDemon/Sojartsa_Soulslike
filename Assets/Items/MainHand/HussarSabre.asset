@@ -27,3 +27,18 @@ MonoBehaviour:
   weaponPrefab: {fileID: 8626494685632287027, guid: 994d5337c75f8b4468c76f0cb8fa7caf, type: 3}
   baseDamage: 25
   attackSpeed: 1
+  poiseDamage: 10
+  swingSound:
+    Guid:
+      Data1: 235142855
+      Data2: 1179554966
+      Data3: -870776402
+      Data4: 16384006
+    Path: event:/Woosh/Woosh
+  hitSound:
+    Guid:
+      Data1: 741548907
+      Data2: 1298391247
+      Data3: -545342023
+      Data4: -2117291299
+    Path: event:/HitMaterial

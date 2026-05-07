@@ -79,6 +79,13 @@ public class EquipmentManager : MonoBehaviour
             _currentWeaponModel = Instantiate(weapon.weaponPrefab, mainHandSocket);
             _currentWeaponModel.transform.localPosition = Vector3.zero;
             _currentWeaponModel.transform.localRotation = Quaternion.identity;
+
+            // NOWOŚĆ: Przekazujemy dane do miecza
+            WeaponHitbox hitbox = _currentWeaponModel.GetComponentInChildren<WeaponHitbox>();
+            if (hitbox != null)
+            {
+                hitbox.Initialize(weapon);
+            }
         }
     }
 

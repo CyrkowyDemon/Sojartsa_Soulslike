@@ -11,6 +11,7 @@ public class RomeroAI_DataDriven : EnemyBase
     [SerializeField] private float strafeDistance = 4f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private float maxChaseDistance = 25f;
+    [SerializeField] [Range(0.5f, 2f)] private float movementSpeedMultiplier = 1f;
 
     [Header("Reaktywność (Defensywa)")]
     [SerializeField] [Range(0, 1)] private float dodgeChance = 0.5f;
@@ -222,8 +223,8 @@ public class RomeroAI_DataDriven : EnemyBase
         float targetForward = 0f;
         if ((_target.position - transform.position).sqrMagnitude < 2.5f * 2.5f) targetForward = -0.5f;
 
-        _animator.SetFloat("SidewaysSpeed", Mathf.Lerp(_animator.GetFloat("SidewaysSpeed"), targetSideways, Time.deltaTime * 5f));
-        _animator.SetFloat("ForwardSpeed", Mathf.Lerp(_animator.GetFloat("ForwardSpeed"), targetForward, Time.deltaTime * 5f));
+        _animator.SetFloat("SidewaysSpeed", Mathf.Lerp(_animator.GetFloat("SidewaysSpeed"), targetSideways * movementSpeedMultiplier, Time.deltaTime * 5f));
+        _animator.SetFloat("ForwardSpeed", Mathf.Lerp(_animator.GetFloat("ForwardSpeed"), targetForward * movementSpeedMultiplier, Time.deltaTime * 5f));
         LookAtTarget();
     }
 
@@ -235,9 +236,19 @@ public class RomeroAI_DataDriven : EnemyBase
         Vector3 velocity = _agent.desiredVelocity;
         if (velocity.magnitude > 0.1f)
         {
-            Vector3 localVel = transform.InverseTransformDirection(velocity);
-            _animator.SetFloat("ForwardSpeed", localVel.z, 0.1f, Time.deltaTime);
-            _animator.SetFloat("SidewaysSpeed", localVel.x, 0.1f, Time.deltaTime);
+            // PRO FIX: Jeśli agent chce się ruszyć, wymuszamy minimum 0.7 prędkości w animatorze
+            // Dzięki temu unikamy "ślamazarnego chodzenia" (0.12/0.35), o którym pisałeś.
+            float speedFactor = Mathf.Lerp(0.7f, 1.0f, velocity.magnitude / _agent.speed);
+            speedFactor *= movementSpeedMultiplier;
+
+            Vector3 localVel = transform.InverseTransformDirection(velocity).normalized;
+            _animator.SetFloat("ForwardSpeed", localVel.z * speedFactor);
+            _animator.SetFloat("SidewaysSpeed", localVel.x * speedFactor);
+        }
+        else
+        {
+            _animator.SetFloat("ForwardSpeed", 0f);
+            _animator.SetFloat("SidewaysSpeed", 0f);
         }
     }
 

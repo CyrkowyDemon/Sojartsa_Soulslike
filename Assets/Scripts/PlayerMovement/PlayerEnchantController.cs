@@ -1,4 +1,5 @@
 using UnityEngine;
+using FMODUnity;
 
 public class PlayerEnchantController : MonoBehaviour
 {
@@ -117,6 +118,12 @@ public class PlayerEnchantController : MonoBehaviour
         if (_visuals != null)
         {
             _visuals.ActivateVisuals(currentActiveEnchant);
+        }
+
+        // DODANO: Dźwięk startowy (One Shot)
+        if (!currentActiveEnchant.startSound.IsNull)
+        {
+            RuntimeManager.PlayOneShot(currentActiveEnchant.startSound, transform.position);
         }
 
         Debug.Log($"<color=orange>Ogień na mieczu!</color> Potrwa {currentDurationTimer} sekund.");

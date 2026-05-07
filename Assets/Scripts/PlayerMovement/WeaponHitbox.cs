@@ -38,11 +38,29 @@ public class WeaponHitbox : MonoBehaviour
     private RaycastHit[] _hitCache = new RaycastHit[10];
     private PlayerCombat _ownerCombat;
     private SojartsaAI.v3.AIBrain _ownerBrain;
+    private WeaponData _weaponData; // NOWOŚĆ: Przechowuje dane z Inventory
 
     private void Awake()
     {
         _ownerBrain = transform.root.GetComponentInChildren<SojartsaAI.v3.AIBrain>();
         _ownerCombat = transform.root.GetComponentInChildren<PlayerCombat>();
+    }
+
+    /// <summary>
+    /// Pobiera dane z systemu Inventory. Wywoływane przez EquipmentManager przy spawnowaniu broni.
+    /// </summary>
+    public void Initialize(WeaponData data)
+    {
+        _weaponData = data;
+        if (data != null)
+        {
+            damageAmount = data.baseDamage;
+            poiseDamage = data.poiseDamage;
+            
+            // Jeśli WeaponData ma przypisane dźwięki, nadpisujemy te lokalne
+            if (!data.swingSound.IsNull) swingSound = data.swingSound;
+            if (!data.hitSound.IsNull) hitSound = data.hitSound;
+        }
     }
 
     private void Start()

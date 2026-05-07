@@ -34,6 +34,9 @@ namespace SojartsaAI.v3
         // Sensory (Osobny moduł)
         public AISensory Sensory { get; private set; }
         
+        // Audio Manager
+        public EnemySFXManager SFX { get; private set; }
+        
         // --- AAA - Hitboxy i Akcje ---
         private WeaponHitbox[] _hitboxes;
         public AIActionData ActiveAction { get; set; }
@@ -57,6 +60,7 @@ namespace SojartsaAI.v3
             }
 
             Sensory = new AISensory(transform, target, archetype, playerInput);
+            SFX = GetComponent<EnemySFXManager>();
             currentPoise = 0f; // Zaczynamy od 0 (Sekiro Style)
         }
 
@@ -144,6 +148,14 @@ namespace SojartsaAI.v3
         public void SendAnimationSignal(string signal)
         {
             _currentState?.OnAnimationSignal(signal);
+        }
+
+        public void PlayActionSound(FMODUnity.EventReference sound)
+        {
+            if (SFX != null && !sound.IsNull)
+            {
+                FMODUnity.RuntimeManager.PlayOneShotAttached(sound, gameObject);
+            }
         }
 
         // --- IDamageable AAA Implementation ---

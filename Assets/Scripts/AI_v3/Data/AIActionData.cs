@@ -11,6 +11,9 @@ namespace SojartsaAI.v3
         public AIActionType type;
         public string animationTrigger;
 
+        [Header("Audio (The Tell)")]
+        public FMODUnity.EventReference actionTellSound;
+
         [Header("Zasięg")]
         public float minDistance = 0f;
         public float maxDistance = 5f;

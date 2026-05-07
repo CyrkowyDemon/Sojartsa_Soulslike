@@ -1,4 +1,5 @@
 using UnityEngine;
+using FMODUnity;
 
 public enum EnchantType
 {
@@ -33,6 +34,10 @@ public class EnchantData : ItemData
     [Tooltip("Kolor domyślnego traila z efektem HDR (Glow)")]
     [ColorUsage(true, true)] 
     public Color trailColor = Color.white;
+
+    [Header("Dźwięki (FMOD)")]
+    public EventReference startSound;
+    public EventReference loopSound;
 
     private void OnValidate()
     {

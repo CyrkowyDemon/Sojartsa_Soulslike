@@ -16,7 +16,7 @@ MonoBehaviour:
   fieldOfView: 120
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 1032
   minThinkDelay: 0.5
   maxThinkDelay: 1.5
   preferredCombatDistance: 3.5

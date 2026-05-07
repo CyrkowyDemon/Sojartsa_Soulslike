@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8298746133848279496
+--- !u!114 &-8833456057958091854
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -10,23 +10,50 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/Tavern
+  m_Name: event:/Music_Ambient
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
-  Path: event:/Tavern
+  Path: event:/Music_Ambient
   Guid:
-    Data1: -1857527801
-    Data2: 1301448164
-    Data3: 503510696
-    Data4: -984850208
+    Data1: -1344658507
+    Data2: 1279105514
+    Data3: -1998959189
+    Data4: -1822176179
   Banks:
   - {fileID: -1395164888046074251}
   IsStream: 1
-  Is3D: 1
+  Is3D: 0
   IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 61000
+  Length: 142406
+--- !u!114 &-8790662941543065896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Enemy_Sounds/Romero/Death
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Enemy_Sounds/Romero/Death
+  Guid:
+    Data1: -1349124223
+    Data2: 1150428339
+    Data3: 1348713620
+    Data4: -1360265052
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 768
 --- !u!114 &-8055644028912070556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42,11 +69,119 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639133219002389048
+  lastModified: 639137983948439468
   FileSizes:
   - Name: Desktop
-    Value: 1398
+    Value: 1968
   Exists: 1
+--- !u!114 &-7814590970517446114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/TavernAmbient
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/TavernAmbient
+  Guid:
+    Data1: -70716166
+    Data2: 1184491135
+    Data3: -1655404668
+    Data4: 1016422304
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 117093
+--- !u!114 &-7119182002285549309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Level1Ambient
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Level1Ambient
+  Guid:
+    Data1: -1787017993
+    Data2: 1271500629
+    Data3: 371519126
+    Data4: -2110673865
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 117776
+--- !u!114 &-5547573329919043724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Enemy_Sounds/Romero/Hit_Reaction
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Enemy_Sounds/Romero/Hit_Reaction
+  Guid:
+    Data1: -1243192125
+    Data2: 1274034460
+    Data3: -1440853100
+    Data4: -1869255325
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1305
+--- !u!114 &-5104655744726127018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: snapshot:/TavernSnapshot
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: snapshot:/TavernSnapshot
+  Guid:
+    Data1: 862580355
+    Data2: 1197708222
+    Data3: 966219919
+    Data4: -1070458670
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 0
 --- !u!114 &-4715419453808957309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73,33 +208,6 @@ MonoBehaviour:
   - Closed
   - Opened
   Exists: 1
---- !u!114 &-2337784836147937662
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/Asdasd
-  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
-  Path: event:/Asdasd
-  Guid:
-    Data1: -970365646
-    Data2: 1147000383
-    Data3: 1966378133
-    Data4: -1682072026
-  Banks:
-  - {fileID: -1395164888046074251}
-  IsStream: 1
-  Is3D: 1
-  IsOneShot: 0
-  Parameters: []
-  MinDistance: 1
-  MaxDistance: 20
-  Length: 61000
 --- !u!114 &-2170712167792877585
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,10 +250,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639133219002378713
+  lastModified: 639137983948424391
   FileSizes:
   - Name: Desktop
-    Value: 2691104
+    Value: 8154528
   Exists: 1
 --- !u!114 &-897539636616960276
 MonoBehaviour:
@@ -173,7 +281,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 111908
+  Length: 107952
 --- !u!114 &-341317514183290024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -217,42 +325,69 @@ MonoBehaviour:
   - {fileID: -8055644028912070556}
   - {fileID: -1395164888046074251}
   EditorEvents:
-  - {fileID: -8298746133848279496}
-  - {fileID: 5059730038469999015}
   - {fileID: -897539636616960276}
   - {fileID: 7175402441396577716}
   - {fileID: 7849781739912008267}
-  - {fileID: -2337784836147937662}
   - {fileID: -2170712167792877585}
   - {fileID: -341317514183290024}
   - {fileID: 8679606633634982098}
+  - {fileID: 2097981234664506286}
+  - {fileID: 1310586292144206871}
+  - {fileID: -7814590970517446114}
+  - {fileID: -5104655744726127018}
+  - {fileID: -8833456057958091854}
+  - {fileID: 2933295754973301438}
+  - {fileID: -5547573329919043724}
+  - {fileID: 1953250621825653919}
+  - {fileID: -7119182002285549309}
+  - {fileID: -8790662941543065896}
+  - {fileID: 3173548438380389575}
+  - {fileID: 1655372086695094964}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1395164888046074251}
   StringsBanks:
   - {fileID: -8055644028912070556}
   cacheVersion: 131859
-  cacheTime: 639133219002389048
+  cacheTime: 639137983948439468
   SerializableEventsDict:
-  - key: event:/Tavern
-    index: 0
-  - key: event:/Ambient
-    index: 1
   - key: event:/Campfire_Ambient
-    index: 2
+    index: 0
   - key: event:/foot
-    index: 3
+    index: 1
   - key: event:/Chest
-    index: 4
-  - key: event:/Asdasd
-    index: 5
+    index: 2
   - key: snapshot:/Outside
-    index: 6
+    index: 3
   - key: event:/Woosh/Woosh
-    index: 7
+    index: 4
   - key: event:/HitMaterial
+    index: 5
+  - key: event:/Dodge
+    index: 6
+  - key: event:/footstepDuringAttack
+    index: 7
+  - key: event:/TavernAmbient
     index: 8
---- !u!114 &5059730038469999015
+  - key: snapshot:/TavernSnapshot
+    index: 9
+  - key: event:/Music_Ambient
+    index: 10
+  - key: event:/Enemy_Sounds/Romero/IdleWalking
+    index: 11
+  - key: event:/Enemy_Sounds/Romero/Hit_Reaction
+    index: 12
+  - key: event:/Enemy_Sounds/Romero/Attack_Tell
+    index: 13
+  - key: event:/Level1Ambient
+    index: 14
+  - key: event:/Enemy_Sounds/Romero/Death
+    index: 15
+  - key: event:/Enemy_Sounds/Romero/Break
+    index: 16
+  - key: event:/Level1Music
+    index: 17
+--- !u!114 &1310586292144206871
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -262,14 +397,95 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/Ambient
+  m_Name: event:/footstepDuringAttack
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
-  Path: event:/Ambient
+  Path: event:/footstepDuringAttack
   Guid:
-    Data1: 978858504
-    Data2: 1135975925
-    Data3: -1086435940
-    Data4: -1946942851
+    Data1: 1315558882
+    Data2: 1307382993
+    Data3: -736969344
+    Data4: -1669680818
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 254
+--- !u!114 &1342312926261976640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/HitMaterial/Surface
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Surface
+  StudioPath: 
+  Min: 0
+  Max: 2
+  Default: 0
+  ID:
+    data1: 2759716341
+    data2: 2891897448
+  Type: 2
+  IsGlobal: 0
+  Labels:
+  - Flesh
+  - Wood
+  - Metal
+  Exists: 1
+--- !u!114 &1655372086695094964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Level1Music
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Level1Music
+  Guid:
+    Data1: -329356408
+    Data2: 1240552853
+    Data3: 602189227
+    Data4: 546602421
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 80000
+--- !u!114 &1953250621825653919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Enemy_Sounds/Romero/Attack_Tell
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Enemy_Sounds/Romero/Attack_Tell
+  Guid:
+    Data1: 1419259519
+    Data2: 1312068056
+    Data3: 524416692
+    Data4: 1317782910
   Banks:
   - {fileID: -1395164888046074251}
   IsStream: 0
@@ -278,7 +494,88 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 1754
+--- !u!114 &2097981234664506286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Dodge
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Dodge
+  Guid:
+    Data1: -796044105
+    Data2: 1203916125
+    Data3: -1684933474
+    Data4: -1866352057
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 218
+--- !u!114 &2933295754973301438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Enemy_Sounds/Romero/IdleWalking
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Enemy_Sounds/Romero/IdleWalking
+  Guid:
+    Data1: -647769454
+    Data2: 1213719166
+    Data3: 1639816890
+    Data4: -192309087
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 2019
+--- !u!114 &3173548438380389575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Enemy_Sounds/Romero/Break
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Enemy_Sounds/Romero/Break
+  Guid:
+    Data1: 1643925452
+    Data2: 1248521909
+    Data3: -360973397
+    Data4: 1537790034
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 985
 --- !u!114 &6259269677443727127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -385,7 +682,8 @@ MonoBehaviour:
   IsStream: 0
   Is3D: 0
   IsOneShot: 1
-  Parameters: []
+  Parameters:
+  - {fileID: 1342312926261976640}
   MinDistance: 1
   MaxDistance: 20
   Length: 1150

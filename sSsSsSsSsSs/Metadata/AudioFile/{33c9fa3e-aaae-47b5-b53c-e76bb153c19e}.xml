@@ -2,7 +2,7 @@
 <objects serializationModel="Studio.02.03.00">
 	<object class="AudioFile" id="{33c9fa3e-aaae-47b5-b53c-e76bb153c19e}">
 		<property name="assetPath">
-			<value>Level1Ambient.flac</value>
+			<value>LakeAmbient.flac</value>
 		</property>
 		<property name="isStreaming">
 			<value>true</value>

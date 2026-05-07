@@ -79,4 +79,14 @@ public class RootMotionProxy : MonoBehaviour
     {
         if (playerCombat != null) playerCombat.PlaySwingSound();
     }
+
+    public void PlayDodgeSound()
+    {
+        if (PlayerSFXManager.Instance != null) PlayerSFXManager.Instance.PlayDodge();
+    }
+
+    public void PlayFootScuff()
+    {
+        if (PlayerSFXManager.Instance != null) PlayerSFXManager.Instance.PlayScuff();
+    }
 }

@@ -32,6 +32,7 @@ public class EnemyHealth : MonoBehaviour
     [Header("Odniesienia")]
     private Animator _animator;
     private NavMeshAgent _agent;
+    private EnemySFXManager _sfxManager; // NOWOŚĆ: Połączenie z dźwiękiem
     private int _attackTagHash;
 
     public bool IsBroken => _isBroken;
@@ -43,6 +44,8 @@ public class EnemyHealth : MonoBehaviour
         _currentPoise = maxPoise;
         _animator = GetComponent<Animator>();
         _agent = GetComponent<NavMeshAgent>();
+        _sfxManager = GetComponent<EnemySFXManager>(); // Szukamy managera audio
+        if (_sfxManager == null) Debug.LogWarning($"<color=red>[EnemyAudio]</color> NIE ZNALEZIONO EnemySFXManager na {gameObject.name}!");
         _attackTagHash = Animator.StringToHash("Attack");
     }
 
@@ -87,6 +90,9 @@ public class EnemyHealth : MonoBehaviour
             EnemyBase ai = GetComponent<EnemyBase>();
             if (ai != null) ai.OnDamagedByPlayer();
         }
+
+        // --- AUDIO: Krzyk bólu ---
+        if (_sfxManager != null) _sfxManager.PlayHitVoice();
 
         // Jeśli wróg jest w stanie Broken, nie dodajemy kolejnych ran - on już "pęka"
         if (!_isBroken) AddWound();
@@ -155,6 +161,9 @@ public class EnemyHealth : MonoBehaviour
         // Informujemy mózg AI, że dostał w twarz i ma zresetować swoje plany (przełączyć na stan Stagger)
         SendMessage("ForceInterrupt", SendMessageOptions.DontRequireReceiver);
 
+        // --- AUDIO: Legendarny "Ding!" przełamania postawy ---
+        if (_sfxManager != null) _sfxManager.PlayPoiseBreak();
+
         if (isKnockback) 
         {
             _animator.SetTrigger("Knockback");
@@ -170,6 +179,9 @@ public class EnemyHealth : MonoBehaviour
         if (_isDead) return;
         _isDead = true;
         _isBroken = false;
+
+        // --- AUDIO: Ostatni dech ---
+        if (_sfxManager != null) _sfxManager.PlayDeathVoice();
 
         // --- KLUCZOWE: Odcinamy AI od prądu i ZAMYKAMY HITBOXY! ---
         SendMessage("CloseDamage", SendMessageOptions.DontRequireReceiver); 

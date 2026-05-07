@@ -42,7 +42,13 @@ namespace SojartsaAI.v3
             _hasHeld = false;
             
             if (_brain != null)
+            {
                 _brain.SendAnimationSignal(onEnterSignal);
+
+                // --- AUDIO: Odtwarzamy dźwięk telegrafowania (The Tell) ---
+                if (_brain.ActiveAction != null)
+                    _brain.PlayActionSound(_brain.ActiveAction.actionTellSound);
+            }
                 
             _cancelSignalSent = false;
         }

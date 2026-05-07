@@ -15,6 +15,8 @@ MonoBehaviour:
   physicMaterialMappings:
   - material: {fileID: 13400000, guid: f8662468c90aaef4bba16dbdeedcc839, type: 2}
     type: 3
+  - material: {fileID: 13400000, guid: e521dfe3dee55d948a9590bbaf08c6f2, type: 2}
+    type: 9
   terrainLayerMappings:
   - layer: {fileID: 8574412962073106934, guid: cbfbd0830302a6d4e8d2d96e99e2702b, type: 2}
     type: 1

@@ -33,3 +33,17 @@ MonoBehaviour:
   weaponVFXPrefab: {fileID: 8752486452262766316, guid: df02762e36fad3a4c91e7befebd73832, type: 3}
   overrideTrailMaterial: {fileID: 2100000, guid: a0cf25cc2e4de2b4bad2b6c471f6d6e2, type: 2}
   trailColor: {r: 3.0314326, g: 0.51524734, b: 0, a: 0.22745098}
+  startSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  loopSound:
+    Guid:
+      Data1: 1836218686
+      Data2: 1298364068
+      Data3: -1963143799
+      Data4: 861612681
+    Path: event:/Campfire_Ambient

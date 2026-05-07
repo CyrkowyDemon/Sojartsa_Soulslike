@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using FMODUnity;
 
 public class SettingsManager : MonoBehaviour
 {
@@ -19,6 +20,11 @@ public class SettingsManager : MonoBehaviour
     [Range(0f, 1f)] public float soundsVolume = 1.0f;
     [Range(0f, 1f)] public float voiceVolume = 1.0f;
 
+    [Header("FMOD Bus Paths (Dopasuj do nazw w FMOD Studio)")]
+    public string musicBusPath = "bus:/Music";
+    public string sfxBusPath = "bus:/SFX";
+    public string voiceBusPath = "bus:/Voice";
+
     [Header("Grafika")]
     public int qualityIndex = 2; 
     public int screenModeIndex = 0; 
@@ -30,6 +36,11 @@ public class SettingsManager : MonoBehaviour
     public bool autoAim = true;
 
     public event Action OnSettingsUpdated;
+
+    // FMOD Studio Bus Instances
+    private FMOD.Studio.Bus _musicBus;
+    private FMOD.Studio.Bus _sfxBus;
+    private FMOD.Studio.Bus _voiceBus;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void InitializeOnLoad()
@@ -53,17 +64,53 @@ public class SettingsManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // === FROMSOFTWARE STANDARD: Blokada 60 FPS ===
-        // VSync musi być wyłączony, żeby targetFrameRate był jedynym szefem!
+        // Inicjalizacja szyn na starcie
+        InitializeBuses();
+
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
-        Debug.Log($"<color=lime>[FPS] Blokada aktywna! Target: {Application.targetFrameRate} FPS | vSync: {QualitySettings.vSyncCount}</color>");
-        // ==============================================
-
+        
         LoadSettings();
     }
 
-    // Zapis dla Sterowania
+    private void InitializeBuses()
+    {
+        if (!string.IsNullOrEmpty(musicBusPath)) _musicBus = RuntimeManager.GetBus(musicBusPath);
+        if (!string.IsNullOrEmpty(sfxBusPath)) _sfxBus = RuntimeManager.GetBus(sfxBusPath);
+        if (!string.IsNullOrEmpty(voiceBusPath)) _voiceBus = RuntimeManager.GetBus(voiceBusPath);
+    }
+
+    public void SaveAudioAndUISettings(bool subtitles, bool hud, float music, float sounds, float voice)
+    {
+        showSubtitles = subtitles;
+        showHUD = hud;
+        musicVolume = music;
+        soundsVolume = sounds;
+        voiceVolume = voice;
+
+        PlayerPrefs.SetInt("ShowSubtitles", showSubtitles ? 1 : 0);
+        PlayerPrefs.SetInt("ShowHUD", showHUD ? 1 : 0);
+        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
+        PlayerPrefs.SetFloat("SoundsVolume", soundsVolume);
+        PlayerPrefs.SetFloat("VoiceVolume", voiceVolume);
+        PlayerPrefs.Save();
+
+        ApplyAudioSettings(); 
+        OnSettingsUpdated?.Invoke();
+    }
+
+    public void ApplyAudioSettings()
+    {
+        // Sprawdzamy ważność szyn i reinicjalizujemy jeśli trzeba
+        if (!_musicBus.isValid() && !string.IsNullOrEmpty(musicBusPath)) _musicBus = RuntimeManager.GetBus(musicBusPath);
+        if (!_sfxBus.isValid() && !string.IsNullOrEmpty(sfxBusPath)) _sfxBus = RuntimeManager.GetBus(sfxBusPath);
+        if (!_voiceBus.isValid() && !string.IsNullOrEmpty(voiceBusPath)) _voiceBus = RuntimeManager.GetBus(voiceBusPath);
+
+        if (_musicBus.isValid()) _musicBus.setVolume(musicVolume);
+        if (_sfxBus.isValid()) _sfxBus.setVolume(soundsVolume);
+        if (_voiceBus.isValid()) _voiceBus.setVolume(voiceVolume);
+    }
+
     public void SaveSettings(float mouse, float gamepad, bool invX, bool invY, float vib)
     {
         mouseSensitivity = mouse;
@@ -80,7 +127,8 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.Save();
         OnSettingsUpdated?.Invoke();
     }
-        public void SaveGameSettings(bool useLock, bool aim)
+
+    public void SaveGameSettings(bool useLock, bool aim)
     {
         autoLock = useLock;
         autoAim = aim;
@@ -88,28 +136,9 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.SetInt("AutoLock", autoLock ? 1 : 0);
         PlayerPrefs.SetInt("AutoAim", autoAim ? 1 : 0);
         PlayerPrefs.Save();
-        
-        OnSettingsUpdated?.Invoke();
-    }
-    // Zapis dla Audio i UI
-    public void SaveAudioAndUISettings(bool subtitles, bool hud, float music, float sounds, float voice)
-    {
-        showSubtitles = subtitles;
-        showHUD = hud;
-        musicVolume = music;
-        soundsVolume = sounds;
-        voiceVolume = voice;
-
-        PlayerPrefs.SetInt("ShowSubtitles", showSubtitles ? 1 : 0);
-        PlayerPrefs.SetInt("ShowHUD", showHUD ? 1 : 0);
-        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
-        PlayerPrefs.SetFloat("SoundsVolume", soundsVolume);
-        PlayerPrefs.SetFloat("VoiceVolume", voiceVolume);
-        PlayerPrefs.Save();
         OnSettingsUpdated?.Invoke();
     }
 
-    // Zapis dla Grafiki
     public void SaveGraphicsSettings(int quality, int screenMode, int resIndex, bool blood)
     {
         qualityIndex = quality;
@@ -129,10 +158,8 @@ public class SettingsManager : MonoBehaviour
 
     public void ApplyGraphics()
     {
-        // Upewniamy się, że blokada FPS nie zostanie przypadkowo wyłączona przez Unity
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
-
         QualitySettings.SetQualityLevel(qualityIndex);
 
         FullScreenMode mode = FullScreenMode.ExclusiveFullScreen;
@@ -142,10 +169,8 @@ public class SettingsManager : MonoBehaviour
         Resolution[] resolutions = Screen.resolutions;
         if (resolutions.Length > 0)
         {
-            // Zabezpieczenie przed wyjściem poza zakres, jeśli monitor się zmienił
             int index = Mathf.Clamp(resolutionIndex, 0, resolutions.Length - 1);
             Resolution res = resolutions[index];
-            // Zawsze wybieramy najwyższe możliwe odświeżanie dla tej rozdzielczości
             Screen.SetResolution(res.width, res.height, mode);
         }
     }
@@ -173,6 +198,7 @@ public class SettingsManager : MonoBehaviour
         autoAim = PlayerPrefs.GetInt("AutoAim", 1) == 1;
 
         ApplyGraphics();
+        ApplyAudioSettings(); 
         OnSettingsUpdated?.Invoke();
     }
 }

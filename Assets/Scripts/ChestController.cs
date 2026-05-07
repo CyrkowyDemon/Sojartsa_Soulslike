@@ -20,6 +20,12 @@ public class ChestController : MonoBehaviour, IInteractable
     private bool _isAnimating = false;
     private int _openCount = 0;
 
+    [ContextMenu("DEBUG: Force Unlock Interaction")]
+    public void ForceUnlock()
+    {
+        _isAnimating = false;
+    }
+
     public void Interact(Transform interactor)
     {
         if (_isAnimating || (!canBeClosed && isOpen)) return;

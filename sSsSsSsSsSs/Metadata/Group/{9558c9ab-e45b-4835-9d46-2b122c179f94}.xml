@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.03.00">
 	<object class="MixerGroup" id="{9558c9ab-e45b-4835-9d46-2b122c179f94}">
+		<property name="volume">
+			<value>-5</value>
+		</property>
 		<property name="name">
 			<value>Fpotsteps</value>
 		</property>
@@ -11,7 +14,7 @@
 			<destination>{5031e594-c2c1-4271-96b7-ed3dabdbd1e3}</destination>
 		</relationship>
 		<relationship name="output">
-			<destination>{aaf34498-2368-48c2-821c-8aa28c3e73c8}</destination>
+			<destination>{445fd04f-2a40-4bee-aa9e-758066f0118a}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusEffectChain" id="{6b2e1162-aecc-4257-830e-03be31eb211c}">
