@@ -35,11 +35,11 @@ MonoBehaviour:
     Path: 
   idleGrowl:
     Guid:
-      Data1: 0
-      Data2: 0
-      Data3: 0
-      Data4: 0
-    Path: 
+      Data1: -1041893474
+      Data2: 1249293755
+      Data3: 162719933
+      Data4: 423270709
+    Path: event:/Enemy_Sounds/Bee/BeeIdle
   footstepSound:
     Guid:
       Data1: 0

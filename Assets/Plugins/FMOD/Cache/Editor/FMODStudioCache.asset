@@ -69,10 +69,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639138268771985657
+  lastModified: 639138397866238705
   FileSizes:
   - Name: Desktop
-    Value: 2026
+    Value: 2080
   Exists: 1
 --- !u!114 &-7814590970517446114
 MonoBehaviour:
@@ -96,7 +96,7 @@ MonoBehaviour:
   - {fileID: -1395164888046074251}
   IsStream: 1
   Is3D: 0
-  IsOneShot: 0
+  IsOneShot: 1
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
@@ -123,11 +123,11 @@ MonoBehaviour:
   - {fileID: -1395164888046074251}
   IsStream: 1
   Is3D: 0
-  IsOneShot: 1
+  IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 117776
+  Length: 59000
 --- !u!114 &-5547573329919043724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155,6 +155,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 1305
+--- !u!114 &-5305320849191468100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Enemy_Sounds/Bee/BeeIdle
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Enemy_Sounds/Bee/BeeIdle
+  Guid:
+    Data1: -1041893474
+    Data2: 1249293755
+    Data3: 162719933
+    Data4: 423270709
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 3236
 --- !u!114 &-5104655744726127018
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -250,10 +277,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639138268771960582
+  lastModified: 639138397866223524
   FileSizes:
   - Name: Desktop
-    Value: 8203616
+    Value: 8248128
   Exists: 1
 --- !u!114 &-897539636616960276
 MonoBehaviour:
@@ -335,7 +362,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 3568
+  Length: 3334
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -371,13 +398,14 @@ MonoBehaviour:
   - {fileID: 3173548438380389575}
   - {fileID: 1655372086695094964}
   - {fileID: -325990439566225443}
+  - {fileID: -5305320849191468100}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1395164888046074251}
   StringsBanks:
   - {fileID: -8055644028912070556}
   cacheVersion: 131859
-  cacheTime: 639138268771985657
+  cacheTime: 639138397866238705
   SerializableEventsDict:
   - key: event:/Campfire_Ambient
     index: 0
@@ -417,6 +445,8 @@ MonoBehaviour:
     index: 17
   - key: event:/FireEnchantOpener
     index: 18
+  - key: event:/Enemy_Sounds/Bee/BeeIdle
+    index: 19
 --- !u!114 &1310586292144206871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -497,7 +527,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 80000
+  Length: 50000
 --- !u!114 &1953250621825653919
 MonoBehaviour:
   m_ObjectHideFlags: 0

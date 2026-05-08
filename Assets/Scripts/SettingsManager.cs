@@ -20,14 +20,14 @@ public class SettingsManager : MonoBehaviour
     [Range(0f, 1f)] public float soundsVolume = 1.0f;
     [Range(0f, 1f)] public float voiceVolume = 1.0f;
 
-    [Header("FMOD Bus Paths (Dopasuj do nazw w FMOD Studio)")]
+    [Header("FMOD Bus Paths")]
     public string musicBusPath = "bus:/Music";
     public string sfxBusPath = "bus:/SFX";
     public string voiceBusPath = "bus:/Voice";
 
     [Header("Grafika")]
-    public int qualityIndex = 2; 
-    public int screenModeIndex = 0; 
+    public int qualityIndex = 2;
+    public int screenModeIndex = 0;
     public int resolutionIndex = 0;
     public bool showBlood = true;
 
@@ -37,7 +37,6 @@ public class SettingsManager : MonoBehaviour
 
     public event Action OnSettingsUpdated;
 
-    // FMOD Studio Bus Instances
     private FMOD.Studio.Bus _musicBus;
     private FMOD.Studio.Bus _sfxBus;
     private FMOD.Studio.Bus _voiceBus;
@@ -64,12 +63,11 @@ public class SettingsManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Inicjalizacja szyn na starcie
         InitializeBuses();
 
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
-        
+
         LoadSettings();
     }
 
@@ -95,20 +93,29 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.SetFloat("VoiceVolume", voiceVolume);
         PlayerPrefs.Save();
 
-        ApplyAudioSettings(); 
+        ApplyAudioSettings();
         OnSettingsUpdated?.Invoke();
     }
 
     public void ApplyAudioSettings()
     {
-        // Sprawdzamy ważność szyn i reinicjalizujemy jeśli trzeba
+        // Reinicjalizacja szyn jeśli straciły ważność
         if (!_musicBus.isValid() && !string.IsNullOrEmpty(musicBusPath)) _musicBus = RuntimeManager.GetBus(musicBusPath);
         if (!_sfxBus.isValid() && !string.IsNullOrEmpty(sfxBusPath)) _sfxBus = RuntimeManager.GetBus(sfxBusPath);
         if (!_voiceBus.isValid() && !string.IsNullOrEmpty(voiceBusPath)) _voiceBus = RuntimeManager.GetBus(voiceBusPath);
 
-        if (_musicBus.isValid()) _musicBus.setVolume(musicVolume);
-        if (_sfxBus.isValid()) _sfxBus.setVolume(soundsVolume);
-        if (_voiceBus.isValid()) _voiceBus.setVolume(voiceVolume);
+        // STOSUJEMY KRZYWĄ LOGARYTMICZNĄ (Decybele)
+        // Pozwala to uniknąć sytuacji, w której dźwięk jest za głośny przez 90% paska slidera.
+        if (_musicBus.isValid()) _musicBus.setVolume(LinearToDbVolume(musicVolume));
+        if (_sfxBus.isValid()) _sfxBus.setVolume(LinearToDbVolume(soundsVolume));
+        if (_voiceBus.isValid()) _voiceBus.setVolume(LinearToDbVolume(voiceVolume));
+    }
+
+    // Funkcja pomocnicza do przeliczania wartości slidera (0-1) na odczucie logarytmiczne
+    private float LinearToDbVolume(float linearValue)
+    {
+        // Używamy funkcji kwadratowej - jest szybka i daje bardzo naturalny efekt w FMOD
+        return linearValue * linearValue;
     }
 
     public void SaveSettings(float mouse, float gamepad, bool invX, bool invY, float vib)
@@ -198,7 +205,7 @@ public class SettingsManager : MonoBehaviour
         autoAim = PlayerPrefs.GetInt("AutoAim", 1) == 1;
 
         ApplyGraphics();
-        ApplyAudioSettings(); 
+        ApplyAudioSettings();
         OnSettingsUpdated?.Invoke();
     }
 }
