@@ -35,11 +35,11 @@ MonoBehaviour:
   trailColor: {r: 3.0314326, g: 0.51524734, b: 0, a: 0.22745098}
   startSound:
     Guid:
-      Data1: 0
-      Data2: 0
-      Data3: 0
-      Data4: 0
-    Path: 
+      Data1: 2046206784
+      Data2: 1331725673
+      Data3: -910184047
+      Data4: 507901743
+    Path: event:/FireEnchantOpener
   loopSound:
     Guid:
       Data1: 1836218686

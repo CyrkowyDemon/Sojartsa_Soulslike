@@ -69,10 +69,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639137983948439468
+  lastModified: 639138268771985657
   FileSizes:
   - Name: Desktop
-    Value: 1968
+    Value: 2026
   Exists: 1
 --- !u!114 &-7814590970517446114
 MonoBehaviour:
@@ -250,10 +250,10 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639137983948424391
+  lastModified: 639138268771960582
   FileSizes:
   - Name: Desktop
-    Value: 8154528
+    Value: 8203616
   Exists: 1
 --- !u!114 &-897539636616960276
 MonoBehaviour:
@@ -309,6 +309,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 394
+--- !u!114 &-325990439566225443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/FireEnchantOpener
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/FireEnchantOpener
+  Guid:
+    Data1: 2046206784
+    Data2: 1331725673
+    Data3: -910184047
+    Data4: 507901743
+  Banks:
+  - {fileID: -1395164888046074251}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 3568
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,17 +370,18 @@ MonoBehaviour:
   - {fileID: -8790662941543065896}
   - {fileID: 3173548438380389575}
   - {fileID: 1655372086695094964}
+  - {fileID: -325990439566225443}
   EditorParameters: []
   MasterBanks:
   - {fileID: -1395164888046074251}
   StringsBanks:
   - {fileID: -8055644028912070556}
   cacheVersion: 131859
-  cacheTime: 639137983948439468
+  cacheTime: 639138268771985657
   SerializableEventsDict:
   - key: event:/Campfire_Ambient
     index: 0
-  - key: event:/foot
+  - key: event:/Foot
     index: 1
   - key: event:/Chest
     index: 2
@@ -365,7 +393,7 @@ MonoBehaviour:
     index: 5
   - key: event:/Dodge
     index: 6
-  - key: event:/footstepDuringAttack
+  - key: event:/FootstepDuringAttack
     index: 7
   - key: event:/TavernAmbient
     index: 8
@@ -387,6 +415,8 @@ MonoBehaviour:
     index: 16
   - key: event:/Level1Music
     index: 17
+  - key: event:/FireEnchantOpener
+    index: 18
 --- !u!114 &1310586292144206871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -397,9 +427,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/footstepDuringAttack
+  m_Name: event:/FootstepDuringAttack
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
-  Path: event:/footstepDuringAttack
+  Path: event:/FootstepDuringAttack
   Guid:
     Data1: 1315558882
     Data2: 1307382993
@@ -586,7 +616,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/foot/footsteps
+  m_Name: parameter:/Foot/footsteps
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
   Name: footsteps
   StudioPath: 
@@ -613,9 +643,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/foot
+  m_Name: event:/Foot
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
-  Path: event:/foot
+  Path: event:/Foot
   Guid:
     Data1: -963625136
     Data2: 1085232764
