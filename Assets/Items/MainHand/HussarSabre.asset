@@ -23,7 +23,7 @@ MonoBehaviour:
   isStackable: 0
   maxStackSize: 1
   buyValue: 1
-  sellValue: 1
+  sellValue: 2
   weaponPrefab: {fileID: 8626494685632287027, guid: 994d5337c75f8b4468c76f0cb8fa7caf, type: 3}
   baseDamage: 25
   attackSpeed: 1

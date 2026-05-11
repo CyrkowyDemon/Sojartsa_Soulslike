@@ -196,6 +196,9 @@ public class ItemTransferManager : MonoBehaviour
         if (source.SlotIndex < 0 || target.SlotIndex < 0) return false;
         if (source.SlotIndex >= barter.barterSlots.Count || target.SlotIndex >= barter.barterSlots.Count) return false;
 
+        InventorySlot slotA = barter.barterSlots[source.SlotIndex];
+        InventorySlot slotB = barter.barterSlots[target.SlotIndex];
+
         if (!slotA.IsEmpty && !slotB.IsEmpty && slotA.item.itemID == slotB.item.itemID && slotA.item.isStackable)
         {
             int spaceLeft = slotB.item.maxStackSize - slotB.amount;
