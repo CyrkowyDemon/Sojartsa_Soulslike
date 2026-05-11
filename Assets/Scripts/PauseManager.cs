@@ -113,19 +113,14 @@ public class PauseManager : MonoBehaviour
         Debug.Log($"[PauseManager] TogglePause wywołane! Obecny stan isPaused: {isPaused}");
         if (!isPaused)
         {
-            if (DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy) 
+            // Mordo, sprawdzamy czy cokolwiek "dialogowego" lub "handlowego" jest włączone
+            bool isDialogueActive = DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy;
+            bool isNPCMenuActive = NPCMenuUI.Instance != null && NPCMenuUI.Instance.menuPanel != null && NPCMenuUI.Instance.menuPanel.activeInHierarchy;
+            bool isBarterActive = BarterUI.Instance != null && BarterUI.Instance.mainPanel != null && BarterUI.Instance.mainPanel.activeInHierarchy;
+
+            if (isDialogueActive || isNPCMenuActive || isBarterActive)
             {
-                Debug.Log("[PauseManager] Blokada: DialoguePanel jest aktywny!");
-                return;
-            }
-            if (NPCMenuUI.Instance != null && NPCMenuUI.Instance.menuPanel != null && NPCMenuUI.Instance.menuPanel.activeInHierarchy) 
-            {
-                Debug.Log("[PauseManager] Blokada: NPCMenuUI jest aktywny!");
-                return;
-            }
-            if (BarterUI.Instance != null && BarterUI.Instance.mainPanel != null && BarterUI.Instance.mainPanel.activeInHierarchy) 
-            {
-                Debug.Log("[PauseManager] Blokada: BarterUI jest aktywny!");
+                Debug.Log($"[PauseManager] BLOKADA: Dialogue:{isDialogueActive}, NPCMenu:{isNPCMenuActive}, Barter:{isBarterActive}");
                 return;
             }
         }

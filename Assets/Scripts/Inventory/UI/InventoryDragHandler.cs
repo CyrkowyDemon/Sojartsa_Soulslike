@@ -59,7 +59,9 @@ namespace Sojartsa.Inventory.UI
                 _dragIconImage.raycastTarget = false;
             }
 
-            _dragIconObject.transform.SetParent(_mainCanvas.transform, false);
+            // Mordo, szukamy najwyższego Canvatu, żeby ikona była ZAWSZE na wierzchu!
+            Canvas rootCanvas = _mainCanvas.rootCanvas;
+            _dragIconObject.transform.SetParent(rootCanvas.transform, false);
             _dragIconObject.transform.SetAsLastSibling();
             
             RectTransform rt = _dragIconObject.GetComponent<RectTransform>();

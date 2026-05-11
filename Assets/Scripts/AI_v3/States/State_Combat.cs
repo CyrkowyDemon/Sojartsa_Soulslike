@@ -97,8 +97,8 @@ namespace SojartsaAI.v3
                     float forwardMove = Vector3.Dot(brain.transform.forward, moveDir);
                     float rightMove = Vector3.Dot(brain.transform.right, moveDir);
 
-                    brain.anim.SetFloat("ForwardSpeed", forwardMove * 0.5f, 0.1f, Time.deltaTime);
-                    brain.anim.SetFloat("SidewaysSpeed", rightMove * 0.5f, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("ForwardSpeed", forwardMove * brain.movementSpeedMultiplier);
+                    brain.anim.SetFloat("SidewaysSpeed", rightMove * brain.movementSpeedMultiplier);
                 }
                 else
                 {

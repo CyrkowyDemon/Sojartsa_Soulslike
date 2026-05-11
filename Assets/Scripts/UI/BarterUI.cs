@@ -65,11 +65,24 @@ public class BarterUI : MonoBehaviour
             CloseUI();
     }
 
+    private void Update()
+    {
+        // TWARDY FIX: ESC zawsze zamyka sklep, niezależnie od innych systemów
+        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if (mainPanel != null && mainPanel.activeSelf)
+                CloseUI();
+        }
+    }
+
     public void OpenBuy(TradeShopData data)
     {
         if (mainPanel) mainPanel.SetActive(true);
         if (buyView) buyView.SetActive(true);
         if (sellView) sellView.SetActive(false);
+
+        // Mordo, chowany dialog, żeby nie zasłaniał slotów!
+        if (DialogueManager.Instance != null) DialogueManager.Instance.dialoguePanel.SetActive(false);
 
         if (shopNameText) shopNameText.text = data.shopName;
 
@@ -94,6 +107,9 @@ public class BarterUI : MonoBehaviour
 
         if (shopNameText) shopNameText.text = data.shopName + " - Skup";
         
+        // Mordo, tu też chowany dialog!
+        if (DialogueManager.Instance != null) DialogueManager.Instance.dialoguePanel.SetActive(false);
+
         RefreshSellDisplay();
     }
 

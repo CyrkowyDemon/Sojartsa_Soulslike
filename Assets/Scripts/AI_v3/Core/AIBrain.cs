@@ -19,6 +19,7 @@ namespace SojartsaAI.v3
         [Header("Konfiguracja (Data)")]
         public AIArchetype archetype;
         public InputReader playerInput;
+        [Range(0.5f, 3f)] public float movementSpeedMultiplier = 1f;
 
         [Header("AAA - Statystyki Postury")]
         public float currentPoise;
@@ -205,7 +206,7 @@ namespace SojartsaAI.v3
             if (anim == null || Time.deltaTime <= 0) return;
 
             // W AAA pozycji pilnuje animacja (deltaPosition)
-            Vector3 nextPos = transform.position + anim.deltaPosition;
+            Vector3 nextPos = transform.position + (anim.deltaPosition * movementSpeedMultiplier);
 
             // Ale NavMesh jest "granicą" (zabezpieczenie)
             if (agent != null && agent.isOnNavMesh)
@@ -222,12 +223,10 @@ namespace SojartsaAI.v3
 
             transform.position = nextPos;
             
-            // AAA: Płynniejsza rotacja podczas ruchu (jeśli nie jesteśmy w akcji, która blokuje rotację)
-            if (agent != null && agent.velocity.sqrMagnitude > 0.1f)
-            {
-                transform.rotation = Quaternion.LookRotation(agent.velocity.normalized);
-            }
-            else
+            // AAA: Rotacja. 
+            // Jeśli mamy animację z rotacją (np. uniki, ataki obrotowe), używamy deltaRotation.
+            // W przeciwnym razie stany (np. State_Combat) same ustawiają LookAt na gracza.
+            if (anim.deltaRotation != Quaternion.identity)
             {
                 transform.rotation *= anim.deltaRotation;
             }

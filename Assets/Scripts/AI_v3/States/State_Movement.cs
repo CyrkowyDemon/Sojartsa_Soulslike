@@ -6,11 +6,14 @@ namespace SojartsaAI.v3
     {
         public State_Passive(AIBrain brain) : base(brain) { }
 
+        private float _nextIdleTime;
+
         public override void Enter()
         {
             base.Enter();
             brain.agent.isStopped = true;
             brain.anim.SetFloat("ForwardSpeed", 0f);
+            _nextIdleTime = Time.time + Random.Range(3f, 10f);
         }
 
         public override void LogicUpdate()
@@ -19,6 +22,13 @@ namespace SojartsaAI.v3
             
             // Percepcja
             brain.Sensory.Tick();
+
+            // Losowy dźwięk Idle
+            if (Time.time > _nextIdleTime)
+            {
+                if (brain.SFX != null) brain.SFX.PlayIdleGrowl();
+                _nextIdleTime = Time.time + Random.Range(5f, 15f);
+            }
             
             if (brain.Sensory.IsPlayerVisible)
             {
@@ -54,7 +64,7 @@ namespace SojartsaAI.v3
 
             // Podążanie
             brain.MoveTo(brain.target.position);
-            brain.anim.SetFloat("ForwardSpeed", 1f);
+            brain.anim.SetFloat("ForwardSpeed", 1f * brain.movementSpeedMultiplier);
 
             // Jeśli stracimy gracza z oczu na zbyt długo - wróć do pasywnego
             if (!brain.Sensory.IsPlayerVisible && stateTimer > 5f)

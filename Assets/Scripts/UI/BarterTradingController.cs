@@ -55,11 +55,9 @@ public class BarterTradingController : MonoBehaviour
             }
         }
         
-        if (!sellResultSlot.IsEmpty)
-        {
-            InventoryController.Instance.AddItem(sellResultSlot.item, sellResultSlot.amount);
-            sellResultSlot.Clear();
-        }
+        // Mordo, wywalamy to! Nie dodajemy wyniku wyceny przy zamykaniu okna. 
+        // Gracz dostaje kasę TYLKO jak kliknie "Finalize".
+        sellResultSlot.Clear();
 
         _currentShop = null;
         NotifyBarterChanged();
@@ -107,14 +105,20 @@ public class BarterTradingController : MonoBehaviour
 
     public void RefreshSellValue()
     {
-        if (_currentShop == null || primaryCurrencyItem == null) return;
+        if (_currentShop == null) { Debug.LogWarning("[BARTER] Brak przypisanego sklepu!"); return; }
+        if (primaryCurrencyItem == null) { Debug.LogWarning("[BARTER] Brak przedmiotu waluty (primaryCurrencyItem) w kontrolerze!"); return; }
 
         int totalValue = 0;
         foreach (var slot in barterSlots)
         {
             if (!slot.IsEmpty)
             {
-                totalValue += Mathf.FloorToInt(slot.item.sellValue * slot.amount * _currentShop.sellRate);
+                float baseVal = slot.item.sellValue;
+                float rate = _currentShop.sellRate;
+                int itemVal = Mathf.FloorToInt(baseVal * slot.amount * rate);
+                
+                totalValue += itemVal;
+                Debug.Log($"[BARTER] Wykryto: {slot.item.itemName} x{slot.amount}. (Baza: {baseVal}, Mnożnik NPC: {rate}) -> Wynik: {itemVal}");
             }
         }
 
@@ -122,10 +126,12 @@ public class BarterTradingController : MonoBehaviour
         {
             sellResultSlot.item = primaryCurrencyItem;
             sellResultSlot.amount = totalValue;
+            Debug.Log($"[BARTER] Łączna wycena: {totalValue} x {primaryCurrencyItem.itemName}");
         }
         else
         {
             sellResultSlot.Clear();
+            Debug.Log("[BARTER] Wycena wynosi 0.");
         }
 
         // Odświeżamy też tekst sprzedaży w BarterUI

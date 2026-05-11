@@ -168,7 +168,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public void OnCancel(InputAction.CallbackContext context) { if (context.performed) CancelEvent?.Invoke(); }
     public void OnTabPrev(InputAction.CallbackContext context) { if (context.performed) TabPrevEvent?.Invoke(); }
     public void OnTabNext(InputAction.CallbackContext context) { if (context.performed) TabNextEvent?.Invoke(); }
-    public void OnInteraction(InputAction.CallbackContext context) { if (context.performed) InteractEvent?.Invoke(); }
+    public void OnInteraction(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) InteractEvent?.Invoke(); }
     public void OnUseEnchant(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) UseEnchantEvent?.Invoke(); }
     public void OnNewaction(InputAction.CallbackContext context) { }
 

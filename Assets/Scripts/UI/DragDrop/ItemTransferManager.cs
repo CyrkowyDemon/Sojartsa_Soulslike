@@ -21,8 +21,15 @@ public class ItemTransferManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(this);
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (Instance != this)
+        {
+            Destroy(this);
+        }
     }
 
     /// <summary>
@@ -126,7 +133,9 @@ public class ItemTransferManager : MonoBehaviour
         BarterTradingController barter = BarterTradingController.Instance;
         if (inv == null || barter == null) return false;
 
-        InventorySlot slotOnTable = barter.barterSlots[source.SlotIndex];
+        // Mordo, fix: Jeśli indeks to -1, to bierzemy przedmiot ze slotu WYNIKU, nie ze stołu!
+        InventorySlot slotOnTable = (source.SlotIndex == -1) ? barter.sellResultSlot : barter.barterSlots[source.SlotIndex];
+        
         if (slotOnTable.IsEmpty) return false;
 
         List<InventorySlot> targetList = GetSlotList(target.Source);
@@ -183,8 +192,9 @@ public class ItemTransferManager : MonoBehaviour
         BarterTradingController barter = BarterTradingController.Instance;
         if (barter == null) return false;
 
-        InventorySlot slotA = barter.barterSlots[source.SlotIndex];
-        InventorySlot slotB = barter.barterSlots[target.SlotIndex];
+        // Mordo, nie pozwalamy na zamianę miejscami (Swap) ze slotem wyniku (-1)
+        if (source.SlotIndex < 0 || target.SlotIndex < 0) return false;
+        if (source.SlotIndex >= barter.barterSlots.Count || target.SlotIndex >= barter.barterSlots.Count) return false;
 
         if (!slotA.IsEmpty && !slotB.IsEmpty && slotA.item.itemID == slotB.item.itemID && slotA.item.isStackable)
         {

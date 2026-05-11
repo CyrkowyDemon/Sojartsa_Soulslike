@@ -30,7 +30,8 @@ namespace Sojartsa.Inventory.UI
 
         private void OnEnable()
         {
-            if (controller == null) controller = InventoryController.Instance;
+            // Zawsze bierzemy instancję globalną, żeby Hub widział przedmioty z gry
+            controller = InventoryController.Instance;
 
             if (controller != null)
             {

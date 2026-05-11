@@ -25,10 +25,18 @@ public class InventoryController : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(this);
-
-        InitializeInventory();
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            InitializeInventory();
+        }
+        else if (Instance != this)
+        {
+            // Mordo, to jest kluczowe: NISZCZYMY TYLKO SKRYPT, NIE GRACZA!
+            Debug.LogWarning($"[INVENTORY] Wykryto duplikat na {gameObject.name}. Usuwam tylko skrypt, żeby nie zepsuć obiektu.");
+            Destroy(this); 
+        }
     }
 
     private void InitializeInventory()
@@ -99,6 +107,13 @@ public class InventoryController : MonoBehaviour
 
         InventorySlot slotA = targetBag[indexA];
         InventorySlot slotB = targetBag[indexB];
+
+        // Mordo, to jest fix: Jeśli to pasek sprzętu, sprawdzamy czy przedmioty mogą zamienić się miejscami!
+        if (targetBag == equipmentSlots)
+        {
+            if (!IsValidForEquipmentSlot(slotA.item, indexB)) return;
+            if (!IsValidForEquipmentSlot(slotB.item, indexA)) return;
+        }
 
         // 1. Próba łączenia (Merge), jeśli to ten sam przedmiot i się stackuje
         if (!slotA.IsEmpty && !slotB.IsEmpty && slotA.item.itemID == slotB.item.itemID && slotA.item.isStackable)

@@ -12,6 +12,15 @@ namespace SojartsaAI.v3
         public EnemySFXData sfxData;
 
         public bool HasData => sfxData != null;
+        private float _lastIdleTime;
+
+        public void PlayIdleGrowl()
+        {
+            if (HasData && !sfxData.idleGrowl.IsNull)
+            {
+                RuntimeManager.PlayOneShotAttached(sfxData.idleGrowl, gameObject);
+            }
+        }
 
         public void PlayAttackVoice()
         {
