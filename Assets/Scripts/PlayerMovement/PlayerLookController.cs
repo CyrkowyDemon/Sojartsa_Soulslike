@@ -25,10 +25,27 @@ public class PlayerLookController : MonoBehaviour
 
     [Header("Płynność")]
     [SerializeField] private float lookSpeed = 10f;
+    [SerializeField] private float positionFollowSpeed = 20f; // Szybkość śledzenia pozycji
 
     private float _headYaw;
     private float _spineYaw;
     private float _pitch;
+    private Animator _animator;
+    private Vector3 _positionOffset; // Zapamiętany offset wysokości
+
+    private void Start()
+    {
+        _animator = GetComponent<Animator>();
+        if (_animator == null) _animator = GetComponentInChildren<Animator>();
+
+        if (cameraPoint != null)
+        {
+            // Zapamiętujemy jak wysoko nad graczem był punkt
+            _positionOffset = cameraPoint.position - transform.position;
+            // ODPINAMY punkt od gracza, żeby nie dziedziczył rotacji i drgań
+            cameraPoint.SetParent(null);
+        }
+    }
 
     public bool IsSnapping { get; private set; }
 
@@ -61,10 +78,6 @@ public class PlayerLookController : MonoBehaviour
         Vector3 toTargetFlat = Vector3.ProjectOnPlane(toTarget, Vector3.up);
         float horizAngle = Vector3.SignedAngle(transform.forward, toTargetFlat.normalized, Vector3.up);
         float absAngle = Mathf.Abs(horizAngle);
-
-        // --- TYMCZASOWY LOG DEBUG DO ANALIZY ---
-        if (Time.frameCount % 20 == 0)
-            Debug.Log($"<color=pink>[ANGLE DEBUG] Kąt wroga od przodu gracza: {absAngle:F2} | Próg Snapa: {snapThreshold}</color>");
 
         // --- Zarządzanie Stanem SNAP (Histereza) ---
         if (absAngle >= snapThreshold)
@@ -100,6 +113,7 @@ public class PlayerLookController : MonoBehaviour
     private void LateUpdate()
     {
         ApplyBoneRotations();
+        UpdateCameraPoint();
     }
 
     private void UpdateNeutralLerp()
@@ -108,6 +122,47 @@ public class PlayerLookController : MonoBehaviour
         _spineYaw = Mathf.Lerp(_spineYaw, 0f, lookSpeed * Time.deltaTime);
         _pitch = Mathf.Lerp(_pitch, 0f, lookSpeed * Time.deltaTime);
         IsSnapping = false;
+    }
+
+    private void UpdateCameraPoint()
+    {
+        if (cameraPoint == null) return;
+
+        // 1. PŁYNNE ŚLEDZENIE POZYCJI (Zabija jitter uniku)
+        Vector3 targetPos = transform.position + _positionOffset;
+        cameraPoint.position = Vector3.Lerp(cameraPoint.position, targetPos, positionFollowSpeed * Time.deltaTime);
+
+        bool hasTarget = targetHandler != null && targetHandler.IsLockedOn && targetHandler.CurrentTarget != null;
+
+        if (hasTarget)
+        {
+            // 2. ROTACJA ŚWIATOWA NA WROGA (Ignoruje rotację gracza)
+            Vector3 toTarget = targetHandler.CurrentTarget.position - cameraPoint.position;
+            toTarget.y = 0;
+
+            if (toTarget.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetWorldRot = Quaternion.LookRotation(toTarget.normalized);
+                
+                // Mordo, tutaj dzieje się magia: unik nie szarpie, bo obracamy się w przestrzeni świata
+                float currentLookSpeed = lookSpeed * 0.5f;
+                cameraPoint.rotation = Quaternion.Slerp(cameraPoint.rotation, targetWorldRot, currentLookSpeed * Time.deltaTime);
+            }
+        }
+        else
+        {
+            // 3. POWRÓT ZA PLECY (Tylko gdy gracz się rusza)
+            bool isMoving = false;
+            if (TryGetComponent<CharacterController>(out var cc)) isMoving = cc.velocity.sqrMagnitude > 0.1f;
+            else if (TryGetComponent<Rigidbody>(out var rb)) isMoving = rb.linearVelocity.sqrMagnitude > 0.1f;
+
+            if (isMoving)
+            {
+                // Obracamy punkt kamery tak, żeby pokrywał się z kierunkiem patrzenia gracza (transform.forward)
+                Quaternion targetRot = Quaternion.LookRotation(transform.forward);
+                cameraPoint.rotation = Quaternion.Slerp(cameraPoint.rotation, targetRot, lookSpeed * 0.2f * Time.deltaTime);
+            }
+        }
     }
 
     private void ApplyBoneRotations()
@@ -121,44 +176,6 @@ public class PlayerLookController : MonoBehaviour
         {
             spineBone.rotation = Quaternion.AngleAxis(_spineYaw, Vector3.up) * spineBone.rotation;
             spineBone.rotation = Quaternion.AngleAxis(-_pitch * 0.4f, spineBone.right) * spineBone.rotation;
-        }
-
-        if (cameraPoint != null)
-        {
-            bool hasTarget = targetHandler != null && targetHandler.IsLockedOn && targetHandler.CurrentTarget != null;
-            if (hasTarget)
-            {
-                Vector3 toTarget = targetHandler.CurrentTarget.position - transform.position;
-                toTarget.y = 0;
-                
-                if (toTarget.sqrMagnitude > 0.01f)
-                {
-                    Quaternion targetWorldRot = Quaternion.LookRotation(toTarget.normalized);
-                    cameraPoint.rotation = Quaternion.Slerp(cameraPoint.rotation, targetWorldRot, lookSpeed * 0.5f * Time.deltaTime);
-
-                    float maxAllowedRotation = headLimit + spineLimit;
-                    float currentLocalY = cameraPoint.localEulerAngles.y;
-                    if (currentLocalY > 180f) currentLocalY -= 360f;
-                    
-                    float clampedY = Mathf.Clamp(currentLocalY, -maxAllowedRotation, maxAllowedRotation);
-                    cameraPoint.localRotation = Quaternion.Euler(0, clampedY, 0);
-                }
-            }
-            else
-            {
-                // Sekiro Style: Powrót do pozycji tylko gdy gracz się porusza
-                bool isMoving = false;
-                
-                // Próbujemy pobrać prędkość (Rigidbody lub CharacterController)
-                if (TryGetComponent<CharacterController>(out var cc)) isMoving = cc.velocity.sqrMagnitude > 0.1f;
-                else if (TryGetComponent<Rigidbody>(out var rb)) isMoving = rb.linearVelocity.sqrMagnitude > 0.1f;
-
-                if (isMoving)
-                {
-                    // Powrót do bycia na wprost pleców - drastycznie zwolniony powrót (0.2f)
-                    cameraPoint.localRotation = Quaternion.Slerp(cameraPoint.localRotation, Quaternion.identity, lookSpeed * 0.2f * Time.deltaTime);
-                }
-            }
         }
     }
 }

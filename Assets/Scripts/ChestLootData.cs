@@ -11,18 +11,21 @@ public class ChestLootData : ScriptableObject
 [Serializable]
 public struct LootEntry
 {
-    [Tooltip("Przy którym otwarciu ta nagroda ma wpaść? (np. 1 dla pierwszego razu)")]
+    [Tooltip("Przy którym otwarciu ta nagroda ma wpaść? (Dla pierwszego otwarcia wpisz 1)")]
     public int requiredOpenCount;
     
-    [Tooltip("Ile dusz gracz dostaje (opcjonalne).")]
-    public int soulsAmount;
+    [Header("Nagroda Pieniężna (Skrót)")]
+    [Tooltip("Ile waluty (np. monet) gracz dostaje. Automatycznie używa przedmiotu zdefiniowanego w CurrencyManager.")]
+    public int currencyAmount;
 
-    [Tooltip("Przedmiot, który gracz dostaje.")]
+    [Header("Nagroda Przedmiotowa")]
+    [Tooltip("Konkretny przedmiot, który gracz dostaje.")]
     public ItemData itemReward;
     
-    [Tooltip("Ilość przedmiotu.")]
+    [Tooltip("Ilość powyższego przedmiotu.")]
     public int itemAmount;
     
-    [Tooltip("Jeśli zaznaczone, nagroda wpadnie tylko raz, nawet jak gracz zamknie i otworzy skrzynię ponownie.")]
+    [Header("Ustawienia")]
+    [Tooltip("Jeśli zaznaczone, nagroda wpadnie tylko raz (nawet jeśli skrzynia zostanie zamknięta i otwarta ponownie).")]
     public bool giveOnlyOnce;
 }

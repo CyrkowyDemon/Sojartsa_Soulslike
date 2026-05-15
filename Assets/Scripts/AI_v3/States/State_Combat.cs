@@ -10,6 +10,9 @@ namespace SojartsaAI.v3
     public class State_Combat : AIState
     {
         private float _decisionTimer;
+        private float _movementDecisionTimer;
+        private float _currentStrafeOffset;
+        private float _targetStrafeOffset;
 
         public State_Combat(AIBrain brain) : base(brain) { }
 
@@ -80,30 +83,43 @@ namespace SojartsaAI.v3
                 }
             }
 
-            // 2. RUCH TAKTYCZNY (Flankowanie i Strafing)
+            // 2. RUCH TAKTYCZNY (Flankowanie i Strafing - AAA Movement Decisions)
             if (GlobalCombatDirector.Instance != null)
             {
-                Vector3 slotPos = GlobalCombatDirector.Instance.GetSlotPosition(brain, brain.target);
+                // Aktualizujemy decyzję o kierunku krążenia
+                _movementDecisionTimer -= Time.deltaTime;
+                if (_movementDecisionTimer <= 0f)
+                {
+                    // Losujemy nowy offset: -30 stopni (lewo), 0 (centrum), 30 (prawo)
+                    float[] choices = { -30f, 0f, 30f };
+                    _targetStrafeOffset = choices[Random.Range(0, choices.Length)];
+                    _movementDecisionTimer = Random.Range(2f, 4f); // Jak długo trzymać ten kierunek
+                }
+
+                // Płynne przechodzenie do nowego offsetu (Lerp)
+                _currentStrafeOffset = Mathf.Lerp(_currentStrafeOffset, _targetStrafeOffset, Time.deltaTime * 2f);
+
+                Vector3 slotPos = GlobalCombatDirector.Instance.GetSlotPosition(brain, brain.target, _currentStrafeOffset);
                 brain.MoveTo(slotPos);
                 
                 // AAA: Obliczamy wektor ruchu względem wroga, żeby obsłużyć Strafing (RightSpeed)
                 Vector3 moveDir = (slotPos - brain.transform.position);
                 float distToSlot = moveDir.magnitude;
                 
-                if (distToSlot > 0.5f)
+                if (distToSlot > 0.3f) // Nieco mniejszy próg dla płynności
                 {
                     moveDir.Normalize();
                     // Mapujemy ruch na osie Forward/Right wroga
                     float forwardMove = Vector3.Dot(brain.transform.forward, moveDir);
                     float rightMove = Vector3.Dot(brain.transform.right, moveDir);
 
-                    brain.anim.SetFloat("ForwardSpeed", forwardMove * brain.movementSpeedMultiplier);
-                    brain.anim.SetFloat("SidewaysSpeed", rightMove * brain.movementSpeedMultiplier);
+                    brain.anim.SetFloat("ForwardSpeed", forwardMove * brain.movementSpeedMultiplier, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("SidewaysSpeed", rightMove * brain.movementSpeedMultiplier, 0.1f, Time.deltaTime);
                 }
                 else
                 {
-                    brain.anim.SetFloat("ForwardSpeed", 0, 0.1f, Time.deltaTime);
-                    brain.anim.SetFloat("SidewaysSpeed", 0, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("ForwardSpeed", 0, 0.2f, Time.deltaTime);
+                    brain.anim.SetFloat("SidewaysSpeed", 0, 0.2f, Time.deltaTime);
                 }
             }
 

@@ -21,6 +21,6 @@ MonoBehaviour:
   bonusVitality: 0
   bonusAttackPower: 0
   isStackable: 1
-  maxStackSize: 100
+  maxStackSize: 99
   buyValue: 1
   sellValue: 1

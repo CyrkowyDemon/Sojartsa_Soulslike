@@ -47,6 +47,19 @@ public class FadeManager : MonoBehaviour
         StartCoroutine(FadeRoutine(0f, duration, onComplete));
     }
 
+    /// <summary>
+    /// Natychmiastowe ustawienie przezroczystości (bez animacji).
+    /// </summary>
+    public void SetAlpha(float alpha)
+    {
+        StopAllCoroutines();
+        if (canvasGroup != null) canvasGroup.alpha = alpha;
+        
+        // Audio: 0 głośności jeśli ekran czarny (alpha 1), 1 głośności jeśli czysty (alpha 0)
+        float targetVolume = (alpha > 0.5f) ? 0f : 1f;
+        _masterBus.setVolume(targetVolume);
+    }
+
     private IEnumerator FadeRoutine(float targetAlpha, float duration, Action onComplete)
     {
         if (canvasGroup == null)

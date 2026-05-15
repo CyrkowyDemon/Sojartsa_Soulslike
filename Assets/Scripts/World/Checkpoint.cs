@@ -35,11 +35,10 @@ public class Checkpoint : MonoBehaviour, IInteractable
         isActivated = true;
         if (activeVFX != null) activeVFX.SetActive(true);
 
-        // Rejestrujemy punkt w WarpManagerze
-        if (WarpManager.Instance != null)
+        // Rejestrujemy punkt w RespawnManagerze
+        if (RespawnManager.Instance != null)
         {
-            // Przekazujemy obecną scenę i ID punktu jako "ostatni punkt"
-            WarpManager.Instance.SetLastCheckpoint(
+            RespawnManager.Instance.SetCheckpoint(
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, 
                 checkpointID
             );

@@ -54,6 +54,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
+        if (animator == null || (TryGetComponent<PlayerHealth>(out var h) && h.IsDead)) return;
+
         if (_bufferTimer > 0)
         {
             _bufferTimer -= Time.deltaTime;
@@ -63,6 +65,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleAttackInput()
     {
+        if (TryGetComponent<PlayerHealth>(out var h) && h.IsDead) return;
+
         // Sprawdzamy warstwę ACTIONS (2), bo tam siedzą ataki!
         bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
         bool canAttack = animator.GetBool("CanCancel") || isIdle;
@@ -80,6 +84,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleHeavyAttackInput()
     {
+        if (TryGetComponent<PlayerHealth>(out var h) && h.IsDead) return;
+
         // BLOKADA: Brak broni = brak ataku
         if (_activeWeaponHitbox == null)
         {
@@ -155,6 +161,8 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleDodgeInput()
     {
+        if (TryGetComponent<PlayerHealth>(out var h) && h.IsDead) return;
+
         bool isIdle = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER).shortNameHash == _nothingStateHash;
         bool canDodge = animator.GetBool("CanCancel") || isIdle;
 

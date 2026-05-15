@@ -11,15 +11,17 @@ public class CurrencyManager : MonoBehaviour
 
     [Header("Ustawienia Waluty")]
     [SerializeField] private ItemData currencyItem; // Przeciągnij tu asset monety!
-    [SerializeField] private string currencyItemID = "gold_coin"; // ID przedmiotu który jest kasą
+
+    /// <summary>ID przedmiotu wyciągnięte prosto z assetu (nie musisz wpisywać dwa razy!)</summary>
+    public string CurrencyItemID => (currencyItem != null) ? currencyItem.itemID : "gold_coin";
 
     /// <summary>Aktualna ilość waluty pobrana prosto z Inventory.</summary>
     public int CurrentCurrency 
     {
         get 
         {
-            if (InventoryController.Instance != null)
-                return InventoryController.Instance.GetTotalItemCount(currencyItemID);
+            if (InventoryController.Instance != null && currencyItem != null)
+                return InventoryController.Instance.GetTotalItemCount(CurrencyItemID);
             return 0;
         }
     }
@@ -94,7 +96,7 @@ public class CurrencyManager : MonoBehaviour
 
         if (InventoryController.Instance != null)
         {
-            bool success = InventoryController.Instance.RemoveItem(currencyItemID, amount);
+            bool success = InventoryController.Instance.RemoveItem(CurrencyItemID, amount);
             return success;
         }
 
@@ -108,7 +110,7 @@ public class CurrencyManager : MonoBehaviour
     {
         if (InventoryController.Instance != null)
         {
-            InventoryController.Instance.RemoveItem(currencyItemID, CurrentCurrency);
+            InventoryController.Instance.RemoveItem(CurrencyItemID, CurrentCurrency);
         }
     }
 }

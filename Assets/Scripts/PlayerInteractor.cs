@@ -73,6 +73,8 @@ public class PlayerInteractor : MonoBehaviour
 
     private void HandleInteraction()
     {
+        if (TryGetComponent<PlayerHealth>(out var h) && h.IsDead) return;
+
         // PRO FIX: Jeśli trwa dialog, zlewamy system patrzenia na NPC i od razu skipujemy!
         if (DialogueManager.Instance != null && DialogueManager.Instance.dialoguePanel != null && DialogueManager.Instance.dialoguePanel.activeInHierarchy)
         {

@@ -82,27 +82,29 @@ public class PlayerMovement : MonoBehaviour
         _moveInput = inputReader.MovementValue;
         _isGrounded = controller.isGrounded;
 
-        // --- SYSTEM ROTACJI (REŻYSERSKA PRECYZJA) ---
         AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
         AnimatorStateInfo actionState = animator.GetCurrentAnimatorStateInfo(ACTIONS_LAYER);
         bool isActionPlaying = actionState.shortNameHash != _nothingStateHash || animator.IsInTransition(ACTIONS_LAYER);
         
+        bool lockedOn = targetHandler != null && targetHandler.IsLockedOn;
+        animator.SetFloat("LockedIn", lockedOn ? 1f : 0f, dampingTime, Time.deltaTime);
+
         bool canRotate = true; 
         float currentRotationSpeed = rotationSpeed;
 
         if (_playerCombat != null)
         {
             // TWARDA BLOKADA (Dodge lub Aktywny Hitbox/Recovery do momentu Cancel)
-            if (_playerCombat.IsDodgingAnim || _playerCombat.IsRotationLocked)
+            // Mordo, dodajemy "!lockedOn" - jeśli masz locka, postać ma się obracać ZAWSZE.
+            if ((_playerCombat.IsDodgingAnim || _playerCombat.IsRotationLocked) && !lockedOn)
             {
                 canRotate = false;
                 
                 // === FAILSAFE (SAMOLECZENIE) ===
-                // Jeśli jakimś cudem flaga została (np. brak eventu), a my już biegamy lub stoimy w Idle - ODBLOKUJ.
                 if (!isActionPlaying && (baseState.shortNameHash == _idleStateHash || baseState.tagHash == _idleTagHash))
                 {
                     canRotate = true;
-                    _playerCombat.ResetCombatFlags(); // Czyścimy syf w skrypcie Combat
+                    _playerCombat.ResetCombatFlags(); 
                 }
             }
             // FAZA WIND-UP (ZAMACH)
@@ -112,9 +114,6 @@ public class PlayerMovement : MonoBehaviour
                 currentRotationSpeed = rotationSpeed * 0.30f;
             }
         }
-        
-        bool lockedOn = targetHandler != null && targetHandler.IsLockedOn;
-        animator.SetFloat("LockedIn", lockedOn ? 1f : 0f, dampingTime, Time.deltaTime);
 
         if (lockedOn)
         {
@@ -168,15 +167,15 @@ public class PlayerMovement : MonoBehaviour
         {
             if (_isSnappingActive)
             {
-                // Zamiast RotateTowards (które jest mechaniczne i brutalne), używamy szybkiego Slerpa
-                // Da to efekt płynnego "doskoczenia" do celu z ładnym miękkim lądowaniem ramy.
-                float snapSpeed = rotationSpeed * snapRotationMultiplier;
-                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, snapSpeed * Time.deltaTime);
+                // Mordo, zamiast agresywnego mnożnika x4, dajemy stałą, ale wysoką prędkość obrotu (np. 720 stopni na sek)
+                // To sprawi, że obrót jest szybki, ale ma fizyczny czas trwania, więc Cinemachine zdąży go wygładzić.
+                float snapStep = 720f * Time.deltaTime; 
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, _targetRotation, snapStep);
             }
             else
             {
-                // Zwykły płynny obrót przy chodzeniu
-                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, _currentRotationSpeed * Time.deltaTime);
+                // Zwykły płynny obrót przy chodzeniu - lekko podkręcony dla responsywności
+                transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, (_currentRotationSpeed * 1.5f) * Time.deltaTime);
             }
             _shouldManualRotate = false; // zużyte
         }

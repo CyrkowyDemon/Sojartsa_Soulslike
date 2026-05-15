@@ -4,6 +4,18 @@ using TMPro;
 
 public class PlayerHUD : MonoBehaviour
 {
+    private static PlayerHUD _instance;
+    public static PlayerHUD Instance => _instance;
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        _instance = this;
+    }
     [Header("HP")]
     [SerializeField] private Slider hpSlider;
     [SerializeField] private Slider hpGhostSlider;
@@ -18,6 +30,9 @@ public class PlayerHUD : MonoBehaviour
     [Header("Waluta")]
     [SerializeField] private TextMeshProUGUI currencyText;
     [SerializeField] private float tickSpeed = 0.05f; // Szybkość przeskoku (opcjonalne)
+
+    [Header("Death Screen")]
+    [SerializeField] private CanvasGroup deathScreenGroup; // Przeciągnij tu CanvasGroup z napisem "YOU DIED"
 
     private int _displayedCurrency = 0;
     private Coroutine _tickCoroutine;
@@ -56,6 +71,9 @@ public class PlayerHUD : MonoBehaviour
 
     private void Start()
     {
+        // Ukrywamy ekran śmierci na starcie (fail-safe)
+        SetDeathScreen(false);
+
         // Odświeżamy wyświetlaną kwotę od razu przy starcie sceny
         if (CurrencyManager.Instance != null)
         {
@@ -134,5 +152,36 @@ public class PlayerHUD : MonoBehaviour
             yield return new WaitForSeconds(0.01f);
         }
         _tickCoroutine = null;
+    }
+
+    public void SetDeathScreen(bool active)
+    {
+        if (deathScreenGroup != null)
+        {
+            deathScreenGroup.alpha = active ? 1 : 0;
+            deathScreenGroup.blocksRaycasts = active;
+            deathScreenGroup.interactable = active;
+        }
+    }
+
+    public void FadeDeathScreen(bool active, float duration)
+    {
+        if (deathScreenGroup == null) return;
+        StartCoroutine(FadeDeathRoutine(active ? 1f : 0f, duration));
+    }
+
+    private System.Collections.IEnumerator FadeDeathRoutine(float targetAlpha, float duration)
+    {
+        float startAlpha = deathScreenGroup.alpha;
+        float elapsed = 0f;
+        deathScreenGroup.blocksRaycasts = targetAlpha > 0.5f;
+        deathScreenGroup.interactable = targetAlpha > 0.5f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            deathScreenGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+            yield return null;
+        }
+        deathScreenGroup.alpha = targetAlpha;
     }
 }

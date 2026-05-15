@@ -25,19 +25,9 @@ public class WarpManager : MonoBehaviour
     private bool _isWarping = false;
     private string _targetSpawnPointID;
 
-    // --- SOS: Powrót do Poprzedniej Lokalizacji ---
+    // --- SOS: Powrót do Poprzedniej Lokalizacji (Drzwi/Warp) ---
     private string _lastSceneName;
     private string _lastSpawnPointID;
-
-    /// <summary>
-    /// Ustawia punkt odrodzenia (np. przy ognisku).
-    /// </summary>
-    public void SetLastCheckpoint(string sceneName, string spawnPointID)
-    {
-        _lastSceneName = sceneName;
-        _lastSpawnPointID = spawnPointID;
-        Debug.Log($"<color=lime>[WARP] Nowy punkt odrodzenia: {sceneName} / {spawnPointID}</color>");
-    }
 
     private void Awake()
     {
@@ -56,10 +46,19 @@ public class WarpManager : MonoBehaviour
     {
         if (_isWarping) return;
         
-        // Zapamiętujemy "skąd przyszliśmy" tylko jeśli to normalny Warp (nie powrotny)
+        // Zapamiętujemy "skąd przyszliśmy" tylko dla celów powrotu przez WarpBack
         _lastSceneName = SceneManager.GetActiveScene().name;
         _lastSpawnPointID = returnID;
 
+        StartCoroutine(WarpRoutine(sceneName, spawnPointID));
+    }
+
+    /// <summary>
+    /// Specjalny warp dla odrodzenia (nie nadpisuje pamięci powrotu).
+    /// </summary>
+    public void WarpToCheckpoint(string sceneName, string spawnPointID)
+    {
+        if (_isWarping) return;
         StartCoroutine(WarpRoutine(sceneName, spawnPointID));
     }
 
@@ -81,19 +80,28 @@ public class WarpManager : MonoBehaviour
         StartCoroutine(WarpRoutine(_lastSceneName, _lastSpawnPointID));
     }
 
+    private Vector3 _warpOldPos;
+
     private IEnumerator WarpRoutine(string sceneName, string spawnPointID)
     {
         _isWarping = true;
         _targetSpawnPointID = spawnPointID;
 
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null) _warpOldPos = player.transform.position;
+
         // 1. Ekran ciemnieje
         if (FadeManager.Instance != null)
         {
             FadeManager.Instance.FadeOut(fadeDuration);
+            // Czekamy aż wyciemni się do końca
             yield return new WaitForSeconds(fadeDuration);
+            // DODATKOWY FAIL-SAFE: Upewniamy się, że jest absolutnie czarno
+            FadeManager.Instance.SetAlpha(1f);
         }
 
-        // 2. Ładowanie sceny
+        // 2. Ładowanie sceny (Prawdziwy RELOAD)
+        Debug.Log($"<color=white>[WARP] Ładuję scenę: {sceneName}...</color>");
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
         while (!asyncLoad.isDone)
         {
@@ -122,12 +130,7 @@ public class WarpManager : MonoBehaviour
             }
         }
 
-        // Jeśli nie znaleźliśmy punktu po ID, bierzemy pierwszy lepszy (zabezpieczenie)
-        if (targetPoint == null && points.Length > 0)
-        {
-            targetPoint = points[0];
-            Debug.LogWarning($"[WARP] Nie znalazłem '{_targetSpawnPointID}', używam domyślnego {targetPoint.identifier}");
-        }
+        if (targetPoint == null && points.Length > 0) targetPoint = points[0];
 
         if (targetPoint != null)
         {
@@ -137,30 +140,41 @@ public class WarpManager : MonoBehaviour
                 CharacterController cc = player.GetComponent<CharacterController>();
                 PlayerHealth ph = player.GetComponent<PlayerHealth>();
 
-                // --- FIX: Nowa Kolejność ---
-                // 1. Ożywiamy gracza ZANIM go przeniesiemy, żeby był świeży
-                if (ph != null) ph.Revive(); 
+                // --- KLUCZOWY FIX: Najpierw ożywiamy i CHOWAMY, potem przesuwamy ---
+                if (ph != null) 
+                {
+                    ph.Revive();
+                }
 
-                // 2. Wyłączamy CC, żeby grawitacja nie porwała go w trakcie ustawiania Transform
                 if (cc != null) cc.enabled = false;
 
-                // 3. Teleportacja Transform
+                // CHOWAMY MODEL (na wszelki wypadek, żeby nie było widać trupa ani przeskoku)
+                Renderer[] renderers = player.GetComponentsInChildren<Renderer>();
+                foreach (var r in renderers) r.enabled = false;
+
                 player.transform.position = targetPoint.transform.position;
                 player.transform.rotation = targetPoint.transform.rotation;
 
-                Debug.Log($"<color=green>[WARP] Bingo! Gracz dowieziony do: {targetPoint.identifier}.</color>");
-                
-                // 4. Ruszamy fizykę z powrotem
+                Physics.SyncTransforms(); 
+
+                var brain = Object.FindAnyObjectByType<Unity.Cinemachine.CinemachineBrain>();
+                if (brain != null)
+                {
+                    Unity.Cinemachine.CinemachineCore.OnTargetObjectWarped(player.transform, player.transform.position - _warpOldPos);
+                }
+
                 if (cc != null) cc.enabled = true;
+
+                // Wymuszamy na animatorze natychmiastowe przeliczenie stanów
+                // ROBIMY TO TERAZ, gdy CC jest już aktywny!
+                Animator anim = player.GetComponentInChildren<Animator>();
+                if (anim != null) anim.Update(0);
+
+                // Przywracamy model DOPIERO po wszystkim
+                foreach (var r in renderers) r.enabled = true;
+                
+                Debug.Log($"<color=green>[WARP] Gracz odrodzony w punkcie: {targetPoint.identifier}</color>");
             }
-            else
-            {
-                Debug.LogError("<color=red>[WARP] Zgubiłem gracza! Ma tag 'Player'?</color>");
-            }
-        }
-        else
-        {
-            Debug.LogWarning($"<color=yellow>[WARP] Nie znalazłem żadnego SpawnPoint!</color>");
         }
 
         // 4. Ekran jaśnieje

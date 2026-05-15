@@ -13,6 +13,7 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private PlayerHUD hud;
+    [SerializeField] private TargetHandler targetHandler; // FIX: Brakująca referencja do namierzania
 
     // === SYSTEM RAN (POISE / POSTURA) ===
     [Header("System Ran (Poise)")]
@@ -21,6 +22,7 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private float woundDecayDelay = 2f;     // Ile sekund spokoju zanim pasek zacznie opadać
     [SerializeField] private float woundDecayRate = 20f;     // Jak szybko opada pasek (jednostki/sekundę)
     [SerializeField] private float staggerDuration = 1.5f;   // Ile sekund gracz jest ogłuszony
+
 
     private float _currentWounds = 0f;
     private float _lastHitTime = -999f;   // Kiedy ostatnio dostaliśmy cios
@@ -192,14 +194,34 @@ public class PlayerHealth : MonoBehaviour
         if (_isDead) return;
         _isDead = true;
         
-        // Zamykamy miecz przy zgonie
+        // 1. Czyścimy lock-on, żeby kamera nie gapiła się na mordercę
+        if (targetHandler != null) targetHandler.ClearTarget();
+
+        // 2. Zamykamy miecz przy zgonie
         SendMessage("CloseDamage", SendMessageOptions.DontRequireReceiver);
         
+        // 3. Animacja (Napisu jeszcze nie pokazujemy - czekamy na upadek!)
         if (animator != null) animator.SetTrigger("Die");
-        Invoke("RestartScene", 3f);
+
+        // 4. Startujemy kinową sekwencję
+        StartCoroutine(DeathSequenceRoutine());
     }
     
-    private void RestartScene() { SceneManager.LoadScene(SceneManager.GetActiveScene().name); }
+    private System.Collections.IEnumerator DeathSequenceRoutine()
+    {
+        // PRAWIDŁOWA ARCHITEKTURA: Oddajemy kontrolę do RespawnManagera
+        if (RespawnManager.Instance != null)
+        {
+            RespawnManager.Instance.StartDeathSequence();
+        }
+        else
+        {
+            Debug.LogError("[DEATH] Brak RespawnManagera w scenie!");
+            // Fail-safe
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        }
+        yield break;
+    }
 
     // === ANIMATION EVENTS: Dodaj na animacji dashu! ===
     public void EnableIFrames() { _isInvincible = true; }
@@ -215,9 +237,14 @@ public class PlayerHealth : MonoBehaviour
         _currentWounds = 0f;
         currentHealth = Mathf.CeilToInt(maxHealth * (healthPercent / 100f));
         
+        // Chowamy ekran śmierci PŁYNNIE
+        if (hud != null) hud.FadeDeathScreen(false, 1.0f);
+
         if (animator != null) 
         {
-            animator.SetTrigger("Recover"); 
+            // "Opcja Atomowa" - Resetujemy cały animator do stanu fabrycznego
+            animator.Rebind();
+            animator.Update(0f);
             animator.ResetTrigger("Die");
         }
 

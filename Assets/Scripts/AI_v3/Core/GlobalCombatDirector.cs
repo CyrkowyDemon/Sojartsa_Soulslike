@@ -62,7 +62,7 @@ namespace SojartsaAI.v3
         /// <summary>
         /// Zwraca pozycję w świecie, w której wróg powinien stać (bazując na jego slocie).
         /// </summary>
-        public Vector3 GetSlotPosition(AIBrain enemy, Transform player)
+        public Vector3 GetSlotPosition(AIBrain enemy, Transform player, float angleOffset = 0f)
         {
             if (enemy.CombatSlotIndex == -1 || player == null) return enemy.transform.position;
 
@@ -71,6 +71,8 @@ namespace SojartsaAI.v3
             float angle = (enemy.CombatSlotIndex % 2 == 0) 
                 ? (enemy.CombatSlotIndex / 2) * anglePerSlot 
                 : (enemy.CombatSlotIndex / 2 + 1) * -anglePerSlot;
+
+            angle += angleOffset; // Dodajemy dynamiczny offset (strafing)
 
             float radius = enemy.archetype.combatCircleRadius > 0 ? enemy.archetype.combatCircleRadius : circleRadius;
             Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * radius;
