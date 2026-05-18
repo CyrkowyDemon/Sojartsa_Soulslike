@@ -28,6 +28,26 @@ public class RespawnManager : MonoBehaviour
     private GameObject _activeDropInstance; 
 
     public Vector3 LastDeathPosition => _lastDeathPosition;
+    public string CheckpointScene => _checkpointScene;
+    public string CheckpointID => _checkpointID;
+    public int CurrentDropAmount => _currentDropAmount;
+    public Vector3 CurrentDropPos => _currentDropPos;
+    public string CurrentDropScene => _currentDropScene;
+
+    /// <summary>
+    /// Wczytuje dane o dropie z zapisu.
+    /// </summary>
+    public void LoadDeathDropData(int amount, Vector3 pos, string sceneName)
+    {
+        _currentDropAmount = amount;
+        _currentDropPos = pos;
+        _currentDropScene = sceneName;
+        
+        if (_currentDropAmount > 0 && SceneManager.GetActiveScene().name == _currentDropScene)
+        {
+            SpawnDeathDropInScene();
+        }
+    }
 
     private void Awake()
     {

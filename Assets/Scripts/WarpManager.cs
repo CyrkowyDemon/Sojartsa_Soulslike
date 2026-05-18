@@ -90,17 +90,25 @@ public class WarpManager : MonoBehaviour
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) _warpOldPos = player.transform.position;
 
-        // 1. Ekran ciemnieje
+        // 1. Ekran ciemnieje (Fade do czerni)
         if (FadeManager.Instance != null)
         {
             FadeManager.Instance.FadeOut(fadeDuration);
             // Czekamy aż wyciemni się do końca
-            yield return new WaitForSeconds(fadeDuration);
+            yield return new WaitForSecondsRealtime(fadeDuration);
             // DODATKOWY FAIL-SAFE: Upewniamy się, że jest absolutnie czarno
             FadeManager.Instance.SetAlpha(1f);
         }
 
-        // 2. Ładowanie sceny (Prawdziwy RELOAD)
+        // 2. Fade od czerni do ekranu ładowania (Zaczynamy stoper)
+        float startTime = Time.unscaledTime;
+        if (Sojartsa.UI.LoadingScreenManager.Instance != null)
+        {
+            Sojartsa.UI.LoadingScreenManager.Instance.Show();
+            yield return new WaitForSecondsRealtime(0.5f); // Czekamy aż w pełni się rozjaśni z czerni
+        }
+
+        // 3. Ładowanie sceny (Prawdziwy RELOAD)
         Debug.Log($"<color=white>[WARP] Ładuję scenę: {sceneName}...</color>");
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
         while (!asyncLoad.isDone)
@@ -108,8 +116,30 @@ public class WarpManager : MonoBehaviour
             yield return null;
         }
 
-        // 3. Po załadowaniu sceny szukamy punktu
+        // Po załadowaniu sceny szukamy punktu
         yield return StartCoroutine(CompleteWarp());
+
+        // Wymuszamy minimalny czas trwania ekranu ładowania (np. 2 sekundy od startu)
+        float elapsed = Time.unscaledTime - startTime;
+        if (elapsed < 2.0f)
+        {
+            yield return new WaitForSecondsRealtime(2.0f - elapsed);
+        }
+
+        // 4. Fade od ekranu ładowania do czerni (Ekran ładowania płynnie znika do czerni)
+        if (Sojartsa.UI.LoadingScreenManager.Instance != null)
+        {
+            Sojartsa.UI.LoadingScreenManager.Instance.Hide();
+            yield return new WaitForSecondsRealtime(0.5f); // Czekamy aż całkowicie zniknie do czerni
+        }
+
+        // 5. Unfade czerni (Rozjaśniamy nową scenę)
+        if (FadeManager.Instance != null)
+        {
+            FadeManager.Instance.FadeIn(fadeDuration);
+        }
+
+        _isWarping = false;
     }
 
     private IEnumerator CompleteWarp()
@@ -176,13 +206,5 @@ public class WarpManager : MonoBehaviour
                 Debug.Log($"<color=green>[WARP] Gracz odrodzony w punkcie: {targetPoint.identifier}</color>");
             }
         }
-
-        // 4. Ekran jaśnieje
-        if (FadeManager.Instance != null)
-        {
-            FadeManager.Instance.FadeIn(fadeDuration);
-        }
-
-        _isWarping = false;
     }
 }

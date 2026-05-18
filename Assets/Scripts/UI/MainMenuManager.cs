@@ -2,104 +2,165 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using TMPro;
+using Sojartsa.UI;
 
+/// <summary>
+/// Menedżer Głównego Menu. Zajmuje się nawigacją między głównymi panelami.
+/// </summary>
 public class MainMenuManager : MonoBehaviour
 {
-    public enum LevelID 
-    {
-        MainMenu = 0,
-        Tutorial = 1,
-        Pojezierza = 2,
-    }
+    [Header("Ustawienia Poziomu Startowego")]
+    public int firstLevelBuildIndex = 2; 
 
-    [Header("Ustawienia Poziomu")]
-    public LevelID levelToLoad; 
-
-    [Header("Input & Sterowanie")]
-    [SerializeField] private InputReader inputReader;
+    [Header("UI: Główne Przyciski")]
+    public GameObject continueButton;
     public GameObject firstSelectedButton; 
 
-    [Header("Panele UI")]
+    [Header("UI: Panele")]
     public GameObject mainMenuPanel; 
     public GameObject settingsPanel;
+    public GameObject loadGamePanel;
+    public GameObject characterNamePanel;
 
-    [Header("Nawigacja dla Pada")]
-    public GameObject firstSettingsButton; 
-    public GameObject settingsButtonInMenu; 
+    [Header("UI: Nowa Gra")]
+    public TMP_InputField nameInputField;
+
+    [Header("Input")]
+    [SerializeField] private InputReader inputReader;
 
     private void OnEnable()
     {
-        if (inputReader != null)
-            inputReader.CancelEvent += HandleCancel;
+        if (inputReader != null) inputReader.CancelEvent += HandleCancel;
     }
 
     private void OnDisable()
     {
-        if (inputReader != null)
-            inputReader.CancelEvent -= HandleCancel;
-    }
-
-    private void HandleCancel()
-    {
-        // ESC w Settings → wróć do Main Menu
-        if (settingsPanel != null && settingsPanel.activeSelf)
-        {
-            CloseSettings();
-        }
+        if (inputReader != null) inputReader.CancelEvent -= HandleCancel;
     }
 
     private void Start()
     {
-        SelectButton(firstSelectedButton);
+        // Wymuszamy porządek na starcie
+        BackToMainMenu();
+        RefreshMenuState();
     }
 
-    // --- KLUCZOWA FUNKCJA DLA PRZYCISKÓW ---
-    // W Inspektorze w Button -> OnClick wybierz: MainMenuManager -> LoadSpecificLevel
-    // I wpisz w okienku numer sceny (np. 1, 2, 3)
-    public void LoadSpecificLevel(int sceneIndex)
+    public void RefreshMenuState()
     {
-        if (inputReader != null) 
+        if (continueButton != null)
         {
-            // Odkomentuj to, jak naprawisz błędy w InputReaderze:
-            // inputReader.EnableGameplay();
+            bool hasSave = SaveManager.Instance != null && SaveManager.Instance.GetMostRecentSaveSlot() >= 0;
+            continueButton.SetActive(hasSave);
         }
-        
-        Time.timeScale = 1f; 
-        SceneManager.LoadScene(sceneIndex);
     }
 
-    // Standardowy start z poziomu wybranego w "levelToLoad" (np. dla przycisku "Graj Dalej")
-    public void StartGame()
+    public void OnClick_Continue()
     {
-        LoadSpecificLevel((int)levelToLoad);
+        if (SaveManager.Instance == null) return;
+
+        int slot = SaveManager.Instance.GetMostRecentSaveSlot();
+        if (slot < 0) return;
+
+        SaveData meta = SaveManager.Instance.GetSaveMetadata(slot);
+        string charName = meta != null ? meta.characterName : "Nieznany Wędrowiec";
+
+        ConfirmationDialog.Instance.Show(
+            "KONTYNUUJ",
+            $"Wczytać postać \"{charName}\"?",
+            () => SaveManager.Instance.LoadGame(slot)
+        );
     }
 
-    public void OpenSettings()
+    public void OnClick_NewGame()
+    {
+        Debug.Log("[MainMenu] Kliknięto 'Nowa Gra'");
+        if (characterNamePanel != null)
+        {
+            SwitchPanel(characterNamePanel);
+            if (nameInputField != null) SelectButton(nameInputField.gameObject);
+        }
+        else
+        {
+            // Jeśli nie ma panelu imienia, startujemy od razu
+            OnClick_StartJourney();
+        }
+    }
+
+    public void OnClick_OpenLoadPanel()
+    {
+        SwitchPanel(loadGamePanel);
+    }
+
+    public void OnClick_OpenSettings()
+    {
+        SwitchPanel(settingsPanel);
+    }
+
+    public void OnClick_StartJourney()
+    {
+        string charName = (nameInputField != null && !string.IsNullOrEmpty(nameInputField.text)) 
+                          ? nameInputField.text : "Wędrowiec";
+
+        // Pobieramy nazwę sceny z indeksu dla systemu zapisu
+        string scenePath = SceneUtility.GetScenePathByBuildIndex(firstLevelBuildIndex);
+        string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
+
+        Debug.Log($"[MainMenu] Próba startu nowej gry. Imię: {charName}, Scena: {sceneName} (Index: {firstLevelBuildIndex})");
+
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.StartNewGame(charName, sceneName);
+        }
+        else
+        {
+            if (Sojartsa.UI.LoadingScreenManager.Instance != null)
+            {
+                Sojartsa.UI.LoadingScreenManager.Instance.LoadScene(sceneName);
+            }
+            else
+            {
+                SceneManager.LoadScene(firstLevelBuildIndex);
+            }
+        }
+    }
+
+    public void SwitchPanel(GameObject targetPanel)
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        if (settingsPanel != null) settingsPanel.SetActive(true);
-        SelectButton(firstSettingsButton);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (loadGamePanel != null) loadGamePanel.SetActive(false);
+        if (characterNamePanel != null) characterNamePanel.SetActive(false);
+
+        if (targetPanel != null) targetPanel.SetActive(true);
     }
 
-    public void CloseSettings()
+    public void BackToMainMenu()
     {
-        if (settingsPanel != null) settingsPanel.SetActive(false);
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
-        SelectButton(settingsButtonInMenu);
+        SwitchPanel(mainMenuPanel);
+        SelectButton(firstSelectedButton);
+        RefreshMenuState(); // Odświeżamy widoczność przycisku Continue
+    }
+
+    private void HandleCancel()
+    {
+        // Jeśli jesteśmy w jakimkolwiek podmenu, wracamy do głównego
+        if (!mainMenuPanel.activeSelf)
+        {
+            BackToMainMenu();
+        }
     }
 
     public void QuitGame()
     {
-        Debug.Log("Wychodzę z gry!");
         Application.Quit();
     }
 
     public void SelectButton(GameObject button)
     {
         if (button != null && gameObject.activeInHierarchy)
-        {
             StartCoroutine(SelectRoutine(button));
-        }
     }
 
     private IEnumerator SelectRoutine(GameObject button)

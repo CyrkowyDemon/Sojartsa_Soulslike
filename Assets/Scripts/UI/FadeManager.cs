@@ -27,6 +27,7 @@ public class FadeManager : MonoBehaviour
             return;
         }
         Instance = this;
+        DontDestroyOnLoad(gameObject); // Mordo, robimy go nieśmiertelnym, żeby podróżował z Main Menu do gry!
         
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup != null) canvasGroup.alpha = 0f;
@@ -53,7 +54,13 @@ public class FadeManager : MonoBehaviour
     public void SetAlpha(float alpha)
     {
         StopAllCoroutines();
-        if (canvasGroup != null) canvasGroup.alpha = alpha;
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = alpha;
+            // Magia: wyłączamy interakcje jeśli jest przezroczysty, włączamy jeśli jest czarny/ciemnieje
+            canvasGroup.blocksRaycasts = (alpha > 0f);
+            canvasGroup.interactable = (alpha > 0f);
+        }
         
         // Audio: 0 głośności jeśli ekran czarny (alpha 1), 1 głośności jeśli czysty (alpha 0)
         float targetVolume = (alpha > 0.5f) ? 0f : 1f;
@@ -68,6 +75,10 @@ public class FadeManager : MonoBehaviour
             onComplete?.Invoke();
             yield break;
         }
+
+        // Przy jakimkolwiek fadowaniu domyślnie blokujemy interakcje (gracz nie może przeklikać gry podczas animacji)
+        canvasGroup.blocksRaycasts = true;
+        canvasGroup.interactable = true;
 
         float startAlpha = canvasGroup.alpha;
         float elapsed = 0f;
@@ -96,6 +107,13 @@ public class FadeManager : MonoBehaviour
 
         canvasGroup.alpha = targetAlpha;
         _masterBus.setVolume(targetVolume);
+        
+        // Jeśli skończyliśmy rozjaśniać (czyli obraz jest w pełni widoczny, a kurtyna ma przezroczystość 0), odblokowujemy kliknięcia!
+        if (targetAlpha == 0f)
+        {
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.interactable = false;
+        }
         
         onComplete?.Invoke();
     }

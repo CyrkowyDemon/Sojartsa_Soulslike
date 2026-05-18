@@ -16,6 +16,7 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public event Action<Vector2> SwitchTargetEvent;
     public event Action InteractEvent;
     public event Action UseEnchantEvent;
+    public event Action DeleteSaveEvent;
 
     public enum InputDeviceType { Mouse, Gamepad }
     public InputDeviceType LastUsedDevice { get; private set; } = InputDeviceType.Mouse;
@@ -170,6 +171,12 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions, 
     public void OnTabNext(InputAction.CallbackContext context) { if (context.performed) TabNextEvent?.Invoke(); }
     public void OnInteraction(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) InteractEvent?.Invoke(); }
     public void OnUseEnchant(InputAction.CallbackContext context) { if (context.performed && !IsMovementLocked) UseEnchantEvent?.Invoke(); }
+    public void OnDeleteSave(InputAction.CallbackContext context) { 
+        if (context.performed) {
+            Debug.Log($"[InputReader] Q/Y wcisnieto - wywoluje DeleteSaveEvent");
+            DeleteSaveEvent?.Invoke(); 
+        }
+    }
     public void OnNewaction(InputAction.CallbackContext context) { }
 
     public void RefreshSettings()

@@ -489,6 +489,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""DeleteSave"",
+                    ""type"": ""Button"",
+                    ""id"": ""713919e8-7693-47cb-b4fa-42f38d3876be"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -700,6 +709,28 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""TabNext"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""18f1dc64-071a-493f-a36c-9418645062a7"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";PCControlScheme"",
+                    ""action"": ""DeleteSave"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a93149df-8b2b-42fa-9481-9b7dffbe3654"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";XBOXControlScheme"",
+                    ""action"": ""DeleteSave"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -752,6 +783,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
         m_UI_TabPrev = m_UI.FindAction("TabPrev", throwIfNotFound: true);
         m_UI_TabNext = m_UI.FindAction("TabNext", throwIfNotFound: true);
+        m_UI_DeleteSave = m_UI.FindAction("DeleteSave", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
@@ -1022,6 +1054,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_Cancel;
     private readonly InputAction m_UI_TabPrev;
     private readonly InputAction m_UI_TabNext;
+    private readonly InputAction m_UI_DeleteSave;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -1053,6 +1086,10 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "UI/TabNext".
         /// </summary>
         public InputAction @TabNext => m_Wrapper.m_UI_TabNext;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/DeleteSave".
+        /// </summary>
+        public InputAction @DeleteSave => m_Wrapper.m_UI_DeleteSave;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1094,6 +1131,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @TabNext.started += instance.OnTabNext;
             @TabNext.performed += instance.OnTabNext;
             @TabNext.canceled += instance.OnTabNext;
+            @DeleteSave.started += instance.OnDeleteSave;
+            @DeleteSave.performed += instance.OnDeleteSave;
+            @DeleteSave.canceled += instance.OnDeleteSave;
         }
 
         /// <summary>
@@ -1120,6 +1160,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @TabNext.started -= instance.OnTabNext;
             @TabNext.performed -= instance.OnTabNext;
             @TabNext.canceled -= instance.OnTabNext;
+            @DeleteSave.started -= instance.OnDeleteSave;
+            @DeleteSave.performed -= instance.OnDeleteSave;
+            @DeleteSave.canceled -= instance.OnDeleteSave;
         }
 
         /// <summary>
@@ -1292,5 +1335,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnTabNext(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "DeleteSave" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnDeleteSave(InputAction.CallbackContext context);
     }
 }

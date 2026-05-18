@@ -5,15 +5,18 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/UI2.unity
+    guid: d05122f503c71b044afaaab9b9f092f4
   - enabled: 1
     path: Assets/Scenes/UI.unity
-    guid: d05122f503c71b044afaaab9b9f092f4
+    guid: 492b842baea1a4c4f939dba046c1a4d7
   - enabled: 1
     path: Assets/Scenes/TEST - Fighting style.unity
     guid: 01c08f47a229a90409a25566c8804075
   - enabled: 1
     path: Assets/Scenes/Mazury/Pojezierza.unity
-    guid: 157cf78d846fb0241b531570c83780e0
+    guid: 0278577be62730c469ea3f62fa7006aa
   - enabled: 1
     path: Assets/Scenes/HUB.unity
     guid: 7ac9473a8cdbf274f8ffe8eb336ddf41

@@ -15,6 +15,10 @@ public class ChestController : MonoBehaviour, IInteractable
     [Header("Wydarzenia")]
     public UnityEvent OnChestOpened;
     public UnityEvent OnChestClosed;
+    
+    [Header("Zapis Stanu")]
+    [Tooltip("Wpisz unikalną nazwę, żeby gra zapamiętała otwarcie. Puste = reset po śmierci.")]
+    public string uniqueID;
 
     private HashSet<int> _claimedLootIndices = new HashSet<int>();
     private bool _isAnimating = false;
@@ -24,6 +28,21 @@ public class ChestController : MonoBehaviour, IInteractable
     public void ForceUnlock()
     {
         _isAnimating = false;
+    }
+
+    /// <summary>
+    /// Wymusza otwarcie skrzyni bez animacji (dla systemu zapisu).
+    /// </summary>
+    public void ForceOpen()
+    {
+        isOpen = true;
+        _claimedLootIndices.Clear(); // Zakładamy, że skoro otwarta, to loot wzięty (lub nie)
+        
+        // Jeśli masz animatora, trzeba mu ustawić stan Open
+        Animator anim = GetComponent<Animator>();
+        if (anim != null) anim.Play("Open", 0, 1f); // 1f = koniec animacji
+
+        OnChestOpened?.Invoke();
     }
 
     public void Interact(Transform interactor)
@@ -44,6 +63,12 @@ public class ChestController : MonoBehaviour, IInteractable
         _isAnimating = true;
 
         ProcessLoot();
+        
+        if (!string.IsNullOrEmpty(uniqueID) && SaveManager.Instance != null)
+        {
+            SaveManager.Instance.MarkChestAsOpened(uniqueID);
+        }
+
         OnChestOpened?.Invoke(); // Krzyczy: "Zostałam otwarta!"
     }
 

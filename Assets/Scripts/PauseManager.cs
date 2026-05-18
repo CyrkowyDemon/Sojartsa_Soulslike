@@ -111,6 +111,14 @@ public class PauseManager : MonoBehaviour
     public void TogglePause()
     {
         Debug.Log($"[PauseManager] TogglePause wywołane! Obecny stan isPaused: {isPaused}");
+        
+        // Zabezpieczenie: jeśli okienko potwierdzenia (ConfirmPanel) jest aktywne, nie pozwalamy wyłączyć pauzy!
+        if (Sojartsa.UI.ConfirmationDialog.Instance != null && Sojartsa.UI.ConfirmationDialog.Instance.gameObject.activeInHierarchy)
+        {
+            Debug.Log("[PauseManager] BLOKADA TogglePause: Aktywne okienko potwierdzenia.");
+            return;
+        }
+
         if (!isPaused)
         {
             // Mordo, sprawdzamy czy cokolwiek "dialogowego" lub "handlowego" jest włączone
@@ -232,6 +240,13 @@ public class PauseManager : MonoBehaviour
     {
         if (!isPaused) return;
 
+        // Jeśli okienko potwierdzenia (ConfirmPanel) jest aktywne, ESC je bezpiecznie anuluje!
+        if (Sojartsa.UI.ConfirmationDialog.Instance != null && Sojartsa.UI.ConfirmationDialog.Instance.gameObject.activeInHierarchy)
+        {
+            Sojartsa.UI.ConfirmationDialog.Instance.Cancel();
+            return;
+        }
+
         // Hierarchia Cancel: Keybinds -> Settings/Inventory -> Pauza
         if (keybindsPanel != null && keybindsPanel.activeSelf)
         {
@@ -261,9 +276,39 @@ public class PauseManager : MonoBehaviour
 
     public void QuitToMainMenu()
     {
+        if (Sojartsa.UI.ConfirmationDialog.Instance != null)
+        {
+            Sojartsa.UI.ConfirmationDialog.Instance.Show(
+                "WYJŚCIE DO MENU",
+                "Czy na pewno chcesz zapisać grę i wyjść do Menu Głównego?",
+                () => PerformQuit()
+            );
+        }
+        else
+        {
+            PerformQuit();
+        }
+    }
+
+    private void PerformQuit()
+    {
         Time.timeScale = 1f; 
         if (inputReader != null) inputReader.UnlockAllInput(); 
-        SceneManager.LoadScene(0); 
+        
+        // Mordo, zapisujemy przed wyjściem do menu!
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.SaveCurrentGame();
+        }
+
+        if (Sojartsa.UI.LoadingScreenManager.Instance != null)
+        {
+            Sojartsa.UI.LoadingScreenManager.Instance.LoadScene("UI");
+        }
+        else
+        {
+            SceneManager.LoadScene(0); 
+        }
     }
 
    public void SelectButton(GameObject button)

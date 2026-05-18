@@ -9,6 +9,9 @@ namespace AI
         private float _minAttackDist = 2.5f;
         private float _maxAttackDist = 7f;
         private float _nextAttackCheckTime;
+        
+        private enum StrafeIntent { Aggressive, Passive, Defensive }
+        private StrafeIntent _currentIntent;
 
         public AIState_Strafe(AIStateMachine machine, EnemyBase owner) : base(machine, owner) { }
 
@@ -36,9 +39,28 @@ namespace AI
             _strafeDir = Random.value > 0.5f ? 1f : -1f;
             _nextDirChangeTime = Time.time + Random.Range(minDur, maxDur);
             
-            // OPÓŹNIENIE ATAKU PO WEJŚCIU W STRAFE: Zmusi go do pokrążenia chwilę, zamiast od razu bić.
-            float aggression = (soulsAI != null && soulsAI.BehaviorConfig != null) ? soulsAI.BehaviorConfig.aggressionLevel : 1.5f;
-            _nextAttackCheckTime = Time.time + Random.Range(aggression * 0.5f, aggression * 1.5f);
+            // --- LOSOWANIE INTENCJI (UMYSŁ AI) ---
+            float roll = Random.value;
+            float aggression = (soulsAI != null && soulsAI.BehaviorConfig != null) ? soulsAI.BehaviorConfig.aggressionLevel : 1.0f;
+
+            if (roll < 0.4f * aggression) 
+            {
+                // 40% szans: AGRESYWNY - szybko zmniejsza dystans i atakuje niemal od razu
+                _currentIntent = StrafeIntent.Aggressive;
+                _nextAttackCheckTime = Time.time + Random.Range(0.2f, 0.8f);
+            }
+            else if (roll < 0.8f) 
+            {
+                // 40% szans: PASYWNY - buduje napięcie. Krąży powoli i nie atakuje przez kilka sekund
+                _currentIntent = StrafeIntent.Passive;
+                _nextAttackCheckTime = Time.time + Random.Range(2.5f, 5.0f);
+            }
+            else 
+            {
+                // 20% szans: DEFENSYWNY - utrzymuje większy dystans, próbuje się wycofać
+                _currentIntent = StrafeIntent.Defensive;
+                _nextAttackCheckTime = Time.time + Random.Range(2.0f, 4.0f);
+            }
         }
 
         public override void LogicUpdate()
@@ -51,8 +73,11 @@ namespace AI
 
             float dist = Vector3.Distance(owner.transform.position, owner.Target.position);
 
+            // Zależnie od intencji, pozwalamy mu odejść trochę dalej zanim wróci do pościgu (Chase)
+            float effectiveMaxDist = _currentIntent == StrafeIntent.Defensive ? _maxAttackDist + 2f : _maxAttackDist;
+
             // Jeśli gracz ucieknie za daleko, wracamy do Chase
-            if (dist > _maxAttackDist)
+            if (dist > effectiveMaxDist)
             {
                 machine.ChangeState(new AIState_Chase(machine, owner));
                 return;
@@ -62,11 +87,10 @@ namespace AI
             SoulsAI soulsAI = owner as SoulsAI;
             if (soulsAI != null)
             {
-                float aggression = soulsAI.BehaviorConfig != null ? soulsAI.BehaviorConfig.aggressionLevel : 1f;
-
                 if (Time.time > _nextAttackCheckTime)
                 {
-                    _nextAttackCheckTime = Time.time + aggression;
+                    // Odnawiamy check na wypadek, gdyby ataki były na cooldownie
+                    _nextAttackCheckTime = Time.time + 0.5f; 
                     
                     if (!soulsAI.IsAttackOnCooldown)
                     {
@@ -104,12 +128,25 @@ namespace AI
             Vector3 directionToPlayer = (owner.Target.position - owner.transform.position).normalized;
             Vector3 sideways = Vector3.Cross(Vector3.up, directionToPlayer) * _strafeDir;
             
-            // Punkt docelowy to wektor wypadkowy: trochę w bok, trochę w tył/przód zależnie od dystansu
+            // Punkt docelowy to wektor wypadkowy: w bok i w tył/przód zależnie od Dystansu ORAZ Intencji!
             float forwardWeight = 0f;
-            if (dist < _minAttackDist) forwardWeight = -0.5f; // Cofaj się
-            else if (dist > (_maxAttackDist + _minAttackDist) / 2f) forwardWeight = 0.3f; // Przybliż się lekko
+            float currentMinDist = _minAttackDist;
+            float currentMaxDist = _maxAttackDist;
 
-            Vector3 moveTarget = owner.transform.position + sideways + (directionToPlayer * forwardWeight);
+            if (_currentIntent == StrafeIntent.Defensive)
+            {
+                currentMinDist += 1.5f; // Chce stać dalej
+            }
+            else if (_currentIntent == StrafeIntent.Aggressive)
+            {
+                currentMinDist -= 1.0f; // Pcha się na gracza
+            }
+
+            if (dist < currentMinDist) forwardWeight = -0.5f; // Cofa się
+            else if (dist > (currentMaxDist + currentMinDist) / 2f) forwardWeight = 0.4f; // Idzie do przodu
+
+            // Wrzucamy cel nieco dalej wzdłuż stycznej, żeby omijać "zacinanie" się agenta (szarpanie)
+            Vector3 moveTarget = owner.transform.position + (sideways * 2f) + (directionToPlayer * forwardWeight);
 
             // Próbujemy znaleźć bezpieczny punkt na NavMeshu blisko celu
             UnityEngine.AI.NavMeshHit hit;
