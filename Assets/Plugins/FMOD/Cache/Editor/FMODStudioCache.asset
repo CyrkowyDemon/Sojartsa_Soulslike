@@ -69,7 +69,7 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639138580831045711
+  lastModified: 639138397866238705
   FileSizes:
   - Name: Desktop
     Value: 2080
@@ -277,7 +277,7 @@ MonoBehaviour:
   Path: sSsSsSsSsSs/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639138580830984985
+  lastModified: 639138397866223524
   FileSizes:
   - Name: Desktop
     Value: 8248128
@@ -405,7 +405,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: -8055644028912070556}
   cacheVersion: 131859
-  cacheTime: 639138580831045711
+  cacheTime: 639138397866238705
   SerializableEventsDict:
   - key: event:/Campfire_Ambient
     index: 0
@@ -445,6 +445,8 @@ MonoBehaviour:
     index: 17
   - key: event:/FireEnchantOpener
     index: 18
+  - key: event:/Enemy_Sounds/Bee/BeeIdle
+    index: 19
 --- !u!114 &1310586292144206871
 MonoBehaviour:
   m_ObjectHideFlags: 0
