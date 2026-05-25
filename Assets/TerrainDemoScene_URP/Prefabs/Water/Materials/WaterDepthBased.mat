@@ -129,6 +129,7 @@ Material:
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 1
     - _DstBlend: 10
+    - _DstBlendAlpha: 10
     - _EnableBlendModePreserveSpecularLighting: 0
     - _EnableFogOnTransparent: 1
     - _Fresnel: 3
@@ -146,11 +147,12 @@ Material:
     - _RequireSplitLighting: 0
     - _Rim_AO: 1
     - _Rim_Falloff: 2.21
-    - _Rim_Normal_Mask: 0.63
+    - _Rim_Normal_Mask: 0
     - _Rim_Smoothness: 0.1
     - _Smoothness: 0.979
     - _Speed: 0.02
     - _SrcBlend: 5
+    - _SrcBlendAlpha: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4

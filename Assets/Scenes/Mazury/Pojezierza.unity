@@ -7932,26 +7932,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 211272909}
   m_CullTransparentMesh: 1
---- !u!114 &215379636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2562637f396e4c10acd3fa9926b53a12, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Slope
-  enabled: 1
-  label: Slope
-  blendMode: 0
-  opacity: 100
-  passIndex: 1
-  minMax: {x: 0, y: 90}
-  minFalloff: 10
-  maxFalloff: 10
 --- !u!1 &217519551
 GameObject:
   m_ObjectHideFlags: 0
@@ -14965,6 +14945,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 385446989}
   m_CullTransparentMesh: 1
+--- !u!114 &388227525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1d046e3917e4d8580903c69758b6558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Height
+  enabled: 1
+  label: Height
+  blendMode: 0
+  opacity: 100
+  passIndex: 0
+  min: 0
+  minFalloff: 1
+  max: 0.3
+  maxFalloff: 4
 --- !u!1 &390269115
 GameObject:
   m_ObjectHideFlags: 0
@@ -17670,18 +17671,26 @@ MonoBehaviour:
   colorMapResolution: 256
   layerSettings:
   - enabled: 1
-    layer: {fileID: 8574412962073106934, guid: 642bf3fca22f19f4f9728422bbe7f46c, type: 2}
+    layer: {fileID: 8574412962073106934, guid: 4e32022d306550941935a9898d9a184c, type: 2}
     modifierStack:
-    - {fileID: 1537754075}
+    - {fileID: 388227525}
   - enabled: 1
     layer: {fileID: 8574412962073106934, guid: 69debc15b685aef4aa7bb2783ddd8a2b, type: 2}
     modifierStack:
-    - {fileID: 1188593951}
+    - {fileID: 554864639}
   - enabled: 1
-    layer: {fileID: 8574412962073106934, guid: 906ea75245880804aa869574650b5ab3, type: 2}
+    layer: {fileID: 8574412962073106934, guid: e83e5b2c03473f74983ef0f5b9c160c0, type: 2}
     modifierStack:
-    - {fileID: 215379636}
-    - {fileID: 2078385247}
+    - {fileID: 494590588}
+    - {fileID: 2102698195}
+    - {fileID: 1881724389}
+  - enabled: 1
+    layer: {fileID: 8574412962073106934, guid: 75db70689c5584a4bab53b10648d368e, type: 2}
+    modifierStack: []
+  - enabled: 1
+    layer: {fileID: 8574412962073106934, guid: 01e2e79109e4ed04180f814f9b6eceec, type: 2}
+    modifierStack:
+    - {fileID: 1537754075}
   autoRepaint: 0
   terrainListeners: []
   bounds:
@@ -18819,6 +18828,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 490401958}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &494590588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2562637f396e4c10acd3fa9926b53a12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Slope
+  enabled: 1
+  label: Slope
+  blendMode: 0
+  opacity: 100
+  passIndex: 1
+  minMax: {x: 3.0681818, y: 20.454542}
+  minFalloff: 10
+  maxFalloff: 10
 --- !u!1 &507632748
 GameObject:
   m_ObjectHideFlags: 0
@@ -21236,6 +21265,26 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4638197009584367681, guid: 12277727d7729da469f38d4acff17ccf, type: 3}
   m_PrefabInstance: {fileID: 1782641574}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &554864639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2562637f396e4c10acd3fa9926b53a12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Slope
+  enabled: 1
+  label: Slope
+  blendMode: 0
+  opacity: 100
+  passIndex: 1
+  minMax: {x: 7.159088, y: 15.340912}
+  minFalloff: 10
+  maxFalloff: 10
 --- !u!1 &558084900
 GameObject:
   m_ObjectHideFlags: 0
@@ -24090,7 +24139,7 @@ Light:
   serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 1
+  m_Intensity: 5
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -24129,12 +24178,12 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
+  m_ColorTemperature: 5600
+  m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
@@ -26148,6 +26197,11 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!4 &696020807 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8868796909406404049, guid: d36e6b15bd7e081428f1b98422b9146e, type: 3}
+  m_PrefabInstance: {fileID: 754936859}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &697521189
 GameObject:
   m_ObjectHideFlags: 0
@@ -28829,6 +28883,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Enemy (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 6054234986787071767, guid: d36e6b15bd7e081428f1b98422b9146e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7517399332046939727, guid: d36e6b15bd7e081428f1b98422b9146e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.699
@@ -28879,7 +28937,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 8868796909406404049, guid: d36e6b15bd7e081428f1b98422b9146e, type: 3}
+      insertIndex: 6
+      addedObject: {fileID: 1566282060}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d36e6b15bd7e081428f1b98422b9146e, type: 3}
 --- !u!4 &754936860 stripped
@@ -29288,7 +29349,7 @@ Transform:
   m_GameObject: {fileID: 764770916}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 123.7, y: 0.21, z: 125.5}
+  m_LocalPosition: {x: 123.7, y: 0.2, z: 125.5}
   m_LocalScale: {x: 48, y: 1, z: 48}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -34370,6 +34431,75 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 939717605}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &940701986
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 696020807}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0118
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0887
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.032
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.49185532
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.5102115
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.5112921
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.4861512
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -0.273
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -92.492
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 89.617
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+      propertyPath: m_Name
+      value: Zweihander2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
 --- !u!1 &941886526
 GameObject:
   m_ObjectHideFlags: 0
@@ -43240,26 +43370,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1188301923}
   m_CullTransparentMesh: 1
---- !u!114 &1188593951
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2562637f396e4c10acd3fa9926b53a12, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Slope
-  enabled: 1
-  label: Slope
-  blendMode: 0
-  opacity: 90
-  passIndex: 1
-  minMax: {x: 6.1349807, y: 90}
-  minFalloff: 9
-  maxFalloff: 10
 --- !u!1 &1195115848
 GameObject:
   m_ObjectHideFlags: 0
@@ -55678,7 +55788,7 @@ MonoBehaviour:
   enabled: 1
   label: Height
   blendMode: 0
-  opacity: 100
+  opacity: 80
   passIndex: 0
   min: 0
   minFalloff: 1
@@ -56985,6 +57095,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1565907442}
   m_CullTransparentMesh: 1
+--- !u!4 &1566282060 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f77d733512b872f4e8ccafdd7594275a, type: 3}
+  m_PrefabInstance: {fileID: 940701986}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &1570194425 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5904103281785472903, guid: 7f2424893dc3e4a44879f6b9201577ef, type: 3}
@@ -68019,6 +68134,28 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1876146710}
   m_CullTransparentMesh: 1
+--- !u!114 &1881724389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b5a4738b539472faa518e606162927c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Curvature
+  enabled: 1
+  label: Curvature
+  blendMode: 0
+  opacity: 100
+  passIndex: 2
+  solver: 0
+  minMax: {x: 0.102272734, y: 0.23863636}
+  radius: 1
+  minFalloff: 0.3
+  maxFalloff: 0.018
 --- !u!224 &1883975102 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5904103281785472903, guid: 7f2424893dc3e4a44879f6b9201577ef, type: 3}
@@ -77286,26 +77423,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2078154857}
   m_CullTransparentMesh: 1
---- !u!114 &2078385247
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2562637f396e4c10acd3fa9926b53a12, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Slope
-  enabled: 1
-  label: Slope
-  blendMode: 0
-  opacity: 100
-  passIndex: 1
-  minMax: {x: 0, y: 90}
-  minFalloff: 10
-  maxFalloff: 10
 --- !u!1 &2078693250
 GameObject:
   m_ObjectHideFlags: 0
@@ -78055,6 +78172,27 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2097025993}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2102698195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1d046e3917e4d8580903c69758b6558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: sc.terrain.painter.runtime::sc.terrain.proceduralpainter.Height
+  enabled: 1
+  label: Height
+  blendMode: 0
+  opacity: 100
+  passIndex: 0
+  min: 2.2
+  minFalloff: 0.96
+  max: 8.28
+  maxFalloff: 1
 --- !u!1 &2104080043
 GameObject:
   m_ObjectHideFlags: 0
