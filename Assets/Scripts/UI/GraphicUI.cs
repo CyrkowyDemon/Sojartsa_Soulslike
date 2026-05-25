@@ -69,7 +69,7 @@ public class GraphicUI : MonoBehaviour
         if (resolutionText && _resolutions != null && _resolutions.Length > 0)
         {
             Resolution res = _resolutions[Mathf.Clamp(_currentResIndex, 0, _resolutions.Length - 1)];
-            resolutionText.text = $"{res.width} x {res.height} @ {res.refreshRateRatio.value:F0}Hz";
+            resolutionText.text = $"{res.width} x {res.height}";
         }
     }
 

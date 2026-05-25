@@ -34,6 +34,10 @@ public class PlayerHUD : MonoBehaviour
     [Header("Death Screen")]
     [SerializeField] private CanvasGroup deathScreenGroup; // Przeciągnij tu CanvasGroup z napisem "YOU DIED"
 
+    [Header("Widoczność HUD")]
+    [Tooltip("Przeciągnij tu CanvasGroup, który zawiera TYLKO elementy HUD-u (HP, rany, złoto), aby oszczędzić dialogi!")]
+    [SerializeField] private CanvasGroup hudContentGroup;
+
     private int _displayedCurrency = 0;
     private Coroutine _tickCoroutine;
     private float _ghostWoundTarget = 0f;
@@ -46,12 +50,19 @@ public class PlayerHUD : MonoBehaviour
         // Subskrybujemy się na zmiany portfela - HUD sam się odświeży
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.OnCurrencyChanged += UpdateCurrency;
+
+        // Subskrybujemy się na zmiany w ustawieniach (np. włączenie/wyłączenie HUD)
+        if (SettingsManager.Instance != null)
+            SettingsManager.Instance.OnSettingsUpdated += UpdateHUDVisibility;
     }
 
     private void OnDisable()
     {
         if (CurrencyManager.Instance != null)
             CurrencyManager.Instance.OnCurrencyChanged -= UpdateCurrency;
+
+        if (SettingsManager.Instance != null)
+            SettingsManager.Instance.OnSettingsUpdated -= UpdateHUDVisibility;
     }
 
     private void Update()
@@ -74,11 +85,37 @@ public class PlayerHUD : MonoBehaviour
         // Ukrywamy ekran śmierci na starcie (fail-safe)
         SetDeathScreen(false);
 
+        // Odświeżamy widoczność HUD na starcie na podstawie ustawień
+        UpdateHUDVisibility();
+
         // Odświeżamy wyświetlaną kwotę od razu przy starcie sceny
         if (CurrencyManager.Instance != null)
         {
             _displayedCurrency = CurrencyManager.Instance.CurrentCurrency;
             if (currencyText != null) currencyText.text = _displayedCurrency.ToString("N0");
+        }
+    }
+
+    public void UpdateHUDVisibility()
+    {
+        if (SettingsManager.Instance == null) return;
+        bool show = SettingsManager.Instance.showHUD;
+
+        if (hudContentGroup != null)
+        {
+            hudContentGroup.alpha = show ? 1f : 0f;
+            hudContentGroup.interactable = show;
+            hudContentGroup.blocksRaycasts = show;
+        }
+        else
+        {
+            // Bezpieczny mechanizm awaryjny (fallback):
+            // Wyłączamy tylko te elementy, które bezpośrednio należą do tego skryptu!
+            if (hpSlider != null && hpSlider.gameObject != null) hpSlider.gameObject.SetActive(show);
+            if (hpGhostSlider != null && hpGhostSlider.gameObject != null) hpGhostSlider.gameObject.SetActive(show);
+            if (woundSlider != null && woundSlider.gameObject != null) woundSlider.gameObject.SetActive(show);
+            if (woundGhostSlider != null && woundGhostSlider.gameObject != null) woundGhostSlider.gameObject.SetActive(show);
+            if (currencyText != null && currencyText.gameObject != null) currencyText.gameObject.SetActive(show);
         }
     }
 

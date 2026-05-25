@@ -247,6 +247,17 @@ public class PauseManager : MonoBehaviour
             return;
         }
 
+        // Jeśli okienko rozdzielczości jest aktywne w ustawieniach, zamykamy tylko je
+        if (settingsPanel != null && settingsPanel.activeSelf)
+        {
+            var resWindow = settingsPanel.GetComponentInChildren<ResolutionWindow>(true);
+            if (resWindow != null && resWindow.gameObject.activeInHierarchy)
+            {
+                resWindow.Close();
+                return;
+            }
+        }
+
         // Hierarchia Cancel: Keybinds -> Settings/Inventory -> Pauza
         if (keybindsPanel != null && keybindsPanel.activeSelf)
         {
