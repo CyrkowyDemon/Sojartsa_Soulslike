@@ -21,6 +21,7 @@ public class PauseManager : MonoBehaviour
     public GameObject keybindsPanel;
     public GameObject inventoryPanel;
     public GameObject enchantPanel;
+    public GameObject bookPanel;
 
     [Header("Podświetlenia (Focus)")]
     public GameObject firstSettingsButton; 
@@ -29,6 +30,8 @@ public class PauseManager : MonoBehaviour
     public GameObject inventoryButtonInPause;
     public GameObject firstEnchantButton;
     public GameObject enchantButtonInPause;
+    public GameObject firstBookButton;
+    public GameObject bookButtonInPause;
 
     [Header("Kamera - Zabezpieczenie")]
     [Tooltip("Przeciągnij tu obiekt kamery z komponentem Cinemachine Input Axis Controller")]
@@ -88,6 +91,7 @@ public class PauseManager : MonoBehaviour
         SetPanelState(keybindsPanel, false);
         SetPanelState(inventoryPanel, false);
         SetPanelState(enchantPanel, false);
+        SetPanelState(bookPanel, false);
     }
 
     private void SetPanelState(GameObject panel, bool isActive)
@@ -161,6 +165,7 @@ public class PauseManager : MonoBehaviour
                 SetPanelState(keybindsPanel, false);
                 SetPanelState(inventoryPanel, false);
                 SetPanelState(enchantPanel, false);
+                SetPanelState(bookPanel, false);
                 
                 // GŁÓWNEGO panelu (pauseMainPanel) NIE wyłączamy tutaj.
                 // Dzięki temu zniknie on płynnie razem z tłem (pauseCanvas).
@@ -236,6 +241,22 @@ public class PauseManager : MonoBehaviour
         SelectButton(enchantButtonInPause);
     }
 
+    public void OpenBook()
+    {
+        CloseAllPanels();
+        SetPanelState(bookPanel, true);
+        if (inputReader != null) inputReader.SetPauseMenuState();
+        SelectButton(firstBookButton);
+    }
+
+    public void CloseBook()
+    {
+        CloseAllPanels();
+        SetPanelState(pauseMainPanel, true);
+        if (inputReader != null) inputReader.SetPauseMenuState();
+        SelectButton(bookButtonInPause);
+    }
+
     private void HandleCancel()
     {
         if (!isPaused) return;
@@ -278,6 +299,10 @@ public class PauseManager : MonoBehaviour
         else if (enchantPanel != null && enchantPanel.activeSelf)
         {
             CloseEnchant();
+        }
+        else if (bookPanel != null && bookPanel.activeSelf)
+        {
+            TogglePause();
         }
         else
         {

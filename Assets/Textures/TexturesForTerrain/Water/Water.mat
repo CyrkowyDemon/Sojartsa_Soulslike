@@ -8,55 +8,37 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Water
-  m_Shader: {fileID: -6465566751694194690, guid: dfd4dcd41b27bb44498bfa407660802f, type: 3}
-  m_Parent: {fileID: 2100000, guid: 606a2cf006c309d47bb99f421ada20ca, type: 2}
+  m_Shader: {fileID: -6465566751694194690, guid: 2cddf2ee6a74aca44af00f5a49bd2cf1, type: 3}
+  m_Parent: {fileID: 2100000, guid: fb659c98d6ac4db41b88596ff2c4e2e1, type: 2}
   m_ModifiedSerializedProperties: 16
-  m_ValidKeywords:
-  - _ALPHAPREMULTIPLY_ON
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _SURFACE_TYPE_TRANSPARENT
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Transparent
+  m_CustomRenderQueue: 2000
+  stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  - DepthOnly
-  - SHADOWCASTER
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _Normal_Map:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Rim_Albedo:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Rim_Normal:
-        m_Texture: {fileID: 0}
+    - Texture2D_6490A223:
+        m_Texture: {fileID: 2800000, guid: f87d53fcaf34530488b706ee35d9b519, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BlendModePreserveSpecular: 1
-    - _Distortion: 33
-    - _Normal_Strength: 0.01
+    - Vector1_244B0600: 0.2
+    - Vector1_47683D42: 0.91
+    - Vector1_F38B44AA: 0.4
     - _QueueControl: 0
-    - _Rim_Falloff: 3.59
-    - _Rim_Normal_Mask: 0
-    - _Rim_Smoothness: 0
-    - _Smoothness: 0.5
-    - _Speed: 2
-    - _SrcBlend: 1
     m_Colors:
-    - _Deep_Water_Color: {r: 0, g: 0.043137237, b: 0.16078427, a: 0}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Shallow_Water_Color: {r: 0.39999998, g: 0.5647059, b: 0.5647059, a: 0}
+    - Color_7D9A58EC: {r: 0, g: 0.12893078, b: 0.32075465, a: 0.7294118}
+    - Color_F01C36BF: {r: 1, g: 1, b: 1, a: 1}
+    - Vector2_37B21477: {r: 10, g: 10, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &1860452671677674343
