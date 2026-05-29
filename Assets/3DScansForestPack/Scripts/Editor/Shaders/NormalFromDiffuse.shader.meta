@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 8895f36ab477a4556949611f4c2c8d68
+timeCreated: 1499316315
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Scripts/Editor/Shaders/NormalFromDiffuse.shader
+  uploadId: 405607

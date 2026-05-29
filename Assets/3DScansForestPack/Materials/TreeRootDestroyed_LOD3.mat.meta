@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b24060efb74a27f42b05f824f8e8a9f3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Materials/TreeRootDestroyed_LOD3.mat
+  uploadId: 405607

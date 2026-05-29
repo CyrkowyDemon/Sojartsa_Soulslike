@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d49f7b295298c6b49a9d5f318c8254a0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Prefabs/TreeRootDestroyed.prefab
+  uploadId: 405607

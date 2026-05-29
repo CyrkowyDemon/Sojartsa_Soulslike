@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 88c90eeea1f62c044a503f36f9989355
+timeCreated: 1473946648
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Materials/MuirWoodWhiteBalanced.mat
+  uploadId: 405607

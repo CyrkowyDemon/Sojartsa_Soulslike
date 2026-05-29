@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 31793631e3be88b41be75bf0914d202f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Prefabs/TreeCut.prefab
+  uploadId: 405607

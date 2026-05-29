@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 84d7b612822c1d449b96f3e304f526f4
+timeCreated: 1454487487
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Scripts/Plugins/png2tga.cs
+  uploadId: 405607

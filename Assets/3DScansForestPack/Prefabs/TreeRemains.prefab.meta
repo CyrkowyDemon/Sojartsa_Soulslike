@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 638f848e136ddd0458e8e186d21492e8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Prefabs/TreeRemains.prefab
+  uploadId: 405607

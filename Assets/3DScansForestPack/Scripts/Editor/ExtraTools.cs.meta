@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 52c7d714573e0f14bbd416ccf241a18e
+timeCreated: 1454487544
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Scripts/Editor/ExtraTools.cs
+  uploadId: 405607

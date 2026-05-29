@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 238b64854e886124e834be2d78de1fc2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Prefabs/TreeBroken.prefab
+  uploadId: 405607

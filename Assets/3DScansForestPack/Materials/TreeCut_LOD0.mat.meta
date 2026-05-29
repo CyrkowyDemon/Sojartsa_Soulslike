@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: cb4b950813dde734891ebf6ec95ebe7d
+timeCreated: 1523452342
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Materials/TreeCut_LOD0.mat
+  uploadId: 405607

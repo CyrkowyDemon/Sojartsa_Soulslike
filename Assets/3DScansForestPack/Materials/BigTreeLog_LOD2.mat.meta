@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 542188dd86324b64fbc82478cc5b917f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Materials/BigTreeLog_LOD2.mat
+  uploadId: 405607

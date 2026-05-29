@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: e11707bc6fd3fe747ba7ba173a58caab
+timeCreated: 1525606834
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Materials/TreeBranch.mat
+  uploadId: 405607

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cacca0b91eb0ad24088abd1a53f0e7a8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 133837
+  packageName: 3D Scans - Forest Pack
+  packageVersion: 1.1
+  assetPath: Assets/3DScansForestPack/Extras/CamFlightTimeline.playable
+  uploadId: 405607
