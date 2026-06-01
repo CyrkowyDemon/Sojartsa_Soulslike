@@ -137,5 +137,5 @@ AssetOrigin:
   productId: 213197
   packageName: Unity Terrain - URP Demo Scene
   packageVersion: 1.0.3
-  assetPath: Assets/TerrainDemoScene_URP/Prefabs/Rocks/Textures/Cliff_Mossy_B/Cliff_Mossy_B_MaskMap.tif
+  assetPath: Assets/AssetStorePacks/Stone/Rocks - TerrainDemoScene/Textures/Cliff_Mossy_B/Cliff_Mossy_B_MaskMap.tif
   uploadId: 727820

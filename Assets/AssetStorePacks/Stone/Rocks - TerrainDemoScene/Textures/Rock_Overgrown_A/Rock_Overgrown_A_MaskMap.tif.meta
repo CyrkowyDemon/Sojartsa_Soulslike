@@ -137,5 +137,5 @@ AssetOrigin:
   productId: 213197
   packageName: Unity Terrain - URP Demo Scene
   packageVersion: 1.0.3
-  assetPath: Assets/TerrainDemoScene_URP/Prefabs/Rocks/Textures/Rock_Overgrown_A/Rock_Overgrown_A_MaskMap.tif
+  assetPath: Assets/AssetStorePacks/Stone/Rocks - TerrainDemoScene/Textures/Rock_Overgrown_A/Rock_Overgrown_A_MaskMap.tif
   uploadId: 727820
