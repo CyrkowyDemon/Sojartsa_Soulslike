@@ -12,19 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc1cbe464d4c02e49942ba60fc7a0e34, type: 3}
   m_Name: Romero
   m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIArchetype
-  lookRange: 20
+  lookRange: 10
   fieldOfView: 120
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1032
-  minThinkDelay: 1
-  maxThinkDelay: 2.5
-  preferredCombatDistance: 2.5
-  combatCircleRadius: 3
-  maxPoise: 100
-  poiseRegenRate: 10
+  minThinkDelay: 0.8
+  maxThinkDelay: 2
+  preferredCombatDistance: 3
+  combatCircleRadius: 3.5
+  maxPoise: 120
+  poiseRegenRate: 15
   poiseResetDelay: 3
+  staggerDuration: 0.8
   reactions:
   - {fileID: 11400000, guid: 26af802e56e30ef43b8cd84e85d831aa, type: 2}
   actions:
-  - {fileID: 11400000, guid: 59b84199e00a221498c9790e19ceb50c, type: 2}
+  - {fileID: 11400000, guid: 12fd184a232b85445b0b8f7f22b060d6, type: 2}
+  - {fileID: 11400000, guid: 8972446bca7b4ce4f8355e6ef8c1d077, type: 2}
+  - {fileID: 11400000, guid: 567261f9282b7b34a88e68604ad1354a, type: 2}

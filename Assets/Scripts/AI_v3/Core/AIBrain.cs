@@ -24,6 +24,8 @@ namespace SojartsaAI.v3
         [Header("AAA - Statystyki Postury")]
         public float currentPoise;
         private float _poiseRegenTimer;
+        [Tooltip("Indywidualne nadpisanie czasu staggera (hit reaction). Jeśli 0, używa wartości z Archetypu.")]
+        public float staggerDurationOverride = 0f;
 
         // System Stanów
         private AIState _currentState;
@@ -77,11 +79,21 @@ namespace SojartsaAI.v3
                 target = Sensory.Player;
             }
 
+            // AKTUALIZACJA SENSORÓW (Kluczowa poprawka)
+            Sensory?.Tick();
+
             _currentState?.LogicUpdate();
             HandlePoiseRegen();
-            
-            // UI Debug
-            gameObject.name = $"Enemy [{_currentState?.GetType().Name}] (Poise: {currentPoise:F0}/{archetype.maxPoise})";
+
+#if UNITY_EDITOR
+            if (archetype != null)
+                gameObject.name = $"Enemy [{_currentState?.GetType().Name}] (Poise: {currentPoise:F0}/{archetype.maxPoise})";
+#endif
+        }
+
+        private void FixedUpdate()
+        {
+            _currentState?.PhysicsUpdate();
         }
 
         private void OnDestroy()

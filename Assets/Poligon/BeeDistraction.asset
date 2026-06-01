@@ -13,13 +13,20 @@ MonoBehaviour:
   m_Name: BeeDistraction
   m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIActionData
   actionName: BeeDistraction
-  type: 0
+  type: 2
   animationTrigger: Distraction
-  minDistance: 0
-  maxDistance: 20
+  actionTellSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  minDistance: 3
+  maxDistance: 12
   weight: 1
-  cooldown: 60
-  damageAmount: 10
+  cooldown: 15
+  damageAmount: 0
   poiseDamage: 0
   trackingIntensity: 1
   trackingCutoff: 1
@@ -28,3 +35,7 @@ MonoBehaviour:
   environmentCheckDir: {x: 0, y: 0, z: -1}
   checkDistance: 2
   followUpAction: {fileID: 0}
+  cancelIntoAction: {fileID: 11400000, guid: 5b3f75377059e184cb0d60efed51beb1, type: 2}
+  useRandomCancelWindow: 1
+  cancelWindowMin: 0.2
+  cancelWindowMax: 0.8

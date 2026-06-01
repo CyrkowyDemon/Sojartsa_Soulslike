@@ -66,6 +66,27 @@ namespace SojartsaAI.v3
             brain.MoveTo(brain.target.position);
             brain.anim.SetFloat("ForwardSpeed", 1f * brain.movementSpeedMultiplier);
 
+            // Obracanie wroga w stronę ścieżki lub bezpośrednio na cel (brak stucznej ścieżki = patrz na gracza)
+            if (brain.agent != null && brain.agent.isOnNavMesh && brain.agent.hasPath)
+            {
+                Vector3 moveDir = brain.agent.desiredVelocity;
+                moveDir.y = 0;
+                if (moveDir.sqrMagnitude > 0.01f)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(moveDir.normalized);
+                    brain.transform.rotation = Quaternion.Slerp(brain.transform.rotation, targetRot, Time.deltaTime * 8f);
+                }
+            }
+            else if (brain.target != null)
+            {
+                Vector3 dir = (brain.target.position - brain.transform.position).normalized;
+                dir.y = 0;
+                if (dir != Vector3.zero)
+                {
+                    brain.transform.rotation = Quaternion.Slerp(brain.transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 8f);
+                }
+            }
+
             // Jeśli stracimy gracza z oczu na zbyt długo - wróć do pasywnego
             if (!brain.Sensory.IsPlayerVisible && stateTimer > 5f)
             {

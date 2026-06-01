@@ -11,6 +11,7 @@ namespace SojartsaAI.v3
         private AIActionData _data;
         private bool _isActionComplete;
         private bool _canCancel;
+        private float _randomCancelTime; // Wylosowany moment cancela (-1 = nieaktywny)
 
         public State_Action(AIBrain brain, AIActionData data) : base(brain) 
         { 
@@ -22,9 +23,16 @@ namespace SojartsaAI.v3
             base.Enter();
             _isActionComplete = false;
             _canCancel = false;
+            _randomCancelTime = -1f;
 
             // Zatrzymujemy agenta, żeby Root Motion mógł przejąć kontrolę
             brain.agent.isStopped = true;
+
+            // Jeśli tryb losowego okna jest włączony, losujemy moment cancela już teraz
+            if (_data != null && _data.cancelIntoAction != null && _data.useRandomCancelWindow)
+            {
+                _randomCancelTime = Random.Range(_data.cancelWindowMin, _data.cancelWindowMax);
+            }
 
             // Odpalamy animację
             if (_data != null)
@@ -34,6 +42,8 @@ namespace SojartsaAI.v3
         public override void LogicUpdate()
         {
             base.LogicUpdate();
+
+            if (_data == null) return;
 
             // --- AAA: Dynamic Tracking (The Hunting) ---
             AnimatorStateInfo stateInfo = brain.anim.GetCurrentAnimatorStateInfo(0);
@@ -48,9 +58,57 @@ namespace SojartsaAI.v3
                 }
             }
 
+            // --- SYSTEM CANCELOWANIA (Cancel Window) ---
+            if (_data != null && _data.cancelIntoAction != null)
+            {
+                bool shouldCancel = false;
+
+                if (_data.useRandomCancelWindow)
+                {
+                    // Tryb LOSOWY: cancel w wylosowanym momencie z zakresu [min, max]
+                    if (_randomCancelTime >= 0f && stateInfo.normalizedTime >= _randomCancelTime)
+                    {
+                        shouldCancel = true;
+                        _randomCancelTime = -1f; // Zabezpieczenie przed podwójnym odpaleniem
+                    }
+                }
+                else
+                {
+                    // Tryb STANDARDOWY: cancel gdy animator wyśle sygnał CanCancel
+                    if (_canCancel)
+                    {
+                        shouldCancel = true;
+                    }
+                }
+
+                if (shouldCancel)
+                {
+                    brain.RecordActionUse(_data.cancelIntoAction);
+                    brain.ChangeState(new State_Action(brain, _data.cancelIntoAction));
+                    return;
+                }
+            }
+
             // Jeśli animacja wysłała sygnał końca - decydujemy co dalej
             if (_isActionComplete)
             {
+                // --- BRANCHING COMBO (AAA Extension) ---
+                if (_data != null && _data.randomFollowUps != null && _data.randomFollowUps.Count > 0)
+                {
+                    foreach (var branch in _data.randomFollowUps)
+                    {
+                        if (branch.followUpAction != null && Random.Range(0, 100) < branch.chance)
+                        {
+                            if (GlobalCombatDirector.Instance != null && GlobalCombatDirector.Instance.RequestAttackToken(brain))
+                            {
+                                brain.RecordActionUse(branch.followUpAction);
+                                brain.ChangeState(new State_Action(brain, branch.followUpAction));
+                                return;
+                            }
+                        }
+                    }
+                }
+
                 // --- SYSTEM COMBO (AAA Extension) ---
                 if (_data != null && _data.followUpAction != null)
                 {
@@ -95,6 +153,7 @@ namespace SojartsaAI.v3
     public class State_Stagger : AIState
     {
         private bool _isFinished;
+        private float _maxDuration;
 
         public State_Stagger(AIBrain brain) : base(brain) { }
 
@@ -103,6 +162,20 @@ namespace SojartsaAI.v3
             base.Enter();
             _isFinished = false;
             brain.agent.isStopped = true;
+            
+            // Wyznaczamy maksymalny czas trwania staggera
+            if (brain.staggerDurationOverride > 0f)
+            {
+                _maxDuration = brain.staggerDurationOverride;
+            }
+            else if (brain.archetype != null)
+            {
+                _maxDuration = brain.archetype.staggerDuration;
+            }
+            else
+            {
+                _maxDuration = 0.8f;
+            }
             
             // Losujemy animację hita
             brain.anim.SetTrigger("HitReaction");
@@ -113,8 +186,8 @@ namespace SojartsaAI.v3
             base.LogicUpdate();
             if (_isFinished) brain.ChangeState(new State_Combat(brain));
             
-            // Bezpiecznik czasowy (0.8s) jeśli animacja nie wyśle sygnału
-            if (stateTimer > 0.8f) _isFinished = true;
+            // Bezpiecznik czasowy jeśli animacja nie wyśle sygnału
+            if (stateTimer > _maxDuration) _isFinished = true;
         }
 
         public override void OnAnimationSignal(string signal)

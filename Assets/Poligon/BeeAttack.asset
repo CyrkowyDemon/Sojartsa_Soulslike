@@ -15,12 +15,19 @@ MonoBehaviour:
   actionName: BeeAttack
   type: 0
   animationTrigger: Attack
+  actionTellSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
   minDistance: 0
-  maxDistance: 3
-  weight: 1
+  maxDistance: 2
+  weight: 3
   cooldown: 0.5
-  damageAmount: 10
-  poiseDamage: 10
+  damageAmount: 20
+  poiseDamage: 15
   trackingIntensity: 1
   trackingCutoff: 0.405
   isBehindOnly: 0
@@ -28,3 +35,7 @@ MonoBehaviour:
   environmentCheckDir: {x: 0, y: 0, z: 0}
   checkDistance: 0
   followUpAction: {fileID: 0}
+  cancelIntoAction: {fileID: 0}
+  useRandomCancelWindow: 0
+  cancelWindowMin: 0.3
+  cancelWindowMax: 0.7

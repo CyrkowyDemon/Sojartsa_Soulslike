@@ -13,12 +13,17 @@ namespace SojartsaAI.v3
         private float _movementDecisionTimer;
         private float _currentStrafeOffset;
         private float _targetStrafeOffset;
+        private AIReactionData _pendingReaction;
+        private float _reactionDelayTimer;
 
         public State_Combat(AIBrain brain) : base(brain) { }
 
         public override void Enter()
         {
             base.Enter();
+            _pendingReaction = null;
+            _reactionDelayTimer = 0f;
+
             if (GlobalCombatDirector.Instance != null)
                 GlobalCombatDirector.Instance.RegisterEnemy(brain);
                 
@@ -30,57 +35,44 @@ namespace SojartsaAI.v3
             base.LogicUpdate();
             brain.Sensory.Tick();
 
+            float combatDist = brain.archetype.preferredCombatDistance;
+            if (brain.Sensory.Distance > combatDist * 2.5f)
+            {
+                brain.ChangeState(new State_Chase(brain));
+                return;
+            }
+
+            if (!brain.Sensory.IsPlayerVisible && stateTimer > 8f)
+            {
+                brain.ChangeState(new State_Chase(brain));
+                return;
+            }
+
             // ================================================================
             // 1. REAKCJE (The AAA Intelligence - Weights & Priority)
             // ================================================================
-            AIReactionData bestReaction = null;
-            float totalWeight = 0;
-            int highestPriority = -1;
-
-            if (brain.archetype.reactions != null)
+            if (_pendingReaction != null)
             {
-                foreach (var reaction in brain.archetype.reactions)
+                if (!IsReactionConditionMet(_pendingReaction))
                 {
-                    // AAA: Sprawdzamy Cooldown reakcji
-                    if (!brain.IsActionReady(reaction.actionToPerform)) continue;
-
-                    bool conditionMet = false;
-                    if (reaction.condition == AIReactionCondition.OnPlayerHeal && brain.Sensory.IsPlayerHealing()) conditionMet = true;
-                    
-                    if (reaction.condition == AIReactionCondition.OnPlayerAttack && 
-                        (brain.Sensory.IsPlayerAttacking() || brain.Sensory.IsPlayerPressingAttack)) conditionMet = true;
-                        
-                    if (reaction.condition == AIReactionCondition.OnPlayerDistanceClose && brain.Sensory.Distance < 2f) conditionMet = true;
-
-                    if (conditionMet)
+                    _pendingReaction = null;
+                }
+                else
+                {
+                    _reactionDelayTimer -= Time.deltaTime;
+                    if (_reactionDelayTimer <= 0f)
                     {
-                        if (reaction.priority > highestPriority)
-                        {
-                            highestPriority = reaction.priority;
-                            bestReaction = reaction;
-                            totalWeight = reaction.weight;
-                        }
-                        else if (reaction.priority == highestPriority)
-                        {
-                            totalWeight += reaction.weight;
-                            if (Random.Range(0, totalWeight) <= reaction.weight)
-                            {
-                                bestReaction = reaction;
-                            }
-                        }
+                        if (TryExecuteReaction(_pendingReaction))
+                            return;
+
+                        _pendingReaction = null;
                     }
                 }
             }
-
-            if (bestReaction != null && bestReaction.actionToPerform != null)
+            else if (TryQueueBestReaction(out AIReactionData bestReaction))
             {
-                float d = brain.Sensory.Distance;
-                if (d >= bestReaction.actionToPerform.minDistance && d <= bestReaction.actionToPerform.maxDistance)
-                {
-                    brain.RecordActionUse(bestReaction.actionToPerform);
-                    brain.ChangeState(new State_Action(brain, bestReaction.actionToPerform));
-                    return;
-                }
+                _pendingReaction = bestReaction;
+                _reactionDelayTimer = bestReaction.reactionDelay;
             }
 
             // 2. RUCH TAKTYCZNY (Flankowanie i Strafing - AAA Movement Decisions)
@@ -131,13 +123,17 @@ namespace SojartsaAI.v3
                 {
                     _decisionTimer = Random.Range(brain.archetype.minThinkDelay, brain.archetype.maxThinkDelay);
                 }
+                else
+                {
+                    _decisionTimer = 0.3f;
+                }
             }
 
             // Patrzymy na gracza
             RotateTowardsTarget();
         }
 
-        private bool TryAttack(bool force = false)
+        private bool TryAttack()
         {
             if (GlobalCombatDirector.Instance != null)
             {
@@ -152,7 +148,71 @@ namespace SojartsaAI.v3
                 return true;
             }
 
+            if (GlobalCombatDirector.Instance != null)
+                GlobalCombatDirector.Instance.ReleaseAttackToken(brain);
+
             return false;
+        }
+
+        private bool IsReactionConditionMet(AIReactionData reaction)
+        {
+            if (reaction == null) return false;
+
+            switch (reaction.condition)
+            {
+                case AIReactionCondition.OnPlayerHeal:
+                    return brain.Sensory.IsPlayerHealing();
+                case AIReactionCondition.OnPlayerAttack:
+                    return brain.Sensory.IsPlayerAttacking() || brain.Sensory.IsPlayerPressingAttack;
+                case AIReactionCondition.OnPlayerDistanceClose:
+                    return brain.Sensory.Distance < 2f;
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryQueueBestReaction(out AIReactionData bestReaction)
+        {
+            bestReaction = null;
+            float totalWeight = 0;
+            int highestPriority = -1;
+
+            if (brain.archetype.reactions == null) return false;
+
+            foreach (var reaction in brain.archetype.reactions)
+            {
+                if (reaction.actionToPerform == null) continue;
+                if (!brain.IsActionReady(reaction.actionToPerform)) continue;
+                if (!IsReactionConditionMet(reaction)) continue;
+
+                if (reaction.priority > highestPriority)
+                {
+                    highestPriority = reaction.priority;
+                    bestReaction = reaction;
+                    totalWeight = reaction.weight;
+                }
+                else if (reaction.priority == highestPriority)
+                {
+                    totalWeight += reaction.weight;
+                    if (Random.Range(0f, totalWeight) <= reaction.weight)
+                        bestReaction = reaction;
+                }
+            }
+
+            return bestReaction != null;
+        }
+
+        private bool TryExecuteReaction(AIReactionData reaction)
+        {
+            if (reaction?.actionToPerform == null) return false;
+
+            float d = brain.Sensory.Distance;
+            AIActionData action = reaction.actionToPerform;
+            if (d < action.minDistance || d > action.maxDistance) return false;
+
+            brain.RecordActionUse(action);
+            brain.ChangeState(new State_Action(brain, action));
+            return true;
         }
 
         private AIActionData SelectAction(AIActionType type)
@@ -205,7 +265,10 @@ namespace SojartsaAI.v3
 
         public override void Exit()
         {
-            // Nie wyrejestrowujemy się z Director, bo wciąż jesteśmy w walce!
+            _pendingReaction = null;
+
+            if (GlobalCombatDirector.Instance != null)
+                GlobalCombatDirector.Instance.UnregisterEnemy(brain);
         }
     }
 }

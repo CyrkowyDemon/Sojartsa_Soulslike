@@ -64,7 +64,10 @@ public class FadeManager : MonoBehaviour
         
         // Audio: 0 głośności jeśli ekran czarny (alpha 1), 1 głośności jeśli czysty (alpha 0)
         float targetVolume = (alpha > 0.5f) ? 0f : 1f;
-        _masterBus.setVolume(targetVolume);
+        if (_masterBus.isValid())
+        {
+            _masterBus.setVolume(targetVolume);
+        }
     }
 
     private IEnumerator FadeRoutine(float targetAlpha, float duration, Action onComplete)
@@ -84,14 +87,18 @@ public class FadeManager : MonoBehaviour
         float elapsed = 0f;
 
         // Sprawdzamy aktualną głośność szyny
-        _masterBus.getVolume(out float startVolume);
+        float startVolume = 1f;
+        if (_masterBus.isValid())
+        {
+            _masterBus.getVolume(out startVolume);
+        }
         
         // Celujemy w 0 (cisza) przy ściemnianiu lub 1 (pełna moc) przy rozjaśnianiu
         float targetVolume = (targetAlpha > 0.5f) ? 0f : 1f;
 
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime; // Używamy unscaledDeltaTime, żeby fader nie wisiał na pauzie!
             float progress = elapsed / duration;
 
             // 1. Obraz (płynnie od startu do końca czasu)
@@ -100,13 +107,21 @@ public class FadeManager : MonoBehaviour
             // 2. Audio (Zgodnie z życzeniem: zcisza się szybciej - wyzeruje się przy 80% progresu)
             float audioProgress = Mathf.Clamp01(progress / 0.8f); 
             float currentVolume = Mathf.Lerp(startVolume, targetVolume, audioProgress);
-            _masterBus.setVolume(currentVolume);
+            
+            if (_masterBus.isValid())
+            {
+                _masterBus.setVolume(currentVolume);
+            }
 
             yield return null;
         }
 
         canvasGroup.alpha = targetAlpha;
-        _masterBus.setVolume(targetVolume);
+        
+        if (_masterBus.isValid())
+        {
+            _masterBus.setVolume(targetVolume);
+        }
         
         // Jeśli skończyliśmy rozjaśniać (czyli obraz jest w pełni widoczny, a kurtyna ma przezroczystość 0), odblokowujemy kliknięcia!
         if (targetAlpha == 0f)

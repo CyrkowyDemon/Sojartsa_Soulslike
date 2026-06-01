@@ -12,20 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc1cbe464d4c02e49942ba60fc7a0e34, type: 3}
   m_Name: Bee
   m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIArchetype
-  lookRange: 20
-  fieldOfView: 120
+  lookRange: 15
+  fieldOfView: 160
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1032
   minThinkDelay: 0.5
-  maxThinkDelay: 1.5
-  preferredCombatDistance: 3.5
+  maxThinkDelay: 1.2
+  preferredCombatDistance: 4
   combatCircleRadius: 4
-  maxPoise: 100
-  poiseRegenRate: 10
-  poiseResetDelay: 3
-  reactions: []
+  maxPoise: 50
+  poiseRegenRate: 20
+  poiseResetDelay: 1.5
+  staggerDuration: 0.4
+  reactions:
+  - {fileID: 11400000, guid: 1b46edb460408414cb47319a6ebee56b, type: 2}
   actions:
   - {fileID: 11400000, guid: d906ab0e8a541c749af9b53df1746aa5, type: 2}
   - {fileID: 11400000, guid: 01c8ed9ce43891f49ab890f34b40e3c3, type: 2}
   - {fileID: 11400000, guid: 5b3f75377059e184cb0d60efed51beb1, type: 2}
+  - {fileID: 11400000, guid: e6a8a897acd273243878dcff71d45668, type: 2}

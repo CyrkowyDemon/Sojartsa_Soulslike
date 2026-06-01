@@ -22,6 +22,8 @@ namespace SojartsaAI.v3
         public float maxPoise = 100f;
         public float poiseRegenRate = 10f;
         public float poiseResetDelay = 3.0f;
+        [Tooltip("Domyślny czas trwania staggera (reakcji na hit) w sekundach.")]
+        public float staggerDuration = 0.8f;
         
         [Header("System Reakcji (Deterministyczny)")]
         public List<AIReactionData> reactions;

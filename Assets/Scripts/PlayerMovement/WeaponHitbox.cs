@@ -195,14 +195,14 @@ public class WeaponHitbox : MonoBehaviour
 
                 if (enemyHP != null)
                 {
-                    if (transform.root.CompareTag("Player") && EquipmentManager.Instance != null)
+                    if (_ownerCombat != null && EquipmentManager.Instance != null)
                         finalDamage = EquipmentManager.Instance.GetCurrentAttackDamage();
                     enemyHP.TakeDamage(finalDamage, isKnockbackAttack, (int)finalPoiseDamage);
                     isEnemy = true;
                 }
                 else if (playerHP != null)
                 {
-                    playerHP.TakeDamage(finalDamage, isKnockbackAttack);
+                    playerHP.TakeDamage(finalDamage, isKnockbackAttack, finalPoiseDamage);
                     isPlayer = true;
                 }
 

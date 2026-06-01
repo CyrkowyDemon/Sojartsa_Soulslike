@@ -17,6 +17,8 @@ public class EnemyHealth : MonoBehaviour
     private float _woundTimer = 0f;
     private bool _isBroken = false; 
     private bool _isDead = false;
+    private bool _isInvincible = false;
+
 
     [Header("Anty-Stunlock (Poise)")]
     [SerializeField] private float maxPoise = 100f;
@@ -53,8 +55,8 @@ public class EnemyHealth : MonoBehaviour
     {
         if (_isBroken || _isDead) return;
 
-        // Regeneracja Poise z czasem (fromsoftware style)
-        if (_currentPoise < maxPoise)
+        // Regeneracja Poise z czasem (tylko dla starego AI, nowe AIBrain ma własny system)
+        if (GetComponent<AIBrain>() == null && _currentPoise < maxPoise)
         {
             _currentPoise = Mathf.MoveTowards(_currentPoise, maxPoise, poiseResetRate * Time.deltaTime);
         }
@@ -69,6 +71,7 @@ public class EnemyHealth : MonoBehaviour
    public void TakeDamage(int damage, bool isKnockback = false, float poiseDamage = 50f)
     {
         if (_isDead) return;
+        if (_isInvincible) return;
 
         if (_isBroken)
         {
@@ -138,6 +141,9 @@ public class EnemyHealth : MonoBehaviour
 
     private void CheckForStagger(bool isKnockback = false, float poiseDamage = 0)
     {
+        // Nowe AI v3 (AIBrain) w całości samo zarządza swoją posturą i staggerem
+        if (GetComponent<AIBrain>() != null) return;
+
         if (_animator == null || _isBroken) return;
 
         _currentPoise -= poiseDamage;
@@ -198,6 +204,10 @@ public class EnemyHealth : MonoBehaviour
             brain.enabled = false;
         }
 
+        // Wyłączamy manager SFX, aby natychmiast zatrzymać zapętlone dźwięki (np. brzęczenie pszczoły)
+        EnemySFXManager sfx = GetComponent<EnemySFXManager>();
+        if (sfx != null) sfx.enabled = false;
+
         if (_agent != null && _agent.isOnNavMesh) 
         {
             _agent.isStopped = true;
@@ -239,4 +249,7 @@ public class EnemyHealth : MonoBehaviour
         if(_animator != null) _animator.SetBool("IsBroken", false);
         Die();
     }
+
+    public void EnableIFrames() { _isInvincible = true; }
+    public void DisableIFrames() { _isInvincible = false; }
 }

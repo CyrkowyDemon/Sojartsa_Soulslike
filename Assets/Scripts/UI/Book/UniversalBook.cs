@@ -2,9 +2,39 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.EventSystems;
 
 namespace Sojartsa.UI
 {
+    // =========================================================
+    //  KLASY DANYCH ZAPISU (SaveManager je pakuje do JSON-a)
+    // =========================================================
+    [System.Serializable]
+    public class BookSubTabSaveData
+    {
+        public string subTabName;
+        public List<BookPageSaveEntry> pages = new List<BookPageSaveEntry>();
+    }
+
+    [System.Serializable]
+    public class BookTabSaveData
+    {
+        public string tabName;
+        public List<BookPageSaveEntry> pages = new List<BookPageSaveEntry>();
+        public List<BookSubTabSaveData> subTabs = new List<BookSubTabSaveData>();
+    }
+
+    [System.Serializable]
+    public class BookPageSaveEntry
+    {
+        public string pageTitle;
+        public string textContent;
+        public bool isEditable;
+    }
+
+    // =========================================================
+    //  KLASY DANYCH RUNTIME (Trzymają dane w trakcie gry)
+    // =========================================================
     [System.Serializable]
     public class BookPageData
     {
@@ -21,6 +51,7 @@ namespace Sojartsa.UI
         public string subTabName;
         public Button subTabButton;
         public int pageLimit = 99;
+        public bool isEditable = false;
         public List<BookPageData> pages = new List<BookPageData>();
     }
 
@@ -32,6 +63,7 @@ namespace Sojartsa.UI
         [Tooltip("Kontener z przyciskami bocznych zakładek dla tej głównej zakładki")]
         public GameObject subTabsContainer;
         public int pageLimit = 99;
+        public bool isEditable = false;
         public List<SubTab> subTabs = new List<SubTab>();
         public List<BookPageData> pages = new List<BookPageData>();
     }
@@ -45,6 +77,12 @@ namespace Sojartsa.UI
         [Header("Zakładki (Tabs)")]
         [SerializeField] private List<TopTab> topTabs = new List<TopTab>();
         [SerializeField] private int defaultTopTabIndex = 0;
+
+        [Header("Wysuwanie Zakładek (Y Offset)")]
+        [Tooltip("Pozycja Y (anchoredPosition) aktywnej zakładki - wysunięta nad kartkę")]
+        [SerializeField] private float activeTabYOffset = 0f;
+        [Tooltip("Pozycja Y (anchoredPosition) nieaktywnej zakładki - schowana pod kartkę")]
+        [SerializeField] private float inactiveTabYOffset = -20f;
 
         [Header("Referencje UI - Lewa Strona")]
         [SerializeField] private TMP_InputField leftInputField;
@@ -78,6 +116,8 @@ namespace Sojartsa.UI
         private int _activeTopTabIndex = 0;
         private int _activeSubTabIndex = -1; // -1 = brak aktywnej bocznej zakładki
         private int _currentPagePairIndex = 0;
+        private bool _isLeftHovered = false;
+        private bool _isRightHovered = false;
 
         private void Awake()
         {
@@ -87,22 +127,47 @@ namespace Sojartsa.UI
 
         private void Start()
         {
-            // Podpięcie zdarzeń edycji
-            if (leftInputField != null)
-                leftInputField.onValueChanged.AddListener((val) => SaveLeftPageText(val));
-            if (rightInputField != null)
-                rightInputField.onValueChanged.AddListener((val) => SaveRightPageText(val));
+            // Zabezpieczenie przed blokowaniem raycastów przez elementy graficzne/tekstowe wyświetlacza
+            if (leftTextDisplay != null) leftTextDisplay.raycastTarget = false;
+            if (rightTextDisplay != null) rightTextDisplay.raycastTarget = false;
+            if (leftImageDisplay != null) leftImageDisplay.raycastTarget = false;
+            if (rightImageDisplay != null) rightImageDisplay.raycastTarget = false;
 
-            // Setup przycisków nawigacji
+            if (leftInputField != null)
+            {
+                leftInputField.enabled = true;
+                leftInputField.interactable = true;
+            }
+            if (rightInputField != null)
+            {
+                rightInputField.enabled = true;
+                rightInputField.interactable = true;
+            }
+
+            // Podpięcie zdarzeń edycji tekstu - zapis gdy gracz "odłoży pióro"
+            if (leftInputField != null)
+            {
+                leftInputField.onValueChanged.AddListener((val) => SaveLeftPageText(val));
+                leftInputField.onEndEdit.AddListener((_) => TriggerAutoSave());
+            }
+            if (rightInputField != null)
+            {
+                rightInputField.onValueChanged.AddListener((val) => SaveRightPageText(val));
+                rightInputField.onEndEdit.AddListener((_) => TriggerAutoSave());
+            }
+
+            // Setup przycisków nawigacji + efekt zaginania rogu przy najechaniu
             if (nextPageButton != null)
             {
                 nextPageButton.onClick.RemoveAllListeners();
                 nextPageButton.onClick.AddListener(FlipForward);
+                AddCurlHoverTrigger(nextPageButton.gameObject, isRight: true);
             }
             if (prevPageButton != null)
             {
                 prevPageButton.onClick.RemoveAllListeners();
                 prevPageButton.onClick.AddListener(FlipBackward);
+                AddCurlHoverTrigger(prevPageButton.gameObject, isRight: false);
             }
 
             // Konfiguracja przycisków zakładek
@@ -117,6 +182,37 @@ namespace Sojartsa.UI
             // Odświeżamy strony przy włączeniu panelu
             UpdatePageVisuals();
         }
+
+        // =========================================================
+        //  EFEKT ZAGINANIA ROGU NA HOVER PRZYCISKÓW
+        // =========================================================
+
+        /// <summary>
+        /// Dodaje EventTrigger do przycisku nawigacji, który wywołuje efekt zaginania rogu strony.
+        /// </summary>
+        private void AddCurlHoverTrigger(GameObject buttonGO, bool isRight)
+        {
+            EventTrigger trigger = buttonGO.GetComponent<EventTrigger>();
+            if (trigger == null)
+                trigger = buttonGO.AddComponent<EventTrigger>();
+
+            // Zdarzenie: Wejście myszki (Enter)
+            EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+            enterEntry.eventID = EventTriggerType.PointerEnter;
+            bool capturedIsRight = isRight;
+            enterEntry.callback.AddListener((_) => OnCornerHover(capturedIsRight, true));
+            trigger.triggers.Add(enterEntry);
+
+            // Zdarzenie: Wyjście myszki (Exit)
+            EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+            exitEntry.eventID = EventTriggerType.PointerExit;
+            exitEntry.callback.AddListener((_) => OnCornerHover(capturedIsRight, false));
+            trigger.triggers.Add(exitEntry);
+        }
+
+        // =========================================================
+        //  SETUP PRZYCISKÓW ZAKŁADEK
+        // =========================================================
 
         private void SetupTabButtons()
         {
@@ -142,12 +238,19 @@ namespace Sojartsa.UI
             }
         }
 
+        // =========================================================
+        //  NAWIGACJA ZAKŁADEK
+        // =========================================================
+
         /// <summary>
         /// Wybiera główną górną zakładkę.
         /// </summary>
         public void SelectTopTab(int index)
         {
             if (index < 0 || index >= topTabs.Count) return;
+
+            // Zapis przed zmianą zakładki
+            TriggerAutoSave();
 
             _activeTopTabIndex = index;
             _currentPagePairIndex = 0;
@@ -156,10 +259,11 @@ namespace Sojartsa.UI
             for (int i = 0; i < topTabs.Count; i++)
             {
                 if (topTabs[i].subTabsContainer != null)
-                {
                     topTabs[i].subTabsContainer.SetActive(i == index);
-                }
             }
+
+            // Przesuwamy zakładki w osi Y: aktywna wysuwa się, pozostałe chowają
+            ApplyTabYOffsets();
 
             // Jeśli zakładka ma pod-zakładki (boczne), wybierz pierwszą z nich
             if (topTabs[index].subTabs.Count > 0)
@@ -169,6 +273,7 @@ namespace Sojartsa.UI
             else
             {
                 _activeSubTabIndex = -1;
+                EnsureAtLeastOnePage();
                 UpdatePageVisuals();
             }
 
@@ -186,13 +291,88 @@ namespace Sojartsa.UI
 
             if (subIndex < 0 || subIndex >= topTab.subTabs.Count) return;
 
+            // Zapis przed zmianą zakładki
+            TriggerAutoSave();
+
             _activeSubTabIndex = subIndex;
             _currentPagePairIndex = 0;
 
+            EnsureAtLeastOnePage();
             UpdatePageVisuals();
             OnTabChanged?.Invoke();
             Debug.Log($"<color=green>[BOOK] Wybrano pod-zakładkę: {topTab.subTabs[subIndex].subTabName}</color>");
         }
+
+        /// <summary>
+        /// Przesuwa wszystkie górne zakładki w osi Y. Aktywna wysuwa się ku górze, pozostałe chowają się pod kartkę.
+        /// </summary>
+        private void ApplyTabYOffsets()
+        {
+            for (int i = 0; i < topTabs.Count; i++)
+            {
+                if (topTabs[i].tabButton == null) continue;
+                RectTransform rt = topTabs[i].tabButton.GetComponent<RectTransform>();
+                if (rt == null) continue;
+
+                Vector2 pos = rt.anchoredPosition;
+                pos.y = (i == _activeTopTabIndex) ? activeTabYOffset : inactiveTabYOffset;
+                rt.anchoredPosition = pos;
+            }
+        }
+
+        // =========================================================
+        //  ZAPEWNIENIE STRONY DO PISANIA
+        // =========================================================
+
+        /// <summary>
+        /// Sprawdza, czy aktywna zakładka powinna być edytowalna przez gracza.
+        /// Wspiera zarówno ręczne flagowanie w Inspectorze, jak i inteligentne dopasowanie po nazwie (Notatnik/Notes).
+        /// </summary>
+        public bool IsActiveTabEditable()
+        {
+            if (_activeTopTabIndex < 0 || _activeTopTabIndex >= topTabs.Count)
+                return false;
+
+            var topTab = topTabs[_activeTopTabIndex];
+            if (_activeSubTabIndex >= 0 && _activeSubTabIndex < topTab.subTabs.Count)
+            {
+                var subTab = topTab.subTabs[_activeSubTabIndex];
+                return subTab.isEditable || 
+                       subTab.subTabName.ToLower().Contains("note") || 
+                       subTab.subTabName.ToLower().Contains("notatnik") || 
+                       subTab.subTabName.ToLower().Contains("zapis");
+            }
+
+            return topTab.isEditable || 
+                   topTab.tabName.ToLower().Contains("note") || 
+                   topTab.tabName.ToLower().Contains("notatnik") || 
+                   topTab.tabName.ToLower().Contains("zapis");
+        }
+
+        /// <summary>
+        /// Jeśli aktualna zakładka jest pusta, automatycznie dodaje czystą stronę o odpowiednim statusie edycji.
+        /// Gracz zawsze będzie miał miejsce do pisania w notatniku!
+        /// </summary>
+        private void EnsureAtLeastOnePage()
+        {
+            var pages = GetActivePagesList();
+            if (pages != null && pages.Count == 0)
+            {
+                bool editable = IsActiveTabEditable();
+                pages.Add(new BookPageData
+                {
+                    pageTitle = "",
+                    textContent = "",
+                    imageContent = null,
+                    isEditable = editable
+                });
+                Debug.Log($"<color=yellow>[BOOK] Brak stron - dodano pustą stronę. Edytowalna: {editable}</color>");
+            }
+        }
+
+        // =========================================================
+        //  POBIERANIE AKTYWNYCH DANYCH
+        // =========================================================
 
         /// <summary>
         /// Zwraca listę stron aktualnie otwartej zakładki/pod-zakładki.
@@ -204,9 +384,8 @@ namespace Sojartsa.UI
 
             var topTab = topTabs[_activeTopTabIndex];
             if (_activeSubTabIndex >= 0 && _activeSubTabIndex < topTab.subTabs.Count)
-            {
                 return topTab.subTabs[_activeSubTabIndex].pages;
-            }
+
             return topTab.pages;
         }
 
@@ -219,9 +398,8 @@ namespace Sojartsa.UI
             var topTab = topTabs[_activeTopTabIndex];
 
             if (_activeSubTabIndex >= 0 && _activeSubTabIndex < topTab.subTabs.Count)
-            {
                 return topTab.subTabs[_activeSubTabIndex].pageLimit;
-            }
+
             return topTab.pageLimit;
         }
 
@@ -231,6 +409,10 @@ namespace Sojartsa.UI
             if (pages == null) return false;
             return pages.Count < GetActivePageLimit();
         }
+
+        // =========================================================
+        //  DODAWANIE I USUWANIE STRON
+        // =========================================================
 
         /// <summary>
         /// Dodaje nową stronę do aktywnej zakładki.
@@ -272,17 +454,18 @@ namespace Sojartsa.UI
             if (leftIndex < pages.Count) pages.RemoveAt(leftIndex);
 
             if (_currentPagePairIndex > 0 && _currentPagePairIndex * 2 >= pages.Count)
-            {
                 _currentPagePairIndex--;
-            }
 
+            // Zawsze zostaje przynajmniej jedna strona
             if (pages.Count == 0)
-            {
-                AddNewPage("", null, "", true);
-            }
+                EnsureAtLeastOnePage();
 
             UpdatePageVisuals();
         }
+
+        // =========================================================
+        //  WIZUALNE ODŚWIEŻANIE STRON
+        // =========================================================
 
         /// <summary>
         /// Odświeża elementy wizualne książki na podstawie aktywnej pary stron.
@@ -301,16 +484,21 @@ namespace Sojartsa.UI
             int leftIndex = _currentPagePairIndex * 2;
             int rightIndex = _currentPagePairIndex * 2 + 1;
 
+            bool tabEditable = IsActiveTabEditable(); // Pobieramy status edytowalności aktualnej zakładki
+
             // --- LEWA STRONA ---
             if (leftIndex < pages.Count)
             {
                 var leftPage = pages[leftIndex];
+                leftPage.isEditable = tabEditable; // TWARDY SYNCHRON: zakładka decyduje czy strona jest edytowalna!
 
                 if (leftPage.isEditable)
                 {
                     if (leftInputField != null)
                     {
                         leftInputField.gameObject.SetActive(true);
+                        leftInputField.enabled = true;
+                        leftInputField.interactable = true;
                         leftInputField.text = leftPage.textContent;
                     }
                     if (leftTextDisplay != null) leftTextDisplay.gameObject.SetActive(false);
@@ -356,12 +544,15 @@ namespace Sojartsa.UI
             if (rightIndex < pages.Count)
             {
                 var rightPage = pages[rightIndex];
+                rightPage.isEditable = tabEditable; // TWARDY SYNCHRON: zakładka decyduje czy strona jest edytowalna!
 
                 if (rightPage.isEditable)
                 {
                     if (rightInputField != null)
                     {
                         rightInputField.gameObject.SetActive(true);
+                        rightInputField.enabled = true;
+                        rightInputField.interactable = true;
                         rightInputField.text = rightPage.textContent;
                     }
                     if (rightTextDisplay != null) rightTextDisplay.gameObject.SetActive(false);
@@ -406,14 +597,25 @@ namespace Sojartsa.UI
             // --- NAWIGACJA PRZYCISKÓW ---
             if (prevPageButton != null)
             {
-                prevPageButton.gameObject.SetActive(_currentPagePairIndex > 0);
+                bool prevActive = _currentPagePairIndex > 0;
+                prevPageButton.gameObject.SetActive(prevActive);
+                if (!prevActive) _isLeftHovered = false; // Reset flagi gdy przycisk przestaje być aktywny
             }
 
             if (nextPageButton != null)
             {
-                nextPageButton.gameObject.SetActive((_currentPagePairIndex + 1) * 2 < pages.Count);
+                bool nextActive = (_currentPagePairIndex + 1) * 2 < pages.Count;
+                nextPageButton.gameObject.SetActive(nextActive);
+                if (!nextActive) _isRightHovered = false; // Reset flagi gdy przycisk przestaje być aktywny
             }
+
+            // Aplikujemy grafiki rogów na podstawie zapisanego stanu najazdu!
+            RefreshCornerSprites();
         }
+
+        // =========================================================
+        //  PRZEWRACANIE STRON
+        // =========================================================
 
         public void FlipForward()
         {
@@ -425,6 +627,7 @@ namespace Sojartsa.UI
                 _currentPagePairIndex++;
                 UpdatePageVisuals();
                 OnPageTurned?.Invoke();
+                TriggerAutoSave();
             }
         }
 
@@ -435,6 +638,7 @@ namespace Sojartsa.UI
                 _currentPagePairIndex--;
                 UpdatePageVisuals();
                 OnPageTurned?.Invoke();
+                TriggerAutoSave();
             }
         }
 
@@ -448,6 +652,10 @@ namespace Sojartsa.UI
             OnPageTurned?.Invoke();
         }
 
+        // =========================================================
+        //  ZAPIS TEKSTU DO PAMIĘCI
+        // =========================================================
+
         private void SaveLeftPageText(string val)
         {
             var pages = GetActivePagesList();
@@ -455,9 +663,7 @@ namespace Sojartsa.UI
 
             int index = _currentPagePairIndex * 2;
             if (index < pages.Count && pages[index].isEditable)
-            {
                 pages[index].textContent = val;
-            }
         }
 
         private void SaveRightPageText(string val)
@@ -467,36 +673,45 @@ namespace Sojartsa.UI
 
             int index = _currentPagePairIndex * 2 + 1;
             if (index < pages.Count && pages[index].isEditable)
-            {
                 pages[index].textContent = val;
-            }
+        }
+
+        // =========================================================
+        //  EFEKT ZAGINANIA ROGÓW (Corner Hover)
+        // =========================================================
+
+        /// <summary>
+        /// Wywoływane przez BookCornerTrigger lub EventTrigger przycisku, gdy gracz najeżdża/zjeżdża.
+        /// </summary>
+        public void OnCornerHover(bool isRightPage, bool isHovering)
+        {
+            if (isRightPage)
+                _isRightHovered = isHovering;
+            else
+                _isLeftHovered = isHovering;
+
+            RefreshCornerSprites();
         }
 
         /// <summary>
-        /// Wywoływane przez BookCornerTrigger, gdy gracz najeżdża lub zjeżdża z dolnego rogu strony.
+        /// Odświeża grafiki zagięcia rogów na podstawie zapisanego stanu najazdu myszki.
+        /// Całkowicie optymalne rozwiązanie (0% narzutu CPU w klatce) - brak jakichkolwiek update'ów!
         /// </summary>
-        public void OnCornerHover(bool isRightPage, bool isHovering)
+        private void RefreshCornerSprites()
         {
             var pages = GetActivePagesList();
             if (pages == null) return;
 
-            if (isRightPage)
+            if (rightPageBackgroundImage != null && rightPageNormalSprite != null && rightPageCurlSprite != null)
             {
-                if (rightPageBackgroundImage != null && rightPageNormalSprite != null && rightPageCurlSprite != null)
-                {
-                    // Zginamy róg tylko wtedy, gdy możemy przewinąć do przodu
-                    bool canFlip = (_currentPagePairIndex + 1) * 2 < pages.Count;
-                    rightPageBackgroundImage.sprite = (isHovering && canFlip) ? rightPageCurlSprite : rightPageNormalSprite;
-                }
+                bool canFlip = (_currentPagePairIndex + 1) * 2 < pages.Count;
+                rightPageBackgroundImage.sprite = (_isRightHovered && canFlip) ? rightPageCurlSprite : rightPageNormalSprite;
             }
-            else
+
+            if (leftPageBackgroundImage != null && leftPageNormalSprite != null && leftPageCurlSprite != null)
             {
-                if (leftPageBackgroundImage != null && leftPageNormalSprite != null && leftPageCurlSprite != null)
-                {
-                    // Zginamy róg tylko wtedy, gdy możemy przewinąć w tył
-                    bool canFlip = _currentPagePairIndex > 0;
-                    leftPageBackgroundImage.sprite = (isHovering && canFlip) ? leftPageCurlSprite : leftPageNormalSprite;
-                }
+                bool canFlip = _currentPagePairIndex > 0;
+                leftPageBackgroundImage.sprite = (_isLeftHovered && canFlip) ? leftPageCurlSprite : leftPageNormalSprite;
             }
         }
 
@@ -508,13 +723,116 @@ namespace Sojartsa.UI
             if (isRightPage)
             {
                 FlipForward();
-                OnCornerHover(true, false); // Wyłączamy curl po przewróceniu strony
+                OnCornerHover(true, false);
             }
             else
             {
                 FlipBackward();
                 OnCornerHover(false, false);
             }
+        }
+
+        // =========================================================
+        //  INTEGRACJA Z SAVEMANAGER
+        // =========================================================
+
+        /// <summary>
+        /// Wywołuje zapis gry przez SaveManager jeśli jest dostępny.
+        /// Wywoływany po zakończeniu pisania, zmianie zakładki i przewróceniu strony.
+        /// </summary>
+        private void TriggerAutoSave()
+        {
+            if (SaveManager.Instance != null)
+                SaveManager.Instance.SaveCurrentGame();
+        }
+
+        /// <summary>
+        /// Pakuje wszystkie dane tekstowe Księgi do formatu gotowego do zapisania w JSON-ie.
+        /// Wywoływany przez SaveManager.
+        /// </summary>
+        public List<BookTabSaveData> PackBookData()
+        {
+            List<BookTabSaveData> result = new List<BookTabSaveData>();
+            foreach (var topTab in topTabs)
+            {
+                var tabData = new BookTabSaveData { tabName = topTab.tabName };
+
+                foreach (var page in topTab.pages)
+                {
+                    tabData.pages.Add(new BookPageSaveEntry
+                    {
+                        pageTitle = page.pageTitle,
+                        textContent = page.textContent,
+                        isEditable = page.isEditable
+                    });
+                }
+
+                foreach (var subTab in topTab.subTabs)
+                {
+                    var subData = new BookSubTabSaveData { subTabName = subTab.subTabName };
+                    foreach (var page in subTab.pages)
+                    {
+                        subData.pages.Add(new BookPageSaveEntry
+                        {
+                            pageTitle = page.pageTitle,
+                            textContent = page.textContent,
+                            isEditable = page.isEditable
+                        });
+                    }
+                    tabData.subTabs.Add(subData);
+                }
+
+                result.Add(tabData);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Wczytuje dane tekstowe Księgi z pliku zapisu. Wywoływany przez SaveManager.
+        /// Nadpisuje tylko treść stron - nie zmienia ich sprite'ów ani konfiguracji.
+        /// </summary>
+        public void UnpackBookData(List<BookTabSaveData> savedData)
+        {
+            if (savedData == null || savedData.Count == 0) return;
+
+            for (int t = 0; t < topTabs.Count && t < savedData.Count; t++)
+            {
+                var topTab = topTabs[t];
+                var tabData = savedData[t];
+
+                // Wczytaj strony głównej zakładki
+                topTab.pages.Clear();
+                foreach (var entry in tabData.pages)
+                {
+                    topTab.pages.Add(new BookPageData
+                    {
+                        pageTitle = entry.pageTitle,
+                        textContent = entry.textContent,
+                        imageContent = null, // Sprite nie może być zapisany w JSON-ie - to normalne
+                        isEditable = entry.isEditable
+                    });
+                }
+
+                // Wczytaj strony pod-zakładek
+                for (int s = 0; s < topTab.subTabs.Count && s < tabData.subTabs.Count; s++)
+                {
+                    topTab.subTabs[s].pages.Clear();
+                    foreach (var entry in tabData.subTabs[s].pages)
+                    {
+                        topTab.subTabs[s].pages.Add(new BookPageData
+                        {
+                            pageTitle = entry.pageTitle,
+                            textContent = entry.textContent,
+                            imageContent = null,
+                            isEditable = entry.isEditable
+                        });
+                    }
+                }
+            }
+
+            // Odśwież widok po wczytaniu
+            UpdatePageVisuals();
+            Debug.Log("<color=lime>[BOOK] Dane Księgi wczytane pomyślnie!</color>");
         }
     }
 }

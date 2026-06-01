@@ -35,6 +35,9 @@ public class SaveData
     public int deathDropAmount;
     public float[] deathDropPos = new float[3];
     public string deathDropScene;
+
+    [Header("Notatnik i Bestiariusz")]
+    public List<Sojartsa.UI.BookTabSaveData> bookData = new List<Sojartsa.UI.BookTabSaveData>();
 }
 
 [Serializable]

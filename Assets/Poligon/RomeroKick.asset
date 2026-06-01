@@ -9,11 +9,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e47c2f273d278134eaa2c99ef73024ab, type: 3}
+  m_Script: {fileID: 11500000, guid: d78c93ed376564a4097fe3c75292d1f8, type: 3}
   m_Name: RomeroKick
-  m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIReactionData
-  condition: 2
-  actionToPerform: {fileID: 11400000, guid: 8972446bca7b4ce4f8355e6ef8c1d077, type: 2}
-  priority: 100
+  m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIActionData
+  actionName: RomeroKick
+  type: 0
+  animationTrigger: Attack2
+  actionTellSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  minDistance: 0
+  maxDistance: 3
   weight: 1
-  reactionDelay: 0.2
+  cooldown: 3
+  damageAmount: 10
+  poiseDamage: 100
+  trackingIntensity: 0.5
+  trackingCutoff: 0.5
+  isBehindOnly: 0
+  checkEnvironment: 0
+  environmentCheckDir: {x: 0, y: 0, z: -1}
+  checkDistance: 2
+  followUpAction: {fileID: 11400000, guid: 59b84199e00a221498c9790e19ceb50c, type: 2}
+  randomFollowUps: []
+  cancelIntoAction: {fileID: 0}
+  useRandomCancelWindow: 0
+  cancelWindowMin: 0.3
+  cancelWindowMax: 0.7

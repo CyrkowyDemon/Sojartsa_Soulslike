@@ -32,6 +32,8 @@ namespace SojartsaAI.v3
 
         private Animator _playerAnim;
         private InputReader _playerInput;
+        private PlayerCombat _playerCombat;
+
 
         public AISensory(Transform self, Transform player, AIArchetype config, InputReader playerInput = null)
         {
@@ -74,6 +76,7 @@ namespace SojartsaAI.v3
                 {
                     _player = p.transform;
                     _playerAnim = _player.GetComponentInChildren<Animator>();
+                    _playerCombat = _player.GetComponentInChildren<PlayerCombat>();
                 }
                 else return; // Wciąż nie ma gracza w scenie
             }
@@ -151,7 +154,11 @@ namespace SojartsaAI.v3
 
         // Czytanie "Intencji" gracza (Input Reading)
         public bool IsPlayerHealing() => CheckPlayerTag("Healing");
-        public bool IsPlayerAttacking() => CheckPlayerTag("Attack");
+        public bool IsPlayerAttacking()
+        {
+            if (_playerCombat != null && _playerCombat.IsDamageWindowOpen) return true;
+            return CheckPlayerTag("Attack");
+        }
 
         private bool CheckPlayerTag(string tag)
         {

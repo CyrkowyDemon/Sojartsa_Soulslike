@@ -100,15 +100,22 @@ public class EquipmentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Pobiera całkowite obrażenia gracza (Baza * 3).
+    /// Pobiera całkowite obrażenia gracza (Bazowe obrażenia wyposażonej broni + Skalowanie z siły ataku).
     /// </summary>
     public int GetCurrentAttackDamage()
     {
+        // 1. Obrażenia bazowe: z wyposażonej broni lub 5 jeśli gracz bije pięściami
+        int baseDamage = (currentMainHand != null) ? currentMainHand.baseDamage : 5;
+
+        // 2. Skalowanie: bonus z siły ataku gracza (Total Attack Power * 2)
+        int scalingDamage = 0;
         if (PlayerStats.Instance != null)
         {
-            return PlayerStats.Instance.GetTotalDamage();
+            scalingDamage = PlayerStats.Instance.GetTotalAttackPower() * 2;
         }
 
-        return 5; // Failsafe: Pięść
+        int finalDamage = baseDamage + scalingDamage;
+        Debug.Log($"<color=lime>[COMBAT] Obliczono DMG Gracza: {finalDamage} (Baza Broni: {baseDamage} + Skalowanie Siły: {scalingDamage})</color>");
+        return finalDamage;
     }
 }

@@ -18,9 +18,9 @@ MonoBehaviour:
   - material: {fileID: 13400000, guid: e521dfe3dee55d948a9590bbaf08c6f2, type: 2}
     type: 9
   terrainLayerMappings:
-  - layer: {fileID: 8574412962073106934, guid: cbfbd0830302a6d4e8d2d96e99e2702b, type: 2}
+  - layer: {fileID: 8574412962073106934, guid: 672ce7548bc1dce4e90bb3082e201257, type: 2}
     type: 1
-  - layer: {fileID: 8574412962073106934, guid: 431243ddb3103794890c08bc4c55cfe6, type: 2}
+  - layer: {fileID: 8574412962073106934, guid: 4e32022d306550941935a9898d9a184c, type: 2}
     type: 4
   vfxMappings:
   - type: 1

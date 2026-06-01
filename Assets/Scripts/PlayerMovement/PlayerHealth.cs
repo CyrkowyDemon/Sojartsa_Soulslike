@@ -101,7 +101,7 @@ public class PlayerHealth : MonoBehaviour
         if (hud != null) hud.UpdateWounds(_currentWounds, maxWounds);
     }
 
-    public void TakeDamage(int damage, bool isKnockback = false)
+    public void TakeDamage(int damage, bool isKnockback = false, float poiseDamage = 25f)
     {
         if (_isDead) return;
 
@@ -113,7 +113,7 @@ public class PlayerHealth : MonoBehaviour
 
         // === Dodaj rany (Poise damage) ===
         _lastHitTime = Time.time;
-        _currentWounds += woundsPerHit;
+        _currentWounds += poiseDamage;
 
         if (_currentWounds >= maxWounds)
         {
@@ -175,6 +175,9 @@ public class PlayerHealth : MonoBehaviour
 
         if (animator != null)
         {
+            // Resetujemy nakładkę akcji na warstwie 2, aby nie maskowała animacji ogłuszenia
+            animator.Play("Nothing", 2); 
+            
             // Resetujemy inne triggery żeby Knockback nie czekał w kolejce
             animator.ResetTrigger("HitReaction");
             animator.SetTrigger("Knockback"); // <- Podmień na "Stagger" jak będziesz miał animację

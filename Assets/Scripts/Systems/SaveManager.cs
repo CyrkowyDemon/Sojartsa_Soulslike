@@ -139,6 +139,11 @@ public class SaveManager : MonoBehaviour
         _currentSaveData.worldFlags = new Dictionary<string, bool>(_worldFlags);
         _currentSaveData.dialogueProgress = new Dictionary<string, int>(_dialogueProgress);
 
+        // Zapisujemy dane Ksiązki (notatnik, bestiariusz)
+        var book = FindBookInstance();
+        if (book != null)
+            _currentSaveData.bookData = book.PackBookData();
+
         string json = JsonConvert.SerializeObject(_currentSaveData, Formatting.Indented);
         string path = GetSavePath(slotIndex);
         File.WriteAllText(path, json);
@@ -338,6 +343,14 @@ public class SaveManager : MonoBehaviour
                 chest.ForceOpen();
         }
 
+        // Wczytujemy dane Ksiązki (notatnik, bestiariusz)
+        if (_currentSaveData.bookData != null && _currentSaveData.bookData.Count > 0)
+        {
+            var book = FindBookInstance();
+            if (book != null)
+                book.UnpackBookData(_currentSaveData.bookData);
+        }
+
         Debug.Log("<color=lime>[SAVE] Dane wczytane pomyślnie!</color>");
     }
 
@@ -367,4 +380,16 @@ public class SaveManager : MonoBehaviour
     }
 
     private string GetSavePath(int slotIndex) => Path.Combine(Application.persistentDataPath, $"save_slot_{slotIndex}{saveFileExtension}");
+
+    /// <summary>
+    /// Szuka UniversalBook w scenie - działa nawet jeśli GameObject jest nieaktywny (book panel zamknięty).
+    /// </summary>
+    private Sojartsa.UI.UniversalBook FindBookInstance()
+    {
+        // FindObjectsByType nie znajdzie nieaktywnych obiektów, dlatego szukamy przez Resources
+        Sojartsa.UI.UniversalBook[] books = Resources.FindObjectsOfTypeAll<Sojartsa.UI.UniversalBook>();
+        if (books != null && books.Length > 0)
+            return books[0];
+        return null;
+    }
 }

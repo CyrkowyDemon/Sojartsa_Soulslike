@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d78c93ed376564a4097fe3c75292d1f8, type: 3}
   m_Name: RomeroAttack
   m_EditorClassIdentifier: Assembly-CSharp::SojartsaAI.v3.AIActionData
-  actionName: RomeroJump
+  actionName: RomeroAttack
   type: 0
   animationTrigger: Attack
   actionTellSound:
@@ -23,7 +23,7 @@ MonoBehaviour:
       Data4: 0
     Path: 
   minDistance: 1
-  maxDistance: 5
+  maxDistance: 3
   weight: 1
   cooldown: 5
   damageAmount: 20
@@ -35,3 +35,8 @@ MonoBehaviour:
   environmentCheckDir: {x: 0, y: 0, z: -1}
   checkDistance: 2
   followUpAction: {fileID: 0}
+  randomFollowUps: []
+  cancelIntoAction: {fileID: 0}
+  useRandomCancelWindow: 0
+  cancelWindowMin: 0.3
+  cancelWindowMax: 0.7

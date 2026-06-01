@@ -29,5 +29,16 @@ namespace SojartsaAI.v3
         }
         
         // Możesz tu dodawać kolejne funkcje, których będziesz używał w Animacjach
+        public void EnableIFrames()
+        {
+            EnemyHealth hp = GetComponentInParent<EnemyHealth>();
+            if (hp != null) hp.EnableIFrames();
+        }
+
+        public void DisableIFrames()
+        {
+            EnemyHealth hp = GetComponentInParent<EnemyHealth>();
+            if (hp != null) hp.DisableIFrames();
+        }
     }
 }
