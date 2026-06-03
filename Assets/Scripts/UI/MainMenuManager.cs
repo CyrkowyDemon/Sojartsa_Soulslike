@@ -109,19 +109,24 @@ public class MainMenuManager : MonoBehaviour
 
         Debug.Log($"[MainMenu] Próba startu nowej gry. Imię: {charName}, Scena: {sceneName} (Index: {firstLevelBuildIndex})");
 
+        // Zapisujemy docelową scenę, do której trafimy po intro
+        PlayerPrefs.SetString("IntroTargetScene", sceneName);
+        PlayerPrefs.Save();
+
         if (SaveManager.Instance != null)
         {
-            SaveManager.Instance.StartNewGame(charName, sceneName);
+            // Startujemy nową grę, ładując najpierw scenę Intro
+            SaveManager.Instance.StartNewGame(charName, "Intro");
         }
         else
         {
             if (Sojartsa.UI.LoadingScreenManager.Instance != null)
             {
-                Sojartsa.UI.LoadingScreenManager.Instance.LoadScene(sceneName);
+                Sojartsa.UI.LoadingScreenManager.Instance.LoadScene("Intro");
             }
             else
             {
-                SceneManager.LoadScene(firstLevelBuildIndex);
+                SceneManager.LoadScene("Intro");
             }
         }
     }

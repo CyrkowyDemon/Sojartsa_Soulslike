@@ -12,7 +12,10 @@ namespace AI
                 owner.Agent.isStopped = true;
             
             if (owner.Animator != null)
-                owner.Animator.SetFloat("ForwardSpeed", 0f, 0.1f, Time.deltaTime);
+            {
+                owner.Animator.SetFloat("ForwardSpeed", 0f);
+                owner.Animator.SetFloat("SidewaysSpeed", 0f);
+            }
         }
 
         public override void LogicUpdate()

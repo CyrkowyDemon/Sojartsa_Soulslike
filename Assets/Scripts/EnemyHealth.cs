@@ -68,10 +68,53 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
+    private bool _isBlocking = false;
+    public bool IsBlocking
+    {
+        get => _isBlocking;
+        set => _isBlocking = value;
+    }
+
    public void TakeDamage(int damage, bool isKnockback = false, float poiseDamage = 50f)
     {
         if (_isDead) return;
         if (_isInvincible) return;
+
+        if (_isBlocking)
+        {
+            // Sprawdzamy czy cios nadszedł od przodu (w stożku 140 stopni z przodu)
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            Vector3 attackerPos = player != null ? player.transform.position : transform.position;
+            Vector3 dirToAttacker = (attackerPos - transform.position).normalized;
+            dirToAttacker.y = 0;
+            float dot = Vector3.Dot(transform.forward, dirToAttacker);
+
+            if (dot > 0.3f)
+            {
+                // Reakcja dźwiękowa i animacja bloku
+                if (_sfxManager != null) _sfxManager.PlayPoiseBreak(); // Efekt dźwiękowy odbicia
+                if (_animator != null) _animator.SetTrigger("BlockReact"); // Trigger reakcji na blok
+
+                float blockPoiseDamage = poiseDamage * 1.2f; // Blokowanie ciosu zbija postawę wroga
+
+                IDamageable damageable = GetComponent<IDamageable>();
+                if (damageable != null)
+                {
+                    damageable.OnDamagedByPlayer(0, blockPoiseDamage, transform.position);
+                }
+                else
+                {
+                    _currentPoise -= blockPoiseDamage;
+                    if (_currentPoise <= 0)
+                    {
+                        _currentPoise = maxPoise;
+                        SendMessage("ForceInterrupt", SendMessageOptions.DontRequireReceiver);
+                        if (_animator != null) _animator.SetTrigger("Knockback"); // Guard break!
+                    }
+                }
+                return; // KOŃCZYMY: brak obrażeń HP
+            }
+        }
 
         if (_isBroken)
         {
@@ -83,10 +126,10 @@ public class EnemyHealth : MonoBehaviour
 
         // Budzimy AI – szukamy nowego interfejsu IDamageable (AIBrain),
         // a jeśli go nie ma, próbujemy starego EnemyBase (kompatybilność wsteczna)
-        IDamageable damageable = GetComponent<IDamageable>();
-        if (damageable != null)
+        IDamageable dmg = GetComponent<IDamageable>();
+        if (dmg != null)
         {
-            damageable.OnDamagedByPlayer(damage, poiseDamage, transform.position);
+            dmg.OnDamagedByPlayer(damage, poiseDamage, transform.position);
         }
         else
         {
@@ -248,6 +291,20 @@ public class EnemyHealth : MonoBehaviour
         _isBroken = false;
         if(_animator != null) _animator.SetBool("IsBroken", false);
         Die();
+    }
+
+    public void FullHeal()
+    {
+        if (_isDead) return;
+        currentHealth = maxHealth;
+        _currentWounds = 0;
+        _woundTimer = 0f;
+        _isBroken = false;
+        if (_animator != null)
+        {
+            _animator.SetBool("IsBroken", false);
+        }
+        UpdateUI();
     }
 
     public void EnableIFrames() { _isInvincible = true; }

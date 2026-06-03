@@ -19,7 +19,12 @@ namespace SojartsaAI.v3
         [Header("Konfiguracja (Data)")]
         public AIArchetype archetype;
         public InputReader playerInput;
+        [Tooltip("Mnożnik fizycznego przesunięcia w świecie (skalowanie Root Motion)")]
         [Range(0.5f, 3f)] public float movementSpeedMultiplier = 1f;
+        [Tooltip("Wartość ForwardSpeed wysyłana do animatora podczas walki (strafowanie)")]
+        [Range(0.1f, 1f)] public float combatForwardSpeed = 0.5f;
+        [Tooltip("Wartość ForwardSpeed wysyłana do animatora podczas pościgu (bieg)")]
+        [Range(0.5f, 2f)] public float chaseForwardSpeed = 1.0f;
 
         [Header("AAA - Statystyki Postury")]
         public float currentPoise;
@@ -153,9 +158,13 @@ namespace SojartsaAI.v3
         public void ChangeState(AIState newState)
         {
             if (newState == null) return;
+            string oldStateName = _currentState?.GetType().Name ?? "None";
             _currentState?.Exit();
             _currentState = newState;
             _currentState.Enter();
+
+            // Konsolowy log debugu zmian stanu (jak w starym systemie, styl FromSoftware)
+            Debug.Log($"<color=cyan>[AI_v3]</color> <color=yellow>{gameObject.name}</color> zmienił stan: <color=white>{oldStateName} -> {_currentState.GetType().Name}</color>");
         }
 
         public void SendAnimationSignal(string signal)
@@ -218,7 +227,16 @@ namespace SojartsaAI.v3
             if (anim == null || Time.deltaTime <= 0) return;
 
             // W AAA pozycji pilnuje animacja (deltaPosition)
-            Vector3 nextPos = transform.position + (anim.deltaPosition * movementSpeedMultiplier);
+            Vector3 deltaPosition = anim.deltaPosition;
+
+            // FALLBACK: Jeśli animacja nie ma włączonego Root Motion (deltaPosition jest 0), 
+            // a NavMeshAgent próbuje nas przemieścić, używamy jego prędkości.
+            if (deltaPosition.sqrMagnitude < 0.0001f && agent != null && agent.isOnNavMesh && !agent.isStopped)
+            {
+                deltaPosition = agent.velocity * Time.deltaTime;
+            }
+
+            Vector3 nextPos = transform.position + (deltaPosition * movementSpeedMultiplier);
 
             // Ale NavMesh jest "granicą" (zabezpieczenie)
             if (agent != null && agent.isOnNavMesh)

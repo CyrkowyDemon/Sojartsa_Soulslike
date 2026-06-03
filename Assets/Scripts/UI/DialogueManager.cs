@@ -15,6 +15,7 @@ public class DialogueManager : MonoBehaviour
     [Header("Referencje UI")]
     public GameObject dialoguePanel; // Czarny pasek z dialogiem
     public TMP_Text dialogueText; // Komponent z tekstem
+    public UIFadeHelper subtitleBackgroundFader; // NOWE: Referencja do fadera tła napisów
 
     [Header("Wybory UI")]
     public GameObject choicePanel; // Panel trzymający przyciski
@@ -92,6 +93,17 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private Coroutine _deactivatePanelCoroutine;
+
+    private IEnumerator DeactivatePanelAfterDelay(GameObject panel, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (_currentConversation == null)
+        {
+            panel.SetActive(false);
+        }
+    }
+
     public void StartConversation(DialogueConversation conv, PeacefulNPC npc)
     {
         if (conv == null)
@@ -101,6 +113,8 @@ public class DialogueManager : MonoBehaviour
             return;
         }
 
+        if (_deactivatePanelCoroutine != null) StopCoroutine(_deactivatePanelCoroutine);
+
         _currentConversation = conv;
         _currentNPC = npc;
         _currentNodeIndex = 0;
@@ -108,7 +122,22 @@ public class DialogueManager : MonoBehaviour
         Debug.Log($"[Dialogue] StartConversation: {conv.name}");
 
         if (dialoguePanel != null) dialoguePanel.SetActive(true);
-        if (choicePanel != null) choicePanel.SetActive(false); // Chowamy wybory na start
+        if (subtitleBackgroundFader != null) subtitleBackgroundFader.FadeIn();
+        
+        if (choicePanel != null)
+        {
+            UIFadeHelper choiceFader = choicePanel.GetComponent<UIFadeHelper>();
+            if (choiceFader != null)
+            {
+                CanvasGroup cg = choicePanel.GetComponent<CanvasGroup>();
+                if (cg != null) cg.alpha = 0f;
+                choicePanel.SetActive(false);
+            }
+            else
+            {
+                choicePanel.SetActive(false);
+            }
+        }
         
         DisplayNextNode(); // Rozpoczęcie natychmiastowe
     }
@@ -121,8 +150,29 @@ public class DialogueManager : MonoBehaviour
 
         _currentConversation = null;
         _isShowingChoices = false;
-        if (dialoguePanel != null) dialoguePanel.SetActive(false);
-        if (choicePanel != null) choicePanel.SetActive(false);
+        
+        if (dialogueText != null) dialogueText.text = "";
+
+        if (subtitleBackgroundFader != null)
+        {
+            subtitleBackgroundFader.FadeOut();
+            if (dialoguePanel != null)
+            {
+                if (_deactivatePanelCoroutine != null) StopCoroutine(_deactivatePanelCoroutine);
+                _deactivatePanelCoroutine = StartCoroutine(DeactivatePanelAfterDelay(dialoguePanel, 0.3f));
+            }
+        }
+        else
+        {
+            if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        }
+
+        if (choicePanel != null)
+        {
+            UIFadeHelper choiceFader = choicePanel.GetComponent<UIFadeHelper>();
+            if (choiceFader != null) choiceFader.FadeOut();
+            else choicePanel.SetActive(false);
+        }
         
         // Zatrzymujemy głos FMOD natychmiastowo przy zakończeniu
         if (_voiceInstance.isValid())
@@ -296,7 +346,9 @@ public class DialogueManager : MonoBehaviour
         // PRO FIX: Zostawiamy panel w spokoju (tło i portret), a jedynie czyścimy stary tekst!
         if (dialogueText != null) dialogueText.text = "";
 
-        choicePanel.SetActive(true);
+        UIFadeHelper choiceFader = choicePanel.GetComponent<UIFadeHelper>();
+        if (choiceFader != null) choiceFader.FadeIn();
+        else choicePanel.SetActive(true);
 
         // Tworzymy nowe przyciski na podstawie listy choices z assetu
         foreach (var choice in _currentConversation.choices)
@@ -322,7 +374,10 @@ public class DialogueManager : MonoBehaviour
         
         // TWARDE CZYSZCZENIE: zanim zrobimy cokolwiek innego, usuwamy stare śmieci
         _isShowingChoices = false;
-        if (choicePanel != null) choicePanel.SetActive(false);
+        
+        UIFadeHelper choiceFader = choicePanel.GetComponent<UIFadeHelper>();
+        if (choiceFader != null) choiceFader.FadeOut();
+        else if (choicePanel != null) choicePanel.SetActive(false);
         
         foreach (Transform child in choiceParent)
         {

@@ -89,6 +89,12 @@ namespace SojartsaAI.v3
                 }
             }
 
+            // Bezpiecznik czasowy na wypadek zgubionego sygnału ActionEnd w animacji (np. brak eventu w Unity)
+            if (stateTimer > 4.0f)
+            {
+                _isActionComplete = true;
+            }
+
             // Jeśli animacja wysłała sygnał końca - decydujemy co dalej
             if (_isActionComplete)
             {

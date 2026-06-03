@@ -24,14 +24,14 @@ MonoBehaviour:
     Path: 
   minDistance: 0
   maxDistance: 3
-  weight: 1
+  weight: 3
   cooldown: 2
   damageAmount: 0
   poiseDamage: 0
   trackingIntensity: 0.249
   trackingCutoff: 1
   isBehindOnly: 0
-  checkEnvironment: 1
+  checkEnvironment: 0
   environmentCheckDir: {x: 0, y: 0, z: -1}
   checkDistance: 2
   followUpAction: {fileID: 0}

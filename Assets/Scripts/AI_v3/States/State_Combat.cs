@@ -101,12 +101,12 @@ namespace SojartsaAI.v3
                 if (distToSlot > 0.3f) // Nieco mniejszy próg dla płynności
                 {
                     moveDir.Normalize();
-                    // Mapujemy ruch na osie Forward/Right wroga
+                    // Mapujemy ruch na osie Forward/Right wroga i skalujemy przez wybraną prędkość walki
                     float forwardMove = Vector3.Dot(brain.transform.forward, moveDir);
                     float rightMove = Vector3.Dot(brain.transform.right, moveDir);
 
-                    brain.anim.SetFloat("ForwardSpeed", forwardMove * brain.movementSpeedMultiplier, 0.1f, Time.deltaTime);
-                    brain.anim.SetFloat("SidewaysSpeed", rightMove * brain.movementSpeedMultiplier, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("ForwardSpeed", forwardMove * brain.combatForwardSpeed, 0.1f, Time.deltaTime);
+                    brain.anim.SetFloat("SidewaysSpeed", rightMove * brain.combatForwardSpeed, 0.1f, Time.deltaTime);
                 }
                 else
                 {

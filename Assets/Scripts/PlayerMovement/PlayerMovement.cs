@@ -95,17 +95,18 @@ public class PlayerMovement : MonoBehaviour
         if (_playerCombat != null)
         {
             // TWARDA BLOKADA (Dodge lub Aktywny Hitbox/Recovery do momentu Cancel)
-            // Mordo, dodajemy "!lockedOn" - jeśli masz locka, postać ma się obracać ZAWSZE.
+            // Mordo, jeśli masz locka, postać ma się obracać ZAWSZE, stąd && !lockedOn.
             if ((_playerCombat.IsDodgingAnim || _playerCombat.IsRotationLocked) && !lockedOn)
             {
                 canRotate = false;
-                
-                // === FAILSAFE (SAMOLECZENIE) ===
-                if (!isActionPlaying && (baseState.shortNameHash == _idleStateHash || baseState.tagHash == _idleTagHash))
-                {
-                    canRotate = true;
-                    _playerCombat.ResetCombatFlags(); 
-                }
+            }
+
+            // === FAILSAFE (SAMOLECZENIE) ===
+            // Niezależnie od locka, jeśli skończyliśmy akcję i jesteśmy w Idle, resetujemy flagi walki (tylko jeśli były aktywne).
+            if ((_playerCombat.IsDodgingAnim || _playerCombat.IsRotationLocked) && !isActionPlaying && (baseState.shortNameHash == _idleStateHash || baseState.tagHash == _idleTagHash))
+            {
+                canRotate = true;
+                _playerCombat.ResetCombatFlags(); 
             }
             // FAZA WIND-UP (ZAMACH)
             else if (isActionPlaying)

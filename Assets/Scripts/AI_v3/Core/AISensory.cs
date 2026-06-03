@@ -146,8 +146,13 @@ namespace SojartsaAI.v3
             bool chestClear = !Physics.Linecast(eyePos, chestPos, out hit, mask) || hit.transform.root == _player.root;
 
             // AAA: Dodatkowe sprawdzenie kąta FOV (tylko w pasywnym wykrywaniu)
-            float angle = Vector3.Angle(_self.forward, (_player.position - _self.position).normalized);
-            if (angle > _config.fieldOfView * 0.5f) return false;
+            AIBrain brainComponent = _self.GetComponent<AIBrain>();
+            bool isAlerted = brainComponent != null && !(brainComponent.CurrentState is State_Passive);
+            if (!isAlerted)
+            {
+                float angle = Vector3.Angle(_self.forward, (_player.position - _self.position).normalized);
+                if (angle > _config.fieldOfView * 0.5f) return false;
+            }
 
             return headClear || chestClear;
         }
@@ -163,8 +168,22 @@ namespace SojartsaAI.v3
         private bool CheckPlayerTag(string tag)
         {
             if (_playerAnim == null) return false;
-            return _playerAnim.GetCurrentAnimatorStateInfo(0).IsTag(tag) || 
-                   (_playerAnim.IsInTransition(0) && _playerAnim.GetNextAnimatorStateInfo(0).IsTag(tag));
+
+            // Sprawdzamy warstwę 0 (Base) oraz warstwę 2 (Actions), gdzie gracz wykonuje ataki, uniki i leczenie
+            int[] layersToCheck = { 0, 2 };
+            int maxLayers = _playerAnim.layerCount;
+
+            foreach (int i in layersToCheck)
+            {
+                if (i >= maxLayers) continue;
+
+                if (_playerAnim.GetCurrentAnimatorStateInfo(i).IsTag(tag) || 
+                    (_playerAnim.IsInTransition(i) && _playerAnim.GetNextAnimatorStateInfo(i).IsTag(tag)))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

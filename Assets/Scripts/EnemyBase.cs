@@ -19,6 +19,9 @@ public abstract class EnemyBase : MonoBehaviour
     [System.NonSerialized] protected Animator _animator;
     [System.NonSerialized] protected AI.AIStateMachine _stateMachine;
 
+    private Vector3 _startPosition;
+    public Vector3 StartPosition => _startPosition;
+
     protected bool _isInCombat = false;
 
     public bool IsInCombat 
@@ -36,6 +39,8 @@ public abstract class EnemyBase : MonoBehaviour
         _agent = GetComponent<NavMeshAgent>();
         _animator = GetComponent<Animator>();
         _stateMachine = GetComponent<AI.AIStateMachine>();
+        
+        _startPosition = transform.position; // Zapisujemy pozycję domową
         
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)

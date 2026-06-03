@@ -202,6 +202,7 @@ public class PlayerHealth : MonoBehaviour
 
         // 2. Zamykamy miecz przy zgonie
         SendMessage("CloseDamage", SendMessageOptions.DontRequireReceiver);
+        SendMessage("CloseTrail", SendMessageOptions.DontRequireReceiver);
         
         // 3. Animacja (Napisu jeszcze nie pokazujemy - czekamy na upadek!)
         if (animator != null) animator.SetTrigger("Die");

@@ -28,6 +28,9 @@ namespace SojartsaAI.v3
         public bool useCancelWindow;
         public float cancelStartNormalized = 0.7f;
 
+        [Header("Obrona (Block)")]
+        public bool isBlockingState = false;
+
         private AIBrain _brain;
         private bool _cancelSignalSent;
         private bool _hitboxOpened;
@@ -48,6 +51,12 @@ namespace SojartsaAI.v3
                 // --- AUDIO: Odtwarzamy dźwięk telegrafowania (The Tell) ---
                 if (_brain.ActiveAction != null)
                     _brain.PlayActionSound(_brain.ActiveAction.actionTellSound);
+
+                // Włączamy blok, jeśli ten stan jest blokujący
+                if (isBlockingState && _brain.TryGetComponent<EnemyHealth>(out var health))
+                {
+                    health.IsBlocking = true;
+                }
             }
                 
             _cancelSignalSent = false;
@@ -103,6 +112,12 @@ namespace SojartsaAI.v3
                 _brain.CloseAllHitboxes(); // Fail-safe
                 _brain.SendAnimationSignal(onExitSignal);
                 _brain.ActiveAction = null; // Czyszczenie akcji po zakończeniu
+
+                // Wyłączamy blok przy wyjściu ze stanu
+                if (isBlockingState && _brain.TryGetComponent<EnemyHealth>(out var health))
+                {
+                    health.IsBlocking = false;
+                }
             }
         }
     }

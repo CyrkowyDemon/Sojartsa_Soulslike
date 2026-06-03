@@ -9,6 +9,8 @@ namespace AI
         private float _minAttackDist = 2.5f;
         private float _maxAttackDist = 7f;
         private float _nextAttackCheckTime;
+        private float _lostTargetTimer = 0f;
+        private const float TIME_TO_LOSE_TARGET = 4.0f;
         
         private enum StrafeIntent { Aggressive, Passive, Defensive }
         private StrafeIntent _currentIntent;
@@ -61,17 +63,37 @@ namespace AI
                 _currentIntent = StrafeIntent.Defensive;
                 _nextAttackCheckTime = Time.time + Random.Range(2.0f, 4.0f);
             }
+            _lostTargetTimer = 0f;
         }
 
         public override void LogicUpdate()
         {
             if (owner.Target == null)
             {
-                machine.ChangeState(new AIState_Idle(machine, owner));
+                machine.ChangeState(new AIState_Return(machine, owner));
                 return;
             }
 
             float dist = Vector3.Distance(owner.transform.position, owner.Target.position);
+
+            // --- SYSTEM GUBIENIA GRACZA ---
+            Vector3 rayStart = owner.transform.position + Vector3.up * 1.5f;
+            Vector3 rayEnd = owner.Target.position + Vector3.up * 1.5f;
+            bool hasLineOfSight = !Physics.Linecast(rayStart, rayEnd, LayerMask.GetMask("Default", "Environment", "Obstacles"));
+
+            if (dist > 25f || !hasLineOfSight)
+            {
+                _lostTargetTimer += Time.deltaTime;
+                if (_lostTargetTimer >= TIME_TO_LOSE_TARGET)
+                {
+                    machine.ChangeState(new AIState_Return(machine, owner));
+                    return;
+                }
+            }
+            else
+            {
+                _lostTargetTimer = 0f;
+            }
 
             // Zależnie od intencji, pozwalamy mu odejść trochę dalej zanim wróci do pościgu (Chase)
             float effectiveMaxDist = _currentIntent == StrafeIntent.Defensive ? _maxAttackDist + 2f : _maxAttackDist;

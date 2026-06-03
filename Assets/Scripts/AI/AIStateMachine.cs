@@ -26,6 +26,8 @@ namespace AI
             CurrentState?.Exit(); // Bezpieczne wyjście (null-conditional)
             CurrentState = newState;
             CurrentState.Enter();
+
+            Debug.Log($"<color=cyan>[AI]</color> <color=yellow>{gameObject.name}</color> → <color=white>{CurrentState.GetType().Name}</color>");
         }
 
         private void Update()

@@ -25,6 +25,10 @@ namespace AI
             _stateTimer = 0f;
             _hasStartedAnimation = false;
 
+            // Zerujemy parametry ruchu, żeby przeciwnik nie "ślizgał się" podczas ataku
+            owner.Animator.SetFloat("ForwardSpeed", 0f);
+            owner.Animator.SetFloat("SidewaysSpeed", 0f);
+
             // Zatrzymujemy agenta
             if (owner.Agent != null && owner.Agent.isOnNavMesh)
             {

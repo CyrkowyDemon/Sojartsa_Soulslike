@@ -13,6 +13,7 @@ namespace SojartsaAI.v3
             base.Enter();
             brain.agent.isStopped = true;
             brain.anim.SetFloat("ForwardSpeed", 0f);
+            brain.anim.SetFloat("SidewaysSpeed", 0f);
             _nextIdleTime = Time.time + Random.Range(3f, 10f);
         }
 
@@ -45,6 +46,7 @@ namespace SojartsaAI.v3
         {
             base.Enter();
             brain.agent.isStopped = false;
+            brain.anim.SetFloat("SidewaysSpeed", 0f);
         }
 
         public override void LogicUpdate()
@@ -64,7 +66,8 @@ namespace SojartsaAI.v3
 
             // Podążanie
             brain.MoveTo(brain.target.position);
-            brain.anim.SetFloat("ForwardSpeed", 1f * brain.movementSpeedMultiplier);
+            brain.anim.SetFloat("ForwardSpeed", brain.chaseForwardSpeed);
+            brain.anim.SetFloat("SidewaysSpeed", 0f);
 
             // Obracanie wroga w stronę ścieżki lub bezpośrednio na cel (brak stucznej ścieżki = patrz na gracza)
             if (brain.agent != null && brain.agent.isOnNavMesh && brain.agent.hasPath)

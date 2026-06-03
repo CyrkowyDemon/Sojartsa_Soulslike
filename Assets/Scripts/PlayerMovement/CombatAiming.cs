@@ -11,7 +11,7 @@ public class CombatAiming : MonoBehaviour
     [Header("Ustawienia")]
     public float maxAngle = 90f; // TESTOWE 90 STOPNI!
     public float smoothSpeed = 15f;
-    public int animatorLayer = 1; // Indeks 1 = Warstwa 2 w Animatorze
+    public int animatorLayer = 2; // Indeks 2 = Warstwa 3 w Animatorze (Actions)
 
     private Animator _animator;
     private Camera _cam;
@@ -24,7 +24,7 @@ public class CombatAiming : MonoBehaviour
         
         _cam = Camera.main;
         
-        Debug.Log("<color=cyan>[Aiming] SKRYPT ODPALONY. Czekam na animacje z tagiem 'Attack' na warstwie " + (animatorLayer + 1) + "</color>");
+        Debug.Log("<color=cyan>[Aiming] SKRYPT ODPALONY. Czekam na animacje z tagiem 'Attack' na warstwie " + (animatorLayer) + "</color>");
     }
 
     void LateUpdate()
@@ -36,6 +36,17 @@ public class CombatAiming : MonoBehaviour
         // Sprawdzamy stan Animatora na konkretnej warstwie
         AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(animatorLayer);
         
+        // Logika diagnostyczna: pomoże nam sprawdzić, czy Animator w ogóle wchodzi w ten stan
+        if (_animator.IsInTransition(animatorLayer))
+        {
+            // Podczas przejścia ignorujemy sprawdzanie tagów, by nie zaburzać wyginania
+        }
+        else
+        {
+            // Jeśli chcesz na bieżąco diagnozować w konsoli co widzi skrypt:
+            // Debug.Log($"[Aiming Debug] State Hash: {stateInfo.shortNameHash}, Tag Hash: {stateInfo.tagHash}, IsTag('Attack'): {stateInfo.IsTag("Attack")}");
+        }
+
         // Jeśli animacja ma tag "Attack", odpalamy celowanie
         if (stateInfo.IsTag("Attack"))
         {
@@ -43,8 +54,8 @@ public class CombatAiming : MonoBehaviour
             if (pitch > 180) pitch -= 360;
             targetPitch = Mathf.Clamp(pitch, -maxAngle, maxAngle);
             
-            // Log dla testu (możesz wyłączyć jak zacznie działać)
-            // Debug.Log("[Aiming] WYKRYTO TAG ATTACK! Wyginam o: " + targetPitch);
+            // Log dla testu
+            Debug.Log("[Aiming] WYKRYTO TAG ATTACK na warstwie " + animatorLayer + "! Wyginam o: " + targetPitch);
         }
 
         _currentPitch = Mathf.Lerp(_currentPitch, targetPitch, Time.deltaTime * smoothSpeed);

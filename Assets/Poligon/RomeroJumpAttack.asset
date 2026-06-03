@@ -29,7 +29,7 @@ MonoBehaviour:
   damageAmount: 30
   poiseDamage: 10
   trackingIntensity: 0.71
-  trackingCutoff: 0.367
+  trackingCutoff: 0
   isBehindOnly: 0
   checkEnvironment: 1
   environmentCheckDir: {x: 0, y: 0, z: 1}
